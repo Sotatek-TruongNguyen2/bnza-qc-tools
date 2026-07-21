@@ -1,4 +1,5 @@
 import { encodePacked, getAddress, isAddress } from 'viem'
+import { formatTokenAmount } from '@/lib/format-token-amount'
 import type { BasePublicClient } from '@/lib/rpc'
 import {
   BPS,
@@ -27,13 +28,6 @@ function feeLabel(fee: number): string {
 
 function applySlippage(amountOut: bigint, slippageBps: number): bigint {
   return (amountOut * (BPS - BigInt(slippageBps))) / BPS
-}
-
-function formatTokenAmount(raw: bigint, decimals: number, symbol: string): string {
-  const value = Number(raw) / 10 ** decimals
-  return `${value.toLocaleString('en-US', {
-    maximumFractionDigits: Math.min(decimals, 8),
-  })} ${symbol}`
 }
 
 function parseHumanAmount(value: string, decimals: number): bigint {

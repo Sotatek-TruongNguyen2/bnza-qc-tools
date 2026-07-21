@@ -1,4 +1,7 @@
 import { Q96 } from './constants'
+import { formatPrice, formatTokenAmount } from '@/lib/format-token-amount'
+
+export { formatPrice, formatTokenAmount }
 
 export function getSqrtRatioAtTick(tick: number): bigint {
   const absTick = tick < 0 ? -tick : tick
@@ -90,22 +93,8 @@ export function feeTierLabel(fee: number): string {
   return `${fee} (${fee / 10_000}%)`
 }
 
-export function formatTokenAmount(raw: bigint, decimals: number, symbol: string): string {
-  const value = Number(raw) / 10 ** decimals
-  const formatted = value.toLocaleString('en-US', {
-    maximumFractionDigits: Math.min(decimals, 8),
-  })
-  return `${formatted} ${symbol}`
-}
-
 export function tickToPriceRatio(tick: number, decimals0: number, decimals1: number): number {
   return 1.0001 ** tick * 10 ** (decimals0 - decimals1)
-}
-
-export function formatPrice(label: string, price: number): string {
-  if (!Number.isFinite(price) || price <= 0) return `${label}: n/a`
-  const digits = price >= 1000 ? 2 : price >= 1 ? 4 : 8
-  return `${label}: ${price.toLocaleString('en-US', { maximumFractionDigits: digits })}`
 }
 
 export function rangeStatus(
