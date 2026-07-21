@@ -12,12 +12,9 @@ import {
   describeSpotSwap,
   describeSum,
   describeUsdcLeg,
-  earnedDustThresholdNote,
   formatEarnedFormula,
   formatPrincipalFormula,
   getQcPoolPrices,
-  operationFeeApplicabilityNote,
-  performanceFeeApplicabilityNote,
 } from './close-estimate-derivations'
 import { formatRawAmount, formatRawUsdc } from './format-raw-amount'
 import type { PositionRaw } from './types'
@@ -487,7 +484,7 @@ function buildEarnedDetails(args: {
     },
     {
       label: 'Earned dust threshold',
-      value: earnedDustThresholdNote(params.minEarnedUsdc),
+      value: `$${params.minEarnedUsdc} USDC equiv. (${formatRawUsdc(minEarnedRaw)})`,
     },
   ]
 
@@ -496,7 +493,7 @@ function buildEarnedDetails(args: {
       label: 'Fee deduction',
       value:
         earnedGrossUsdc < minEarnedRaw
-          ? `Skipped — ${earnedDustThresholdNote(params.minEarnedUsdc)}`
+          ? `Skipped — gross ${formatRawUsdc(earnedGrossUsdc)} < threshold`
           : 'No earned fees',
     })
   } else {
@@ -582,8 +579,7 @@ function buildEarnedDetails(args: {
 
   return {
     title: 'Earned fees net (USDC equiv.)',
-    summary:
-      'Uncollected earned LP fees after op + performance fee (close/collect/rebalance), converted to USDC at pool price. Neither fee applies to principal.',
+    summary: '',
     formula: formatEarnedFormula(
       params.minEarnedUsdc,
       params.operationFeeBps / 100,
@@ -599,9 +595,7 @@ function buildEarnedDetails(args: {
         value: formatRawAmount(fee1, raw.token1Decimals, raw.token1Symbol),
       },
       { label: 'Pool price', value: poolPrices.token1PerToken0Label },
-      { label: 'When operation fee applies', value: operationFeeApplicabilityNote() },
       { label: 'Operation fee', value: `${params.operationFeeBps / 100}%` },
-      { label: 'When performance fee applies', value: performanceFeeApplicabilityNote() },
       { label: 'Performance fee', value: `${params.performanceFeeBps / 100}%` },
       { label: 'Earned dust threshold', value: `$${params.minEarnedUsdc} USDC equiv.` },
       { label: 'Fee source', value: raw.uncollectedFeesSource },

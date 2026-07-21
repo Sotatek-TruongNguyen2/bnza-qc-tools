@@ -42,7 +42,7 @@ export function CalculationHint({ section, hintId, isOpen, onToggle, onClose }: 
 
       {isOpen && (
         <div className="calc-hint-panel" role="region" aria-label={`${section.title} calculation`}>
-          <p className="calc-hint-summary">{section.summary}</p>
+          {section.summary ? <p className="calc-hint-summary">{section.summary}</p> : null}
           <p className="mono calc-hint-formula">{section.formula}</p>
 
           <h4>Inputs</h4>
