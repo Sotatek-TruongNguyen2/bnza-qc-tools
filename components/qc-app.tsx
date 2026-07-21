@@ -1,14 +1,17 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
+import { AddressesPanel } from './addresses-panel'
 import { BotPanel } from './bot-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
 
-type Tool = 'position' | 'quote' | 'bot'
+type Tool = 'position' | 'quote' | 'bot' | 'addresses'
 
 function toolFromParam(value: string | null): Tool {
-  if (value === 'bot' || value === 'quote' || value === 'position') return value
+  if (value === 'bot' || value === 'quote' || value === 'position' || value === 'addresses') {
+    return value
+  }
   return 'position'
 }
 
@@ -57,6 +60,13 @@ export function QcApp() {
         >
           Swap quote
         </button>
+        <button
+          type="button"
+          className={tool === 'addresses' ? 'tab active' : 'tab'}
+          onClick={() => selectTool('addresses')}
+        >
+          Addresses
+        </button>
       </nav>
 
       <div className="tab-panels">
@@ -80,6 +90,13 @@ export function QcApp() {
           hidden={tool !== 'quote'}
         >
           <QuotePanel />
+        </div>
+        <div
+          className={tool === 'addresses' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
+          aria-hidden={tool !== 'addresses'}
+          hidden={tool !== 'addresses'}
+        >
+          <AddressesPanel />
         </div>
       </div>
 

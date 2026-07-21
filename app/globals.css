@@ -81,6 +81,7 @@ code {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .tab {
@@ -518,6 +519,45 @@ input:focus {
   gap: 0.75rem;
   margin-bottom: 0.5rem;
   flex-wrap: wrap;
+}
+
+.addresses-header {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.addresses-header h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.35rem;
+}
+
+.address-group {
+  margin-top: 1.25rem;
+}
+
+.address-group h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.address-group-desc {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+}
+
+.address-table td:first-child {
+  font-weight: 600;
+  min-width: 11rem;
+}
+
+.address-table td:nth-child(2) a {
+  word-break: break-all;
+}
+
+.address-table td:last-child {
+  font-size: 0.85rem;
+  min-width: 8rem;
 }
 
 .estimate-form {
