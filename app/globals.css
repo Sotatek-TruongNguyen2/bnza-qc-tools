@@ -612,6 +612,52 @@ input:focus {
   margin-top: 1rem;
 }
 
+.pnl-principal-display {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pnl-display-toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.15rem;
+  border-radius: 0.55rem;
+  background: #f0f0f0;
+  width: fit-content;
+}
+
+.pnl-display-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.pnl-display-btn.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.pnl-principal-tokens {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.pnl-principal-tokens .token-amount-line {
+  display: flex;
+}
+
+.pnl-principal-usdc-equiv {
+  font-size: 0.85rem;
+}
+
 .estimate-form {
   display: grid;
   gap: 0.75rem;

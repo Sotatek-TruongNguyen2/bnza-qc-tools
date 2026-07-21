@@ -66,6 +66,7 @@ export function TxPnlPanel() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TxPnlResult | null>(null)
   const [openHintId, setOpenHintId] = useState<string | null>(null)
+  const [principalDisplay, setPrincipalDisplay] = useState<'usdc' | 'tokens'>('usdc')
 
   function toggleHint(hintId: string) {
     setOpenHintId((current) => (current === hintId ? null : hintId))
@@ -245,10 +246,46 @@ export function TxPnlPanel() {
                 onToggle={toggleHint}
                 onClose={() => setOpenHintId(null)}
               />
-              <dd className="mono token-inline">
-                <TokenIcon symbol="USDC" size={16} />
-                <span>{result.human.currentPrincipalUsdc}</span>
-              </dd>
+              <div className="pnl-principal-display">
+                <div className="pnl-display-toggle" role="group" aria-label="Principal display mode">
+                  <button
+                    type="button"
+                    className={principalDisplay === 'usdc' ? 'pnl-display-btn active' : 'pnl-display-btn'}
+                    onClick={() => setPrincipalDisplay('usdc')}
+                  >
+                    USDC
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      principalDisplay === 'tokens' ? 'pnl-display-btn active' : 'pnl-display-btn'
+                    }
+                    onClick={() => setPrincipalDisplay('tokens')}
+                  >
+                    Both tokens
+                  </button>
+                </div>
+                {principalDisplay === 'usdc' ? (
+                  <dd className="mono token-inline">
+                    <TokenIcon symbol="USDC" size={16} />
+                    <span>{result.human.currentPrincipalUsdc}</span>
+                  </dd>
+                ) : (
+                  <dd className="pnl-principal-tokens">
+                    <TokenAmountLine
+                      symbol={result.raw.token0Symbol}
+                      amount={result.human.currentPrincipal.token0}
+                    />
+                    <TokenAmountLine
+                      symbol={result.raw.token1Symbol}
+                      amount={result.human.currentPrincipal.token1}
+                    />
+                    <span className="muted mono pnl-principal-usdc-equiv">
+                      ≈ {result.human.currentPrincipalUsdc}
+                    </span>
+                  </dd>
+                )}
+              </div>
             </div>
             <div>
               <DtWithHint
