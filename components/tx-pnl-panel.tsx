@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenIcon } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
+import type { CloseEstimateCalcSection } from '@/lib/position/close-estimate-types'
 import type { TxPnlResult } from '@/lib/tx-pnl/types'
 
 function pnlClass(value: string): string {
@@ -23,6 +25,36 @@ function PnlPct({ value }: { value: string }) {
   return <span className={pnlPctClass(value)}>({value})</span>
 }
 
+function DtWithHint({
+  label,
+  hintId,
+  section,
+  openHintId,
+  onToggle,
+  onClose,
+}: {
+  label: string
+  hintId: string
+  section: CloseEstimateCalcSection | null | undefined
+  openHintId: string | null
+  onToggle: (hintId: string) => void
+  onClose: () => void
+}) {
+  if (!section) return <dt>{label}</dt>
+  return (
+    <dt className="estimate-dt-row">
+      <span>{label}</span>
+      <CalculationHint
+        hintId={hintId}
+        isOpen={openHintId === hintId}
+        onToggle={onToggle}
+        onClose={onClose}
+        section={section}
+      />
+    </dt>
+  )
+}
+
 export function TxPnlPanel() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -33,6 +65,11 @@ export function TxPnlPanel() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TxPnlResult | null>(null)
+  const [openHintId, setOpenHintId] = useState<string | null>(null)
+
+  function toggleHint(hintId: string) {
+    setOpenHintId((current) => (current === hintId ? null : hintId))
+  }
 
   useEffect(() => {
     if (!txHashFromUrl || !/^0x[a-fA-F0-9]{64}$/.test(txHashFromUrl)) return
@@ -46,6 +83,7 @@ export function TxPnlPanel() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setOpenHintId(null)
 
     const params = new URLSearchParams(searchParams.toString())
     params.set('tool', 'tx-pnl')
@@ -158,14 +196,28 @@ export function TxPnlPanel() {
                   </dd>
                 </div>
                 <div className="estimate-highlight">
-                  <dt>Current combined total</dt>
+                  <DtWithHint
+                    label="Current combined total"
+                    hintId="combined-total"
+                    section={result.human.calcHints.combinedTotal}
+                    openHintId={openHintId}
+                    onToggle={toggleHint}
+                    onClose={() => setOpenHintId(null)}
+                  />
                   <dd className="mono token-inline">
                     <TokenIcon symbol="USDC" size={16} />
                     <span>{result.human.combinedLeg.currentCombinedTotal}</span>
                   </dd>
                 </div>
                 <div className="estimate-highlight">
-                  <dt>{headlinePnlLabel}</dt>
+                  <DtWithHint
+                    label={headlinePnlLabel}
+                    hintId="combined-pnl"
+                    section={result.human.calcHints.combinedPnl}
+                    openHintId={openHintId}
+                    onToggle={toggleHint}
+                    onClose={() => setOpenHintId(null)}
+                  />
                   <dd className="mono">
                     {result.human.combinedLeg.combinedTotalPnl}{' '}
                     <PnlPct value={result.human.combinedLeg.combinedTotalPnlPct} />
@@ -185,35 +237,70 @@ export function TxPnlPanel() {
               </dd>
             </div>
             <div>
-              <dt>Current principal value</dt>
+              <DtWithHint
+                label="Current principal value"
+                hintId="principal"
+                section={result.human.calcHints.currentPrincipal}
+                openHintId={openHintId}
+                onToggle={toggleHint}
+                onClose={() => setOpenHintId(null)}
+              />
               <dd className="mono token-inline">
                 <TokenIcon symbol="USDC" size={16} />
                 <span>{result.human.currentPrincipalUsdc}</span>
               </dd>
             </div>
             <div>
-              <dt>Current uncollected fees</dt>
+              <DtWithHint
+                label="Current uncollected fees"
+                hintId="fees"
+                section={result.human.calcHints.currentFees}
+                openHintId={openHintId}
+                onToggle={toggleHint}
+                onClose={() => setOpenHintId(null)}
+              />
               <dd className="mono token-inline">
                 <TokenIcon symbol="USDC" size={16} />
                 <span>{result.human.currentFeesUsdc}</span>
               </dd>
             </div>
             <div className="estimate-highlight">
-              <dt>Current Uniswap total</dt>
+              <DtWithHint
+                label="Current Uniswap total"
+                hintId="uni-total"
+                section={result.human.calcHints.currentUniswapTotal}
+                openHintId={openHintId}
+                onToggle={toggleHint}
+                onClose={() => setOpenHintId(null)}
+              />
               <dd className="mono token-inline">
                 <TokenIcon symbol="USDC" size={16} />
                 <span>{result.human.currentTotalUsdc}</span>
               </dd>
             </div>
             <div>
-              <dt>Principal-only PnL</dt>
+              <DtWithHint
+                label="Principal-only PnL"
+                hintId="principal-pnl"
+                section={result.human.calcHints.principalOnlyPnl}
+                openHintId={openHintId}
+                onToggle={toggleHint}
+                onClose={() => setOpenHintId(null)}
+              />
               <dd className="mono">
                 {result.human.principalOnlyPnl}{' '}
                 <PnlPct value={result.human.principalOnlyPnlPct} />
               </dd>
             </div>
             <div>
-              <dt>Total PnL incl. fees</dt>
+              <DtWithHint
+                label="Total PnL incl. fees"
+                hintId="uni-pnl"
+                section={result.human.calcHints.uniswapTotalPnl}
+                openHintId={openHintId}
+                onToggle={toggleHint}
+                onClose={() => setOpenHintId(null)}
+              />
               <dd className="mono">
                 {result.human.totalPnl} <PnlPct value={result.human.totalPnlPct} />
               </dd>
@@ -239,7 +326,14 @@ export function TxPnlPanel() {
                   </dd>
                 </div>
                 <div className="estimate-highlight">
-                  <dt>HL PnL</dt>
+                  <DtWithHint
+                    label="HL PnL"
+                    hintId="hl-pnl"
+                    section={result.human.calcHints.hlPnl}
+                    openHintId={openHintId}
+                    onToggle={toggleHint}
+                    onClose={() => setOpenHintId(null)}
+                  />
                   <dd className="mono">
                     {result.human.hlLeg.hlTotalPnl}{' '}
                     <PnlPct value={result.human.hlLeg.hlTotalPnlPct} />

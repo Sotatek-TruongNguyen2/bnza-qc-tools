@@ -1,3 +1,7 @@
+import type { TxPnlCalcHints } from './build-tx-pnl-calc-hints'
+
+export type { TxPnlCalcHints } from './build-tx-pnl-calc-hints'
+
 export type TxPnlHlLeg = {
   entryHyperliquidUsdc: string
   currentHlTotalUsdc: string
@@ -82,6 +86,7 @@ export type TxPnlResult = {
       token1: string
       note: string
     }
+    calcHints: TxPnlCalcHints
     caveats: string[]
     links: TxPnlResult['raw']['links']
   }

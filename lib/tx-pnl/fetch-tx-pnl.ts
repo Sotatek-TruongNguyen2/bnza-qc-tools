@@ -3,6 +3,7 @@ import { CHAIN_ID, NPM_ADDRESS } from '@/lib/position/constants'
 import { fetchPosition } from '@/lib/position/fetch-position'
 import { basescanLink, formatPrice } from '@/lib/position/format'
 import type { BasePublicClient } from '@/lib/rpc'
+import { buildTxPnlCalcHints } from './build-tx-pnl-calc-hints'
 import type { TxPnlCombinedLeg, TxPnlHlLeg, TxPnlResult } from './types'
 
 const POSITION_OPENED_EVENT = parseAbiItem(
@@ -164,6 +165,40 @@ export async function fetchTxPnl(
     }
   }
 
+  const calcHints = buildTxPnlCalcHints({
+    token0Symbol: position.raw.token0Symbol,
+    token1Symbol: position.raw.token1Symbol,
+    principal0Human: position.human.principal.token0,
+    principal1Human: position.human.principal.token1,
+    fees0Human: position.human.uncollectedFees.token0,
+    fees1Human: position.human.uncollectedFees.token1,
+    currentPriceUsdcPerWeth: currentPrice,
+    currentPrincipalUsdc,
+    currentFeesUsdc,
+    currentTotalUsdc,
+    entryUniswapUsdc: decoded.uniswapUsdc,
+    entryHyperliquidUsdc: decoded.hyperliquidUsdc,
+    entryTotalUsdc: decoded.totalUsdc,
+    principalOnlyPnlUsdc,
+    totalPnlUsdc,
+    principalOnlyPnlPct,
+    totalPnlPct,
+    hlLeg: hlLeg
+      ? {
+          currentHlTotalUsdc: BigInt(hlLeg.currentHlTotalUsdc),
+          hlTotalPnlUsdc: BigInt(hlLeg.hlTotalPnlUsdc),
+          hlTotalPnlPct: hlLeg.hlTotalPnlPct,
+        }
+      : null,
+    combinedLeg: combinedLeg
+      ? {
+          currentCombinedTotalUsdc: BigInt(combinedLeg.currentCombinedTotalUsdc),
+          combinedTotalPnlUsdc: BigInt(combinedLeg.combinedTotalPnlUsdc),
+          combinedTotalPnlPct: combinedLeg.combinedTotalPnlPct,
+        }
+      : null,
+  })
+
   return {
     raw: {
       chainId: CHAIN_ID,
@@ -241,6 +276,7 @@ export async function fetchTxPnl(
         token1: position.human.uncollectedFees.token1,
         note: position.human.uncollectedFees.note,
       },
+      calcHints,
       caveats: [
         combinedLeg
           ? 'HL entry basis is hyperliquidUsdc from the open tx; current HL value is your input.'
