@@ -44,17 +44,23 @@ function pctFromPnl(entryUsdcRaw: bigint, pnlUsdcRaw: bigint): number {
 }
 
 function computeHlLeg(args: {
-  hlSizeEth: number
+  hlSizeUsdc: number
   openPriceUsdcPerWeth: number
   currentPriceUsdcPerWeth: number
   entryHyperliquidUsdc: bigint
 }): TxPnlHlLeg {
-  const hlUnrealizedPnlUsd = args.hlSizeEth * (args.currentPriceUsdcPerWeth - args.openPriceUsdcPerWeth)
+  if (!(args.openPriceUsdcPerWeth > 0)) {
+    throw new Error('Open pool price must be > 0 to convert HL size USDC → ETH')
+  }
+  // Signed USDC notional at open → ETH size; short is negative.
+  const hlSizeEth = args.hlSizeUsdc / args.openPriceUsdcPerWeth
+  const hlUnrealizedPnlUsd = hlSizeEth * (args.currentPriceUsdcPerWeth - args.openPriceUsdcPerWeth)
   const hlUnrealizedPnlUsdc = usdToUsdcRaw(hlUnrealizedPnlUsd)
   const currentHlTotalUsdc = args.entryHyperliquidUsdc + hlUnrealizedPnlUsdc
 
   return {
-    hlSizeEth: args.hlSizeEth,
+    hlSizeUsdc: args.hlSizeUsdc,
+    hlSizeEth,
     openPriceUsdcPerWeth: args.openPriceUsdcPerWeth,
     currentHlUnrealizedPnlUsdc: hlUnrealizedPnlUsdc.toString(),
     currentHlTotalUsdc: currentHlTotalUsdc.toString(),
@@ -66,7 +72,7 @@ function computeHlLeg(args: {
 export async function fetchTxPnl(
   client: BasePublicClient,
   txHash: string,
-  options?: { hlSizeEth?: number | null },
+  options?: { hlSizeUsdc?: number | null },
 ): Promise<TxPnlResult> {
   const trimmedHash = txHash.trim()
   if (!isHash(trimmedHash)) throw new Error('txHash must be a valid 0x transaction hash')
@@ -150,7 +156,7 @@ export async function fetchTxPnl(
   let hlLeg: TxPnlHlLeg | null = null
   let combinedLeg: TxPnlCombinedLeg | null = null
 
-  if (options?.hlSizeEth != null && Number.isFinite(options.hlSizeEth)) {
+  if (options?.hlSizeUsdc != null && Number.isFinite(options.hlSizeUsdc)) {
     const openSlot0 = await client.readContract({
       address: decoded.pool,
       abi: POOL_ABI,
@@ -165,7 +171,7 @@ export async function fetchTxPnl(
     )
 
     hlLeg = computeHlLeg({
-      hlSizeEth: options.hlSizeEth,
+      hlSizeUsdc: options.hlSizeUsdc,
       openPriceUsdcPerWeth,
       currentPriceUsdcPerWeth: currentPrice,
       entryHyperliquidUsdc: decoded.hyperliquidUsdc,
@@ -233,7 +239,8 @@ export async function fetchTxPnl(
       totalPnlPct: formatPct(totalPnlPct),
       hlLeg: hlLeg
         ? {
-            hlSizeEth: `${hlLeg.hlSizeEth} ETH`,
+            hlSizeUsdc: `${hlLeg.hlSizeUsdc.toLocaleString('en-US', { maximumFractionDigits: 6 })} USDC`,
+            hlSizeEth: `${hlLeg.hlSizeEth.toLocaleString('en-US', { maximumFractionDigits: 8 })} ETH (derived)`,
             openPrice: formatPrice('USDC per WETH at open', hlLeg.openPriceUsdcPerWeth),
             currentHlUnrealizedPnl: formatSignedUsdc(BigInt(hlLeg.currentHlUnrealizedPnlUsdc)),
             currentHlTotal: formatUsdc(BigInt(hlLeg.currentHlTotalUsdc)),
@@ -261,9 +268,9 @@ export async function fetchTxPnl(
       },
       caveats: [
         combinedLeg
-          ? 'Combined leg uses your HL size input and pool price at open as HL entry proxy.'
-          : 'Uniswap leg only — add HL size to include the Hyperliquid hedge.',
-        'HL unrealized PnL excludes funding, fees, and realized PnL after size changes.',
+          ? 'Combined leg uses your HL size (signed USDC notional) and pool price at open as HL entry proxy.'
+          : 'Uniswap leg only — add HL size (USDC) to include the Hyperliquid hedge.',
+        'HL size USDC → ETH via open pool price; unrealized PnL excludes funding, fees, and size changes.',
         'Spot mark-to-market at current pool price, not guaranteed execution.',
         'Does not include close gas, EXBOT close-side fees, or BNZA buyback.',
       ],

@@ -69,7 +69,7 @@ export function TxPnlPanel() {
       return
     }
     if (hlSize.trim() && !Number.isFinite(Number(hlSize.trim()))) {
-      setError('HL size must be a number (use signed ETH size from Hyperliquid, e.g. -0.00285)')
+      setError('HL size must be a number (signed USDC notional from Hyperliquid, e.g. -5.5)')
       return
     }
     void runQuery(hash, hlSize)
@@ -97,11 +97,11 @@ export function TxPnlPanel() {
           />
         </label>
         <label className="field">
-          <span>HL position size (ETH, optional)</span>
+          <span>HL position size (USDC, optional)</span>
           <input
             value={hlSize}
             onChange={(e) => setHlSize(e.target.value)}
-            placeholder="-0.00285"
+            placeholder="-5.5"
             spellCheck={false}
             autoComplete="off"
             inputMode="decimal"
@@ -113,8 +113,8 @@ export function TxPnlPanel() {
       </form>
 
       <p className="hint">
-        Paste the EXBOT open-position tx hash. Optionally add your current Hyperliquid ETH position
-        size (signed: negative for short) to compute combined Uniswap + HL PnL against the full{' '}
+        Paste the EXBOT open-position tx hash. Optionally add Hyperliquid position size in USDC
+        notional (signed: negative for short) to compute combined Uniswap + HL PnL against the full{' '}
         <code>totalUsdc</code> entry basis.
       </p>
 
@@ -214,6 +214,13 @@ export function TxPnlPanel() {
               <dl className="kv pnl-totals">
                 <div>
                   <dt>HL size input</dt>
+                  <dd className="mono token-inline">
+                    <TokenIcon symbol="USDC" size={16} />
+                    <span>{result.human.hlLeg.hlSizeUsdc}</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Derived ETH size</dt>
                   <dd className="mono">{result.human.hlLeg.hlSizeEth}</dd>
                 </div>
                 <div>

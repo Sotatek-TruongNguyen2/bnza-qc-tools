@@ -1,4 +1,5 @@
 export type TxPnlHlLeg = {
+  hlSizeUsdc: number
   hlSizeEth: number
   openPriceUsdcPerWeth: number
   currentHlUnrealizedPnlUsdc: string
@@ -62,6 +63,7 @@ export type TxPnlResult = {
     principalOnlyPnlPct: string
     totalPnlPct: string
     hlLeg: {
+      hlSizeUsdc: string
       hlSizeEth: string
       openPrice: string
       currentHlUnrealizedPnl: string

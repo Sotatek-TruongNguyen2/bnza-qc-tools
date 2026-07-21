@@ -5,12 +5,12 @@ import { createBasePublicClient, formatRpcError } from '@/lib/rpc'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-function parseHlSizeEth(value: string | null): number | null {
+function parseHlSizeUsdc(value: string | null): number | null {
   const trimmed = value?.trim()
   if (!trimmed) return null
   const parsed = Number(trimmed)
   if (!Number.isFinite(parsed)) {
-    throw new Error('hlSize must be a finite number (signed ETH position size from Hyperliquid)')
+    throw new Error('hlSize must be a finite number (signed USDC notional from Hyperliquid)')
   }
   return parsed
 }
@@ -26,9 +26,9 @@ export async function GET(request: Request) {
     )
   }
 
-  let hlSizeEth: number | null = null
+  let hlSizeUsdc: number | null = null
   try {
-    hlSizeEth = parseHlSizeEth(searchParams.get('hlSize'))
+    hlSizeUsdc = parseHlSizeUsdc(searchParams.get('hlSize'))
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Invalid hlSize' },
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 
   try {
     const client = createBasePublicClient(20_000)
-    const result = await fetchTxPnl(client, txHash, { hlSizeEth })
+    const result = await fetchTxPnl(client, txHash, { hlSizeUsdc })
     return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json(
