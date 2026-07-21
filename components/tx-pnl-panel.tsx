@@ -13,6 +13,16 @@ function pnlClass(value: string): string {
   return 'badge-muted'
 }
 
+function pnlPctClass(pct: string): string {
+  if (pct.startsWith('-')) return 'pnl-pct-neg'
+  if (pct.startsWith('+') || /^0/.test(pct)) return 'pnl-pct-pos'
+  return 'pnl-pct-pos'
+}
+
+function PnlPct({ value }: { value: string }) {
+  return <span className={pnlPctClass(value)}>({value})</span>
+}
+
 export function TxPnlPanel() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -157,8 +167,8 @@ export function TxPnlPanel() {
                 <div className="estimate-highlight">
                   <dt>{headlinePnlLabel}</dt>
                   <dd className="mono">
-                    {result.human.combinedLeg.combinedTotalPnl} (
-                    {result.human.combinedLeg.combinedTotalPnlPct})
+                    {result.human.combinedLeg.combinedTotalPnl}{' '}
+                    <PnlPct value={result.human.combinedLeg.combinedTotalPnlPct} />
                   </dd>
                 </div>
               </dl>
@@ -198,13 +208,14 @@ export function TxPnlPanel() {
             <div>
               <dt>Principal-only PnL</dt>
               <dd className="mono">
-                {result.human.principalOnlyPnl} ({result.human.principalOnlyPnlPct})
+                {result.human.principalOnlyPnl}{' '}
+                <PnlPct value={result.human.principalOnlyPnlPct} />
               </dd>
             </div>
             <div>
               <dt>Total PnL incl. fees</dt>
               <dd className="mono">
-                {result.human.totalPnl} ({result.human.totalPnlPct})
+                {result.human.totalPnl} <PnlPct value={result.human.totalPnlPct} />
               </dd>
             </div>
           </dl>
@@ -231,15 +242,7 @@ export function TxPnlPanel() {
                   <dt>HL PnL</dt>
                   <dd className="mono">
                     {result.human.hlLeg.hlTotalPnl}{' '}
-                    <span
-                      className={
-                        result.human.hlLeg.hlTotalPnlPct.startsWith('-')
-                          ? 'pnl-pct-neg'
-                          : 'pnl-pct-pos'
-                      }
-                    >
-                      ({result.human.hlLeg.hlTotalPnlPct})
-                    </span>
+                    <PnlPct value={result.human.hlLeg.hlTotalPnlPct} />
                   </dd>
                 </div>
               </dl>
