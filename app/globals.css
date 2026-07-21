@@ -617,31 +617,63 @@ input:focus {
   gap: 0.45rem;
 }
 
-.pnl-display-toggle {
+.pnl-slide-toggle {
   display: inline-flex;
-  gap: 0.25rem;
-  padding: 0.15rem;
-  border-radius: 0.55rem;
-  background: #f0f0f0;
+  align-items: center;
+  gap: 0.55rem;
   width: fit-content;
-}
-
-.pnl-display-btn {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.28rem 0.55rem;
-  border-radius: 0.4rem;
   cursor: pointer;
+  user-select: none;
 }
 
-.pnl-display-btn.active {
+.pnl-slide-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.pnl-slide-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.pnl-slide-track {
+  position: relative;
+  width: 2.4rem;
+  height: 1.3rem;
+  border-radius: 999px;
+  background: #d4d4d4;
+  transition: background 0.15s ease;
+  flex: 0 0 auto;
+}
+
+.pnl-slide-thumb {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
   background: #fff;
-  color: var(--ink);
-  box-shadow: 0 0 0 1px var(--line);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease;
+}
+
+.pnl-slide-toggle input:checked + .pnl-slide-track {
+  background: var(--ok, #1a7f37);
+}
+
+.pnl-slide-toggle input:checked + .pnl-slide-track .pnl-slide-thumb {
+  transform: translateX(1.1rem);
+}
+
+.pnl-slide-toggle input:focus-visible + .pnl-slide-track {
+  outline: 2px solid var(--accent, #2f6fed);
+  outline-offset: 2px;
 }
 
 .pnl-principal-tokens {

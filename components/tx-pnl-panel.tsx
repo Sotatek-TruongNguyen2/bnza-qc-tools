@@ -66,7 +66,7 @@ export function TxPnlPanel() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TxPnlResult | null>(null)
   const [openHintId, setOpenHintId] = useState<string | null>(null)
-  const [principalDisplay, setPrincipalDisplay] = useState<'usdc' | 'tokens'>('usdc')
+  const [principalInTokens, setPrincipalInTokens] = useState(false)
 
   function toggleHint(hintId: string) {
     setOpenHintId((current) => (current === hintId ? null : hintId))
@@ -247,25 +247,19 @@ export function TxPnlPanel() {
                 onClose={() => setOpenHintId(null)}
               />
               <div className="pnl-principal-display">
-                <div className="pnl-display-toggle" role="group" aria-label="Principal display mode">
-                  <button
-                    type="button"
-                    className={principalDisplay === 'usdc' ? 'pnl-display-btn active' : 'pnl-display-btn'}
-                    onClick={() => setPrincipalDisplay('usdc')}
-                  >
-                    USDC
-                  </button>
-                  <button
-                    type="button"
-                    className={
-                      principalDisplay === 'tokens' ? 'pnl-display-btn active' : 'pnl-display-btn'
-                    }
-                    onClick={() => setPrincipalDisplay('tokens')}
-                  >
-                    Both tokens
-                  </button>
-                </div>
-                {principalDisplay === 'usdc' ? (
+                <label className="pnl-slide-toggle">
+                  <span className="pnl-slide-label">Show both tokens</span>
+                  <input
+                    type="checkbox"
+                    checked={principalInTokens}
+                    onChange={(e) => setPrincipalInTokens(e.target.checked)}
+                    aria-label="Show principal in both tokens"
+                  />
+                  <span className="pnl-slide-track" aria-hidden="true">
+                    <span className="pnl-slide-thumb" />
+                  </span>
+                </label>
+                {!principalInTokens ? (
                   <dd className="mono token-inline">
                     <TokenIcon symbol="USDC" size={16} />
                     <span>{result.human.currentPrincipalUsdc}</span>
