@@ -1,0 +1,158 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { CopyJsonButton } from './copy-json-button'
+import { apiGetJson } from '@/lib/api-client'
+import type { PositionResult } from '@/lib/position/types'
+
+function statusClass(status: string): string {
+  if (status.startsWith('IN RANGE')) return 'badge-ok'
+  if (status.startsWith('CLOSED')) return 'badge-muted'
+  return 'badge-warn'
+}
+
+export function PositionPanel() {
+  const [tokenId, setTokenId] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<PositionResult | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get('tokenId')
+    if (id && /^\d+$/.test(id)) {
+      setTokenId(id)
+      void runQuery(id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function runQuery(id: string) {
+    setLoading(true)
+    setError(null)
+    setResult(null)
+
+    const url = new URL(window.location.href)
+    url.searchParams.set('tool', 'position')
+    url.searchParams.set('tokenId', id)
+    window.history.replaceState({}, '', url)
+
+    try {
+      const data = await apiGetJson<PositionResult>(
+        `/api/position?tokenId=${encodeURIComponent(id)}`,
+      )
+      setResult(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const id = tokenId.trim()
+    if (!/^\d+$/.test(id)) {
+      setError('tokenId must be a positive integer')
+      return
+    }
+    void runQuery(id)
+  }
+
+  return (
+    <section className="panel">
+      <form className="form-grid" onSubmit={onSubmit}>
+        <label className="field">
+          <span>LP NFT tokenId</span>
+          <input
+            value={tokenId}
+            onChange={(e) => setTokenId(e.target.value)}
+            placeholder="e.g. 5036939"
+            inputMode="numeric"
+            autoComplete="off"
+          />
+        </label>
+        <button type="submit" className="btn-primary" disabled={loading}>
+          {loading ? 'Querying…' : 'Query position'}
+        </button>
+      </form>
+
+      {error && <p className="error">{error}</p>}
+
+      {result && (
+        <div className="result">
+          <div className="result-header">
+            <div>
+              <h2>{result.human.summary}</h2>
+              <p className="muted">{result.raw.network}</p>
+            </div>
+            <div className="result-actions">
+              <span className={statusClass(result.human.status)}>{result.human.status}</span>
+              <CopyJsonButton value={result} />
+            </div>
+          </div>
+
+          <dl className="kv">
+            <div>
+              <dt>Owner</dt>
+              <dd className="mono">
+                <a href={result.human.links.owner} target="_blank" rel="noreferrer">
+                  {result.human.owner}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt>Tick range</dt>
+              <dd className="mono">{result.human.tickRange}</dd>
+            </div>
+          </dl>
+
+          <h3>Prices</h3>
+          <ul className="plain-list mono">
+            <li>{result.human.prices.atLowerTick}</li>
+            <li>{result.human.prices.atUpperTick}</li>
+            <li>{result.human.prices.atCurrentTick}</li>
+            <li>{result.human.prices.inverseAtCurrentTick}</li>
+          </ul>
+
+          <h3>Principal</h3>
+          <ul className="plain-list mono">
+            <li>{result.human.principal.token0}</li>
+            <li>{result.human.principal.token1}</li>
+          </ul>
+
+          <h3>Uncollected fees</h3>
+          <ul className="plain-list mono">
+            <li>{result.human.uncollectedFees.token0}</li>
+            <li>{result.human.uncollectedFees.token1}</li>
+            <li className="muted">{result.human.uncollectedFees.note}</li>
+          </ul>
+
+          <h3>Basescan</h3>
+          <ul className="plain-list">
+            <li>
+              <a href={result.human.links.pool} target="_blank" rel="noreferrer">
+                Pool
+              </a>
+            </li>
+            <li>
+              <a href={result.human.links.owner} target="_blank" rel="noreferrer">
+                Owner
+              </a>
+            </li>
+            <li>
+              <a href={result.human.links.token0} target="_blank" rel="noreferrer">
+                Token0 ({result.raw.token0Symbol})
+              </a>
+            </li>
+            <li>
+              <a href={result.human.links.token1} target="_blank" rel="noreferrer">
+                Token1 ({result.raw.token1Symbol})
+              </a>
+            </li>
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
