@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { CalculationHint } from './calculation-hint'
 import {
   DEFAULT_CLOSE_ESTIMATE_PARAMS,
   estimateCloseUsdc,
@@ -82,11 +83,17 @@ export function PositionCloseEstimate({ raw }: Props) {
 
       <dl className="kv estimate-totals">
         <div>
-          <dt>Principal (USDC, conservative)</dt>
+          <dt className="estimate-dt-row">
+            <span>Principal (USDC, conservative)</span>
+            <CalculationHint section={estimate.breakdown.details.principal} />
+          </dt>
           <dd className="mono">{estimate.human.principalUsdc}</dd>
         </div>
         <div>
-          <dt>Earned fees net (USDC equiv.)</dt>
+          <dt className="estimate-dt-row">
+            <span>Earned fees net (USDC equiv.)</span>
+            <CalculationHint section={estimate.breakdown.details.earned} />
+          </dt>
           <dd className="mono">{estimate.human.earnedNetUsdc}</dd>
         </div>
         <div className="estimate-highlight">

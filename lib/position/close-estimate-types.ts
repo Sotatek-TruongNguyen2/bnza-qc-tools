@@ -9,19 +9,41 @@ export type CloseEstimateParams = {
   swapSlippageBps: number
 }
 
+export type CloseEstimateLine = {
+  label: string
+  value: string
+}
+
+export type CloseEstimateCalcSection = {
+  title: string
+  summary: string
+  formula: string
+  inputs: CloseEstimateLine[]
+  steps: CloseEstimateLine[]
+  result: string
+}
+
 export type CloseEstimateBreakdown = {
   principalUsdcDirect: string
   principalUsdcFromSwap: string
+  principalUsdcSpotSwap: string
   principalUsdcTotal: string
+  principalUsdcSpotTotal: string
   earnedGrossUsdcEquiv: string
   earnedNetUsdcEquiv: string
   earnedFeesCharged: boolean
   earnedFeeNote: string
+  earnedNet0: string
+  earnedNet1: string
   operationFeeUsdcEquiv: string
   performanceFeeUsdcEquiv: string
   totalUsdcSpot: string
   totalUsdcConservative: string
   assumptions: string[]
+  details: {
+    principal: CloseEstimateCalcSection
+    earned: CloseEstimateCalcSection
+  }
 }
 
 export type CloseEstimateResult = {

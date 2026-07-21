@@ -252,6 +252,16 @@ input:focus {
   margin: 0;
 }
 
+.tick-range-highlight dt {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.tick-range-highlight dd {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
 .plain-list {
   margin: 0;
   padding-left: 1.1rem;
@@ -323,6 +333,109 @@ input:focus {
 .estimate-highlight dd {
   font-size: 1.05rem;
   font-weight: 650;
+}
+
+.estimate-dt-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.calc-hint {
+  position: relative;
+  display: inline-flex;
+}
+
+.calc-hint-btn {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  border: 1px solid #b8c4d9;
+  background: #fff;
+  color: #3d4f6f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.calc-hint-btn:hover {
+  background: #eef3ff;
+  border-color: #8aa0c8;
+}
+
+.calc-hint-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  width: min(28rem, calc(100vw - 3rem));
+  max-height: 24rem;
+  overflow: auto;
+  padding: 0.85rem 1rem;
+  border-radius: 0.65rem;
+  border: 1px solid #c5d0e4;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(28, 36, 32, 0.12);
+  font-size: 0.88rem;
+}
+
+.calc-hint-panel h4 {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.calc-hint-panel h4:first-of-type {
+  margin-top: 0.5rem;
+}
+
+.calc-hint-summary {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.calc-hint-formula {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.45rem;
+  background: #f4f7fb;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.calc-hint-kv {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.calc-hint-kv div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.calc-hint-kv dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.calc-hint-kv dd {
+  margin: 0;
+  font-size: 0.8rem;
+  word-break: break-word;
+}
+
+.calc-hint-result {
+  margin: 0.75rem 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
 }
 
 .assumptions {

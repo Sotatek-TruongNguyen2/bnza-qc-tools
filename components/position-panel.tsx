@@ -102,7 +102,7 @@ export function PositionPanel() {
                 </a>
               </dd>
             </div>
-            <div>
+            <div className="tick-range-highlight">
               <dt>Tick range</dt>
               <dd className="mono">{result.human.tickRange}</dd>
             </div>
