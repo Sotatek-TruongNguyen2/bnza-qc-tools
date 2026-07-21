@@ -5,11 +5,18 @@ import { AddressesPanel } from './addresses-panel'
 import { BotPanel } from './bot-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
+import { TxPnlPanel } from './tx-pnl-panel'
 
-type Tool = 'position' | 'quote' | 'bot' | 'addresses'
+type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl'
 
 function toolFromParam(value: string | null): Tool {
-  if (value === 'bot' || value === 'quote' || value === 'position' || value === 'addresses') {
+  if (
+    value === 'bot' ||
+    value === 'quote' ||
+    value === 'position' ||
+    value === 'addresses' ||
+    value === 'tx-pnl'
+  ) {
     return value
   }
   return 'position'
@@ -62,6 +69,13 @@ export function QcApp() {
         </button>
         <button
           type="button"
+          className={tool === 'tx-pnl' ? 'tab active' : 'tab'}
+          onClick={() => selectTool('tx-pnl')}
+        >
+          Uniswap PnL
+        </button>
+        <button
+          type="button"
           className={tool === 'addresses' ? 'tab active' : 'tab'}
           onClick={() => selectTool('addresses')}
         >
@@ -90,6 +104,13 @@ export function QcApp() {
           hidden={tool !== 'quote'}
         >
           <QuotePanel />
+        </div>
+        <div
+          className={tool === 'tx-pnl' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
+          aria-hidden={tool !== 'tx-pnl'}
+          hidden={tool !== 'tx-pnl'}
+        >
+          <TxPnlPanel />
         </div>
         <div
           className={tool === 'addresses' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
