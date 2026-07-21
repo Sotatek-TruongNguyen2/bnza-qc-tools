@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { CopyJsonButton } from './copy-json-button'
 import { PositionCloseEstimate } from './position-close-estimate'
 import { apiGetJson } from '@/lib/api-client'
@@ -13,30 +14,30 @@ function statusClass(status: string): string {
 }
 
 export function PositionPanel() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tokenIdFromUrl = searchParams.get('tokenId')
   const [tokenId, setTokenId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<PositionResult | null>(null)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const id = params.get('tokenId')
-    if (id && /^\d+$/.test(id)) {
-      setTokenId(id)
-      void runQuery(id)
-    }
+    if (!tokenIdFromUrl || !/^\d+$/.test(tokenIdFromUrl)) return
+    setTokenId(tokenIdFromUrl)
+    void runQuery(tokenIdFromUrl)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [tokenIdFromUrl])
 
   async function runQuery(id: string) {
     setLoading(true)
     setError(null)
     setResult(null)
 
-    const url = new URL(window.location.href)
-    url.searchParams.set('tool', 'position')
-    url.searchParams.set('tokenId', id)
-    window.history.replaceState({}, '', url)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tool', 'position')
+    params.set('tokenId', id)
+    router.replace(`/?${params.toString()}`)
 
     try {
       const data = await apiGetJson<PositionResult>(

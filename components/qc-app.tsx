@@ -1,36 +1,39 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { BotPanel } from './bot-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
 
 type Tool = 'position' | 'quote' | 'bot'
 
-export function QcApp() {
-  const [tool, setTool] = useState<Tool>('position')
+function toolFromParam(value: string | null): Tool {
+  if (value === 'bot' || value === 'quote' || value === 'position') return value
+  return 'position'
+}
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const t = params.get('tool')
-    if (t === 'quote' || t === 'position' || t === 'bot') setTool(t)
-  }, [])
+export function QcApp() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tool = toolFromParam(searchParams.get('tool'))
 
   function selectTool(next: Tool) {
-    setTool(next)
-    const url = new URL(window.location.href)
-    url.searchParams.set('tool', next)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tool', next)
+
     if (next === 'position') {
-      url.searchParams.delete('user')
-      url.searchParams.delete('botId')
+      params.delete('user')
+      params.delete('botId')
     } else if (next === 'quote') {
-      url.searchParams.delete('tokenId')
-      url.searchParams.delete('user')
-      url.searchParams.delete('botId')
+      params.delete('tokenId')
+      params.delete('user')
+      params.delete('botId')
     } else {
-      url.searchParams.delete('tokenId')
+      params.delete('tokenId')
     }
-    window.history.replaceState({}, '', url)
+
+    const qs = params.toString()
+    router.replace(qs ? `/?${qs}` : '/')
   }
 
   return (
