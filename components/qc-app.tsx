@@ -72,7 +72,7 @@ export function QcApp() {
           className={tool === 'tx-pnl' ? 'tab active' : 'tab'}
           onClick={() => selectTool('tx-pnl')}
         >
-          Uniswap PnL
+          PnL
         </button>
         <button
           type="button"

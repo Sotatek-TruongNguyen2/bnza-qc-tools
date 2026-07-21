@@ -220,7 +220,7 @@ export async function fetchTxPnl(
     human: {
       summary: combinedLeg
         ? `Combined PnL now vs open tx · tokenId #${decoded.tokenId}`
-        : `Uniswap PnL now vs open tx · tokenId #${decoded.tokenId}`,
+        : `PnL now vs open tx · tokenId #${decoded.tokenId}`,
       tokenId: decoded.tokenId.toString(),
       entryUniswapUsdc: formatUsdc(decoded.uniswapUsdc),
       entryTotalUsdc: formatUsdc(decoded.totalUsdc),
