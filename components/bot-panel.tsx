@@ -201,17 +201,26 @@ export function BotPanel() {
                       </span>
                     </div>
                     <ul className="plain-list mono">
-                      <li className="token-amount-line">
-                        <TokenIcon symbol="USDC" size={16} />
-                        <span>Total deployment: {p.totalUsdc}</span>
+                      <li className="bot-metric-row">
+                        <span className="bot-metric-label">Total deployment</span>
+                        <span className="bot-metric-value token-inline">
+                          <TokenIcon symbol="USDC" size={16} />
+                          <span>{p.totalUsdc}</span>
+                        </span>
                       </li>
-                      <li className="token-amount-line">
-                        <TokenIcon symbol="USDC" size={16} />
-                        <span>Uniswap leg: {p.uniswapUsdc}</span>
+                      <li className="bot-metric-row">
+                        <span className="bot-metric-label">Uniswap leg</span>
+                        <span className="bot-metric-value token-inline">
+                          <TokenIcon symbol="USDC" size={16} />
+                          <span>{p.uniswapUsdc}</span>
+                        </span>
                       </li>
-                      <li className="token-amount-line">
-                        <TokenIcon symbol="USDC" size={16} />
-                        <span>Hyperliquid leg (on-chain accounting): {p.hyperliquidUsdc}</span>
+                      <li className="bot-metric-row">
+                        <span className="bot-metric-label">Hyperliquid leg (on-chain accounting)</span>
+                        <span className="bot-metric-value token-inline">
+                          <TokenIcon symbol="USDC" size={16} />
+                          <span>{p.hyperliquidUsdc}</span>
+                        </span>
                       </li>
                       <li>Tick range: {p.tickRange}</li>
                       <li>Liquidity: {p.liquidity}</li>
