@@ -5,12 +5,12 @@ import { createBasePublicClient, formatRpcError } from '@/lib/rpc'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-function parseHlSizeUsdc(value: string | null): number | null {
+function parseCurrentHlUsdc(value: string | null): number | null {
   const trimmed = value?.trim()
   if (!trimmed) return null
   const parsed = Number(trimmed)
   if (!Number.isFinite(parsed)) {
-    throw new Error('hlSize must be a finite number (signed USDC notional from Hyperliquid)')
+    throw new Error('hlCurrent must be a finite USDC number (current Hyperliquid leg value)')
   }
   return parsed
 }
@@ -26,19 +26,22 @@ export async function GET(request: Request) {
     )
   }
 
-  let hlSizeUsdc: number | null = null
+  // Prefer hlCurrent; keep hlSize as alias for old bookmarks.
+  let currentHlTotalUsdc: number | null = null
   try {
-    hlSizeUsdc = parseHlSizeUsdc(searchParams.get('hlSize'))
+    currentHlTotalUsdc = parseCurrentHlUsdc(
+      searchParams.get('hlCurrent') ?? searchParams.get('hlSize'),
+    )
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Invalid hlSize' },
+      { error: err instanceof Error ? err.message : 'Invalid hlCurrent' },
       { status: 400 },
     )
   }
 
   try {
     const client = createBasePublicClient(20_000)
-    const result = await fetchTxPnl(client, txHash, { hlSizeUsdc })
+    const result = await fetchTxPnl(client, txHash, { currentHlTotalUsdc })
     return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json(

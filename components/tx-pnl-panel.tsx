@@ -17,9 +17,9 @@ export function TxPnlPanel() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const txHashFromUrl = searchParams.get('txHash')
-  const hlSizeFromUrl = searchParams.get('hlSize')
+  const hlCurrentFromUrl = searchParams.get('hlCurrent') ?? searchParams.get('hlSize')
   const [txHash, setTxHash] = useState('')
-  const [hlSize, setHlSize] = useState('')
+  const [hlCurrent, setHlCurrent] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TxPnlResult | null>(null)
@@ -27,12 +27,12 @@ export function TxPnlPanel() {
   useEffect(() => {
     if (!txHashFromUrl || !/^0x[a-fA-F0-9]{64}$/.test(txHashFromUrl)) return
     setTxHash(txHashFromUrl)
-    if (hlSizeFromUrl != null) setHlSize(hlSizeFromUrl)
-    void runQuery(txHashFromUrl, hlSizeFromUrl ?? '')
+    if (hlCurrentFromUrl != null) setHlCurrent(hlCurrentFromUrl)
+    void runQuery(txHashFromUrl, hlCurrentFromUrl ?? '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txHashFromUrl, hlSizeFromUrl])
+  }, [txHashFromUrl, hlCurrentFromUrl])
 
-  async function runQuery(hash: string, hlSizeInput: string) {
+  async function runQuery(hash: string, hlCurrentInput: string) {
     setLoading(true)
     setError(null)
     setResult(null)
@@ -40,16 +40,17 @@ export function TxPnlPanel() {
     const params = new URLSearchParams(searchParams.toString())
     params.set('tool', 'tx-pnl')
     params.set('txHash', hash)
-    const trimmedHlSize = hlSizeInput.trim()
-    if (trimmedHlSize) {
-      params.set('hlSize', trimmedHlSize)
+    const trimmedHlCurrent = hlCurrentInput.trim()
+    if (trimmedHlCurrent) {
+      params.set('hlCurrent', trimmedHlCurrent)
     } else {
-      params.delete('hlSize')
+      params.delete('hlCurrent')
     }
+    params.delete('hlSize')
     router.replace(`/?${params.toString()}`)
 
     const query = new URLSearchParams({ txHash: hash })
-    if (trimmedHlSize) query.set('hlSize', trimmedHlSize)
+    if (trimmedHlCurrent) query.set('hlCurrent', trimmedHlCurrent)
 
     try {
       const data = await apiGetJson<TxPnlResult>(`/api/tx-pnl?${query.toString()}`)
@@ -68,11 +69,11 @@ export function TxPnlPanel() {
       setError('txHash must be a full 0x transaction hash')
       return
     }
-    if (hlSize.trim() && !Number.isFinite(Number(hlSize.trim()))) {
-      setError('HL size must be a number (signed USDC notional from Hyperliquid, e.g. -5.5)')
+    if (hlCurrent.trim() && !Number.isFinite(Number(hlCurrent.trim()))) {
+      setError('Current HL value must be a USDC number (e.g. 5.48)')
       return
     }
-    void runQuery(hash, hlSize)
+    void runQuery(hash, hlCurrent)
   }
 
   const headlinePnl = result?.human.combinedLeg ?? null
@@ -97,11 +98,11 @@ export function TxPnlPanel() {
           />
         </label>
         <label className="field">
-          <span>HL position size (USDC, optional)</span>
+          <span>Current HL leg value (USDC, optional)</span>
           <input
-            value={hlSize}
-            onChange={(e) => setHlSize(e.target.value)}
-            placeholder="-5.5"
+            value={hlCurrent}
+            onChange={(e) => setHlCurrent(e.target.value)}
+            placeholder="5.48"
             spellCheck={false}
             autoComplete="off"
             inputMode="decimal"
@@ -113,9 +114,9 @@ export function TxPnlPanel() {
       </form>
 
       <p className="hint">
-        Paste the EXBOT open-position tx hash. Optionally add Hyperliquid position size in USDC
-        notional (signed: negative for short) to compute combined Uniswap + HL PnL against the full{' '}
-        <code>totalUsdc</code> entry basis.
+        Paste the EXBOT open-position tx hash. Entry HL size comes from on-chain{' '}
+        <code>hyperliquidUsdc</code>. Optionally paste the current Hyperliquid leg value (USDC) to
+        compute combined Uniswap + HL PnL vs full <code>totalUsdc</code>.
       </p>
 
       {error && <p className="error">{error}</p>}
@@ -213,29 +214,21 @@ export function TxPnlPanel() {
               <h3>Hyperliquid leg</h3>
               <dl className="kv pnl-totals">
                 <div>
-                  <dt>HL size input</dt>
+                  <dt>Entry HL basis (from tx)</dt>
                   <dd className="mono token-inline">
                     <TokenIcon symbol="USDC" size={16} />
-                    <span>{result.human.hlLeg.hlSizeUsdc}</span>
+                    <span>{result.human.hlLeg.entryHyperliquidUsdc}</span>
                   </dd>
                 </div>
                 <div>
-                  <dt>Pool price at open (entry proxy)</dt>
-                  <dd className="mono">{result.human.hlLeg.openPrice}</dd>
-                </div>
-                <div>
-                  <dt>HL unrealized PnL</dt>
-                  <dd className="mono">{result.human.hlLeg.currentHlUnrealizedPnl}</dd>
-                </div>
-                <div>
-                  <dt>Current HL leg value</dt>
+                  <dt>Current HL leg value (input)</dt>
                   <dd className="mono token-inline">
                     <TokenIcon symbol="USDC" size={16} />
                     <span>{result.human.hlLeg.currentHlTotal}</span>
                   </dd>
                 </div>
                 <div>
-                  <dt>HL total PnL</dt>
+                  <dt>HL PnL</dt>
                   <dd className="mono">
                     {result.human.hlLeg.hlTotalPnl} ({result.human.hlLeg.hlTotalPnlPct})
                   </dd>

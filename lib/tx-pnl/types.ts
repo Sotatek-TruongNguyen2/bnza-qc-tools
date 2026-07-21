@@ -1,7 +1,5 @@
 export type TxPnlHlLeg = {
-  hlSizeUsdc: number
-  openPriceUsdcPerWeth: number
-  currentHlUnrealizedPnlUsdc: string
+  entryHyperliquidUsdc: string
   currentHlTotalUsdc: string
   hlTotalPnlUsdc: string
   hlTotalPnlPct: number
@@ -53,6 +51,7 @@ export type TxPnlResult = {
     summary: string
     tokenId: string
     entryUniswapUsdc: string
+    entryHyperliquidUsdc: string
     entryTotalUsdc: string
     currentPrincipalUsdc: string
     currentFeesUsdc: string
@@ -62,9 +61,7 @@ export type TxPnlResult = {
     principalOnlyPnlPct: string
     totalPnlPct: string
     hlLeg: {
-      hlSizeUsdc: string
-      openPrice: string
-      currentHlUnrealizedPnl: string
+      entryHyperliquidUsdc: string
       currentHlTotal: string
       hlTotalPnl: string
       hlTotalPnlPct: string
