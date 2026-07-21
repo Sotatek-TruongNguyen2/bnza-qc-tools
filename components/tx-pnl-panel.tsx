@@ -230,7 +230,16 @@ export function TxPnlPanel() {
                 <div className="estimate-highlight">
                   <dt>HL PnL</dt>
                   <dd className="mono">
-                    {result.human.hlLeg.hlTotalPnl} ({result.human.hlLeg.hlTotalPnlPct})
+                    {result.human.hlLeg.hlTotalPnl}{' '}
+                    <span
+                      className={
+                        result.human.hlLeg.hlTotalPnlPct.startsWith('-')
+                          ? 'pnl-pct-neg'
+                          : 'pnl-pct-pos'
+                      }
+                    >
+                      ({result.human.hlLeg.hlTotalPnlPct})
+                    </span>
                   </dd>
                 </div>
               </dl>
