@@ -235,15 +235,15 @@ code {
 
 .quote-swap-row {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 0.75rem;
-  align-items: start;
+  align-items: end;
 }
 
 .quote-swap-btn {
-  align-self: start;
+  align-self: end;
   justify-self: center;
-  margin-top: 0;
+  margin-bottom: 0.1rem;
   padding: 0.55rem 0.75rem;
   line-height: 1;
   font-size: 1.1rem;
@@ -251,6 +251,42 @@ code {
 
 .quote-submit {
   width: 100%;
+}
+
+.quote-token-field {
+  gap: 0.45rem;
+}
+
+.token-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  padding: 0 0.65rem;
+  background: #fff;
+  min-height: calc(0.7rem * 2 + 1.25rem);
+}
+
+.token-select-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(15, 107, 76, 0.12);
+}
+
+.token-select-wrap select {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  border: 0;
+  padding: 0.7rem 0;
+  font: inherit;
+  background: transparent;
+  color: var(--ink);
+}
+
+.token-select-wrap select:focus {
+  outline: none;
 }
 
 .field {
@@ -767,11 +803,14 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
-  .quote-meta-row {
+  .quote-meta-row,
+  .quote-swap-row {
     grid-template-columns: 1fr;
   }
 
   .quote-swap-btn {
+    align-self: center;
     justify-self: center;
+    margin-bottom: 0;
   }
 }

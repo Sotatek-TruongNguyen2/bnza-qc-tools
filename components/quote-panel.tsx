@@ -6,12 +6,32 @@ import { TokenIcon, TokenSymbol } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
 import type { QuoteResult } from '@/lib/quote/types'
 
-const TOKEN_PRESETS = ['USDC', 'WETH'] as const
+const TOKEN_OPTIONS = ['USDC', 'WETH', 'ETH', 'CUSTOM'] as const
+type TokenChoice = (typeof TOKEN_OPTIONS)[number]
+
+function parseTokenChoice(value: string | null, fallback: Exclude<TokenChoice, 'CUSTOM'>): {
+  choice: TokenChoice
+  custom: string
+} {
+  const trimmed = value?.trim() ?? ''
+  const upper = trimmed.toUpperCase()
+  if (upper === 'USDC' || upper === 'WETH' || upper === 'ETH') {
+    return { choice: upper, custom: '' }
+  }
+  if (!trimmed) return { choice: fallback, custom: '' }
+  return { choice: 'CUSTOM', custom: trimmed }
+}
+
+function resolveTokenInput(choice: TokenChoice, custom: string): string {
+  return choice === 'CUSTOM' ? custom.trim() : choice
+}
 
 export function QuotePanel() {
   const [amount, setAmount] = useState('100')
-  const [tokenIn, setTokenIn] = useState('USDC')
-  const [tokenOut, setTokenOut] = useState('WETH')
+  const [tokenInChoice, setTokenInChoice] = useState<TokenChoice>('USDC')
+  const [tokenInCustom, setTokenInCustom] = useState('')
+  const [tokenOutChoice, setTokenOutChoice] = useState<TokenChoice>('WETH')
+  const [tokenOutCustom, setTokenOutCustom] = useState('')
   const [slippage, setSlippage] = useState('0.5')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,8 +46,12 @@ export function QuotePanel() {
     const tout = params.get('tokenOut')
     const slip = params.get('slippage')
     if (a) setAmount(a)
-    if (tin) setTokenIn(tin)
-    if (tout) setTokenOut(tout)
+    const parsedIn = parseTokenChoice(tin, 'USDC')
+    const parsedOut = parseTokenChoice(tout, 'WETH')
+    setTokenInChoice(parsedIn.choice)
+    setTokenInCustom(parsedIn.custom)
+    setTokenOutChoice(parsedOut.choice)
+    setTokenOutCustom(parsedOut.custom)
     if (slip) setSlippage(slip)
     if (a && tin && tout) {
       void runQuote({
@@ -78,17 +102,21 @@ export function QuotePanel() {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const tokenIn = resolveTokenInput(tokenInChoice, tokenInCustom)
+    const tokenOut = resolveTokenInput(tokenOutChoice, tokenOutCustom)
     void runQuote({
       amount: amount.trim(),
-      tokenIn: tokenIn.trim(),
-      tokenOut: tokenOut.trim(),
+      tokenIn,
+      tokenOut,
       slippage: slippage.trim() || '0.5',
     })
   }
 
   function swapTokens() {
-    setTokenIn(tokenOut)
-    setTokenOut(tokenIn)
+    setTokenInChoice(tokenOutChoice)
+    setTokenInCustom(tokenOutCustom)
+    setTokenOutChoice(tokenInChoice)
+    setTokenOutCustom(tokenInCustom)
   }
 
   const best = result?.quotes[0]
@@ -119,30 +147,29 @@ export function QuotePanel() {
         </div>
 
         <div className="quote-swap-row">
-          <label className="field">
+          <label className="field quote-token-field">
             <span>Token in</span>
-            <div className="token-input-wrap">
-              <TokenIcon symbol={tokenIn} size={18} />
+            <div className="token-select-wrap">
+              <TokenIcon symbol={tokenInChoice === 'CUSTOM' ? undefined : tokenInChoice} size={18} />
+              <select
+                value={tokenInChoice}
+                onChange={(e) => setTokenInChoice(e.target.value as TokenChoice)}
+              >
+                <option value="USDC">USDC</option>
+                <option value="WETH">WETH</option>
+                <option value="ETH">ETH</option>
+                <option value="CUSTOM">Custom address</option>
+              </select>
+            </div>
+            {tokenInChoice === 'CUSTOM' && (
               <input
-                value={tokenIn}
-                onChange={(e) => setTokenIn(e.target.value)}
-                list="token-presets"
-                placeholder="USDC"
+                value={tokenInCustom}
+                onChange={(e) => setTokenInCustom(e.target.value)}
+                placeholder="0x token address"
+                spellCheck={false}
+                autoComplete="off"
               />
-            </div>
-            <div className="token-preset-row">
-              {TOKEN_PRESETS.map((t) => (
-                <button
-                  key={`in-${t}`}
-                  type="button"
-                  className="token-preset"
-                  onClick={() => setTokenIn(t)}
-                >
-                  <TokenIcon symbol={t} size={16} />
-                  {t}
-                </button>
-              ))}
-            </div>
+            )}
           </label>
 
           <button
@@ -155,38 +182,31 @@ export function QuotePanel() {
             ⇄
           </button>
 
-          <label className="field">
+          <label className="field quote-token-field">
             <span>Token out</span>
-            <div className="token-input-wrap">
-              <TokenIcon symbol={tokenOut} size={18} />
+            <div className="token-select-wrap">
+              <TokenIcon symbol={tokenOutChoice === 'CUSTOM' ? undefined : tokenOutChoice} size={18} />
+              <select
+                value={tokenOutChoice}
+                onChange={(e) => setTokenOutChoice(e.target.value as TokenChoice)}
+              >
+                <option value="USDC">USDC</option>
+                <option value="WETH">WETH</option>
+                <option value="ETH">ETH</option>
+                <option value="CUSTOM">Custom address</option>
+              </select>
+            </div>
+            {tokenOutChoice === 'CUSTOM' && (
               <input
-                value={tokenOut}
-                onChange={(e) => setTokenOut(e.target.value)}
-                list="token-presets"
-                placeholder="WETH"
+                value={tokenOutCustom}
+                onChange={(e) => setTokenOutCustom(e.target.value)}
+                placeholder="0x token address"
+                spellCheck={false}
+                autoComplete="off"
               />
-            </div>
-            <div className="token-preset-row">
-              {TOKEN_PRESETS.map((t) => (
-                <button
-                  key={`out-${t}`}
-                  type="button"
-                  className="token-preset"
-                  onClick={() => setTokenOut(t)}
-                >
-                  <TokenIcon symbol={t} size={16} />
-                  {t}
-                </button>
-              ))}
-            </div>
+            )}
           </label>
         </div>
-
-        <datalist id="token-presets">
-          {TOKEN_PRESETS.map((t) => (
-            <option key={t} value={t} />
-          ))}
-        </datalist>
 
         <button type="submit" className="btn-primary quote-submit" disabled={loading}>
           {loading ? 'Quoting…' : 'Quote routes'}
