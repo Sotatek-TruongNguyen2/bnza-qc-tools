@@ -5,6 +5,18 @@ import type {
   CloseEstimateParams,
   CloseEstimateResult,
 } from './close-estimate-types'
+import {
+  describeConservativeSwap,
+  describeFeeDeduction,
+  describeNetAfterFees,
+  describeSpotSwap,
+  describeSum,
+  describeUsdcLeg,
+  earnedDustThresholdNote,
+  formatEarnedFormula,
+  formatPrincipalFormula,
+  getQcPoolPrices,
+} from './close-estimate-derivations'
 import { formatRawAmount, formatRawUsdc } from './format-raw-amount'
 import type { PositionRaw } from './types'
 
@@ -87,6 +99,7 @@ function earnedUsdcEquivalent(args: {
   dec1: number
   usdc: string
   sqrtPriceX96: bigint
+  poolPrices: ReturnType<typeof getQcPoolPrices>
 }): { total: bigint; steps: string[] } {
   const usdc = args.usdc.toLowerCase()
   const t0 = args.token0.toLowerCase()
@@ -95,37 +108,93 @@ function earnedUsdcEquivalent(args: {
 
   if (t0 === usdc) {
     let total = args.amount0
-    steps.push(`USDC leg (token0): ${formatRawAmount(args.amount0, args.dec0, args.token0Symbol)}`)
+    steps.push(describeUsdcLeg(args.amount0, args.token0Symbol, args.dec0))
     if (args.amount1 > 0n && t1 !== usdc) {
       const swapped = quoteSpotSwapOut({
         amountIn: args.amount1,
         sqrtPriceX96: args.sqrtPriceX96,
         zeroForOne: false,
       })
-      steps.push(
-        `Swap ${formatRawAmount(args.amount1, args.dec1, args.token1Symbol)} → USDC @ spot: ${formatRawUsdc(swapped)}`,
-      )
+      const swap = describeSpotSwap({
+        amountIn: args.amount1,
+        spotOut: swapped,
+        sqrtPriceX96: args.sqrtPriceX96,
+        zeroForOne: false,
+        inSymbol: args.token1Symbol,
+        outSymbol: 'USDC',
+        inDecimals: args.dec1,
+        outDecimals: 6,
+        poolPrices: args.poolPrices,
+      })
+      steps.push(`Swap to USDC: ${swap.human}`)
+      steps.push(`On-chain: ${swap.onChain}`)
       total += swapped
     }
-    steps.push(`Sum: ${formatRawUsdc(total)}`)
+    if (steps.length > 1) {
+      steps.push(
+        describeSum({
+          parts: [
+            { label: 'USDC leg', raw: args.amount0, decimals: 6 },
+            ...(args.amount1 > 0n && t1 !== usdc
+              ? [
+                  {
+                    label: 'swapped leg',
+                    raw: total - args.amount0,
+                    decimals: 6,
+                  },
+                ]
+              : []),
+          ],
+          total,
+        }),
+      )
+    }
     return { total, steps }
   }
 
   if (t1 === usdc) {
     let total = args.amount1
-    steps.push(`USDC leg (token1): ${formatRawAmount(args.amount1, args.dec1, args.token1Symbol)}`)
+    steps.push(describeUsdcLeg(args.amount1, args.token1Symbol, args.dec1))
     if (args.amount0 > 0n && t0 !== usdc) {
       const swapped = quoteSpotSwapOut({
         amountIn: args.amount0,
         sqrtPriceX96: args.sqrtPriceX96,
         zeroForOne: true,
       })
-      steps.push(
-        `Swap ${formatRawAmount(args.amount0, args.dec0, args.token0Symbol)} → USDC @ spot: ${formatRawUsdc(swapped)}`,
-      )
+      const swap = describeSpotSwap({
+        amountIn: args.amount0,
+        spotOut: swapped,
+        sqrtPriceX96: args.sqrtPriceX96,
+        zeroForOne: true,
+        inSymbol: args.token0Symbol,
+        outSymbol: 'USDC',
+        inDecimals: args.dec0,
+        outDecimals: 6,
+        poolPrices: args.poolPrices,
+      })
+      steps.push(`Swap to USDC: ${swap.human}`)
+      steps.push(`On-chain: ${swap.onChain}`)
       total += swapped
     }
-    steps.push(`Sum: ${formatRawUsdc(total)}`)
+    if (steps.length > 1) {
+      steps.push(
+        describeSum({
+          parts: [
+            { label: 'USDC leg', raw: args.amount1, decimals: 6 },
+            ...(args.amount0 > 0n && t0 !== usdc
+              ? [
+                  {
+                    label: 'swapped leg',
+                    raw: total - args.amount1,
+                    decimals: 6,
+                  },
+                ]
+              : []),
+          ],
+          total,
+        }),
+      )
+    }
     return { total, steps }
   }
 
@@ -139,6 +208,9 @@ type PrincipalLegDetail = {
   spotOut: bigint
   conservativeOut: bigint
   isDirectUsdc: boolean
+  zeroForOne?: boolean
+  inSymbol?: string
+  inDecimals?: number
 }
 
 function principalToUsdc(args: {
@@ -181,6 +253,8 @@ function principalToUsdc(args: {
       spotOut: args.principal0,
       conservativeOut: args.principal0,
       isDirectUsdc: true,
+      inSymbol: args.token0Symbol,
+      inDecimals: args.dec0,
     })
   } else if (args.principal0 > 0n) {
     const expected = quoteSpotSwapOut({
@@ -197,6 +271,9 @@ function principalToUsdc(args: {
       spotOut: expected,
       conservativeOut: conservative,
       isDirectUsdc: false,
+      zeroForOne: true,
+      inSymbol: args.token0Symbol,
+      inDecimals: args.dec0,
     })
   }
 
@@ -208,6 +285,8 @@ function principalToUsdc(args: {
       spotOut: args.principal1,
       conservativeOut: args.principal1,
       isDirectUsdc: true,
+      inSymbol: args.token1Symbol,
+      inDecimals: args.dec1,
     })
   } else if (args.principal1 > 0n) {
     const expected = quoteSpotSwapOut({
@@ -224,6 +303,9 @@ function principalToUsdc(args: {
       spotOut: expected,
       conservativeOut: conservative,
       isDirectUsdc: false,
+      zeroForOne: false,
+      inSymbol: args.token1Symbol,
+      inDecimals: args.dec1,
     })
   }
 
@@ -240,8 +322,10 @@ function buildPrincipalDetails(args: {
   params: CloseEstimateParams
   principal: ReturnType<typeof principalToUsdc>
   principalConservativeTotal: bigint
+  sqrtPriceX96: bigint
+  poolPrices: ReturnType<typeof getQcPoolPrices>
 }): CloseEstimateCalcSection {
-  const { raw, params, principal, principalConservativeTotal } = args
+  const { raw, params, principal, principalConservativeTotal, sqrtPriceX96, poolPrices } = args
   const dec0 = raw.token0Decimals
   const dec1 = raw.token1Decimals
 
@@ -250,26 +334,44 @@ function buildPrincipalDetails(args: {
       return [
         {
           label: leg.label,
-          value: formatRawAmount(leg.amountIn, raw.token0Decimals, raw.token0Symbol),
+          value: describeUsdcLeg(
+            leg.amountIn,
+            leg.inSymbol ?? raw.token0Symbol,
+            leg.inDecimals ?? dec0,
+          ),
         },
       ]
     }
 
-    const symbol = leg.label.startsWith(raw.token0Symbol) ? raw.token0Symbol : raw.token1Symbol
-    const decimals = symbol === raw.token0Symbol ? dec0 : dec1
+    const swap = describeSpotSwap({
+      amountIn: leg.amountIn,
+      spotOut: leg.spotOut,
+      sqrtPriceX96,
+      zeroForOne: leg.zeroForOne ?? true,
+      inSymbol: leg.inSymbol ?? raw.token0Symbol,
+      outSymbol: 'USDC',
+      inDecimals: leg.inDecimals ?? dec0,
+      outDecimals: 6,
+      poolPrices,
+    })
 
     return [
       {
-        label: `${leg.label} — amount in`,
-        value: formatRawAmount(leg.amountIn, decimals, symbol),
+        label: `${leg.label} — spot USDC out`,
+        value: swap.human,
       },
       {
-        label: `${leg.label} — spot USDC out`,
-        value: formatRawUsdc(leg.spotOut),
+        label: `${leg.label} — on-chain spot`,
+        value: swap.onChain,
       },
       {
         label: `${leg.label} — conservative out`,
-        value: `${formatRawUsdc(leg.conservativeOut)} (× (1 − (${principal.poolFeeBps} pool + ${params.swapSlippageBps} slippage) / 10000))`,
+        value: describeConservativeSwap({
+          spotOut: leg.spotOut,
+          conservativeOut: leg.conservativeOut,
+          poolFeeTier: raw.fee,
+          slippageBps: params.swapSlippageBps,
+        }),
       },
     ]
   })
@@ -285,27 +387,33 @@ function buildPrincipalDetails(args: {
     },
     {
       label: 'Principal total (conservative)',
-      value: `${formatRawUsdc(principalConservativeTotal)} = direct + conservative swap`,
+      value: describeSum({
+        parts: [
+          { label: 'USDC direct', raw: principal.direct },
+          { label: 'swapped (conservative)', raw: principal.conservativeSwap },
+        ],
+        total: principalConservativeTotal,
+      }),
     },
   )
 
   return {
     title: 'Principal (USDC, conservative)',
-    summary: 'Liquidity at current pool price, non-USDC leg swapped to USDC with pool fee + slippage haircut.',
-    formula:
-      'principal_usdc = usdc_direct + Σ (spot_swap_out × (1 − (pool_fee_bps + slippage_bps) / 10000)); spot_swap from sqrtPriceX96',
+    summary: 'Liquidity at current pool price; non-USDC leg valued as USDC at spot, then pool fee + slippage haircut.',
+    formula: formatPrincipalFormula(),
     inputs: [
       {
-        label: `${raw.token0Symbol} principal (raw)`,
+        label: `${raw.token0Symbol} principal`,
         value: formatRawAmount(BigInt(raw.principalAmount0), dec0, raw.token0Symbol),
       },
       {
-        label: `${raw.token1Symbol} principal (raw)`,
+        label: `${raw.token1Symbol} principal`,
         value: formatRawAmount(BigInt(raw.principalAmount1), dec1, raw.token1Symbol),
       },
-      { label: 'sqrtPriceX96', value: raw.sqrtPriceX96 },
-      { label: 'Pool fee tier', value: `${raw.fee} (${raw.fee / 10_000}% → ${principal.poolFeeBps} bps)` },
-      { label: 'Swap slippage', value: `${params.swapSlippageBps} bps (${params.swapSlippageBps / 100}%)` },
+      { label: 'Pool price', value: poolPrices.token1PerToken0Label },
+      { label: 'Inverse price', value: poolPrices.token0PerToken1Label },
+      { label: 'Pool fee tier', value: `${raw.fee / 10_000}%` },
+      { label: 'Swap slippage haircut', value: `${params.swapSlippageBps / 100}%` },
       { label: 'Current tick', value: String(raw.currentTick) },
     ],
     steps,
@@ -316,6 +424,7 @@ function buildPrincipalDetails(args: {
 function buildEarnedDetails(args: {
   raw: PositionRaw
   params: CloseEstimateParams
+  poolPrices: ReturnType<typeof getQcPoolPrices>
   fee0: bigint
   fee1: bigint
   minEarnedRaw: bigint
@@ -331,6 +440,7 @@ function buildEarnedDetails(args: {
   const {
     raw,
     params,
+    poolPrices,
     fee0,
     fee1,
     minEarnedRaw,
@@ -355,8 +465,8 @@ function buildEarnedDetails(args: {
       value: formatRawUsdc(earnedGrossUsdc),
     },
     {
-      label: 'Min earned threshold',
-      value: `${formatRawUsdc(minEarnedRaw)} ($${params.minEarnedUsdc})`,
+      label: 'Earned dust threshold',
+      value: earnedDustThresholdNote(params.minEarnedUsdc),
     },
   ]
 
@@ -365,34 +475,76 @@ function buildEarnedDetails(args: {
       label: 'Fee deduction',
       value:
         earnedGrossUsdc < minEarnedRaw
-          ? 'Skipped — below dust threshold (user keeps gross earned)'
+          ? `Skipped — ${earnedDustThresholdNote(params.minEarnedUsdc)}`
           : 'No earned fees',
     })
   } else {
     steps.push(
       {
-        label: `Op fee (${params.operationFeeBps} bps) on ${raw.token0Symbol}`,
-        value: formatRawAmount(charged.opFee0, raw.token0Decimals, raw.token0Symbol),
+        label: `Op fee on ${raw.token0Symbol}`,
+        value: describeFeeDeduction({
+          gross: fee0,
+          bps: params.operationFeeBps,
+          fee: charged.opFee0,
+          symbol: raw.token0Symbol,
+          decimals: raw.token0Decimals,
+          feeKind: 'Op fee',
+        }),
       },
       {
-        label: `Op fee (${params.operationFeeBps} bps) on ${raw.token1Symbol}`,
-        value: formatRawAmount(charged.opFee1, raw.token1Decimals, raw.token1Symbol),
+        label: `Op fee on ${raw.token1Symbol}`,
+        value: describeFeeDeduction({
+          gross: fee1,
+          bps: params.operationFeeBps,
+          fee: charged.opFee1,
+          symbol: raw.token1Symbol,
+          decimals: raw.token1Decimals,
+          feeKind: 'Op fee',
+        }),
       },
       {
-        label: `PF (${params.performanceFeeBps} bps) on ${raw.token0Symbol} after op`,
-        value: formatRawAmount(charged.pf0, raw.token0Decimals, raw.token0Symbol),
+        label: `PF on ${raw.token0Symbol} (after op)`,
+        value: describeFeeDeduction({
+          gross: fee0 - charged.opFee0,
+          bps: params.performanceFeeBps,
+          fee: charged.pf0,
+          symbol: raw.token0Symbol,
+          decimals: raw.token0Decimals,
+          feeKind: 'PF',
+        }),
       },
       {
-        label: `PF (${params.performanceFeeBps} bps) on ${raw.token1Symbol} after op`,
-        value: formatRawAmount(charged.pf1, raw.token1Decimals, raw.token1Symbol),
+        label: `PF on ${raw.token1Symbol} (after op)`,
+        value: describeFeeDeduction({
+          gross: fee1 - charged.opFee1,
+          bps: params.performanceFeeBps,
+          fee: charged.pf1,
+          symbol: raw.token1Symbol,
+          decimals: raw.token1Decimals,
+          feeKind: 'PF',
+        }),
       },
       {
-        label: 'Net earned token0',
-        value: formatRawAmount(earnedNet0, raw.token0Decimals, raw.token0Symbol),
+        label: `Net earned ${raw.token0Symbol}`,
+        value: describeNetAfterFees({
+          gross: fee0,
+          opBps: params.operationFeeBps,
+          pfBps: params.performanceFeeBps,
+          net: earnedNet0,
+          symbol: raw.token0Symbol,
+          decimals: raw.token0Decimals,
+        }),
       },
       {
-        label: 'Net earned token1',
-        value: formatRawAmount(earnedNet1, raw.token1Decimals, raw.token1Symbol),
+        label: `Net earned ${raw.token1Symbol}`,
+        value: describeNetAfterFees({
+          gross: fee1,
+          opBps: params.operationFeeBps,
+          pfBps: params.performanceFeeBps,
+          net: earnedNet1,
+          symbol: raw.token1Symbol,
+          decimals: raw.token1Decimals,
+        }),
       },
       ...earnedNetSteps.map((line, i) => ({ label: `Net USDC equiv. step ${i + 1}`, value: line })),
     )
@@ -405,9 +557,12 @@ function buildEarnedDetails(args: {
 
   return {
     title: 'Earned fees net (USDC equiv.)',
-    summary: 'Uncollected fees after optional LpFeeOps op + performance fee, converted to USDC at spot.',
-    formula:
-      'If gross_usdc_equiv ≥ min_earned: net_i = fee_i × (1 − op_bps/10000) × (1 − pf_bps/10000); then sum USDC legs + spot swap of other leg',
+    summary: 'Uncollected fees after optional op + performance fee, converted to USDC at pool price.',
+    formula: formatEarnedFormula(
+      params.minEarnedUsdc,
+      params.operationFeeBps / 100,
+      params.performanceFeeBps / 100,
+    ),
     inputs: [
       {
         label: `${raw.token0Symbol} uncollected`,
@@ -417,9 +572,10 @@ function buildEarnedDetails(args: {
         label: `${raw.token1Symbol} uncollected`,
         value: formatRawAmount(fee1, raw.token1Decimals, raw.token1Symbol),
       },
-      { label: 'Operation fee', value: `${params.operationFeeBps} bps (${params.operationFeeBps / 100}%)` },
-      { label: 'Performance fee', value: `${params.performanceFeeBps} bps (${params.performanceFeeBps / 100}%)` },
-      { label: 'Min earned (USDC)', value: `$${params.minEarnedUsdc}` },
+      { label: 'Pool price', value: poolPrices.token1PerToken0Label },
+      { label: 'Operation fee', value: `${params.operationFeeBps / 100}%` },
+      { label: 'Performance fee', value: `${params.performanceFeeBps / 100}%` },
+      { label: 'Earned dust threshold', value: `$${params.minEarnedUsdc} USDC equiv.` },
       { label: 'Fee source', value: raw.uncollectedFeesSource },
     ],
     steps,
@@ -437,6 +593,7 @@ export function estimateCloseUsdc(
   }
 
   const sqrtPriceX96 = BigInt(raw.sqrtPriceX96)
+  const poolPrices = getQcPoolPrices(raw)
   const principal0 = BigInt(raw.principalAmount0)
   const principal1 = BigInt(raw.principalAmount1)
   const fee0 = BigInt(raw.uncollectedFees0)
@@ -478,6 +635,7 @@ export function estimateCloseUsdc(
     dec1: raw.token1Decimals,
     usdc: BASE_USDC,
     sqrtPriceX96,
+    poolPrices,
   })
 
   let earnedNet0 = fee0
@@ -508,6 +666,7 @@ export function estimateCloseUsdc(
         dec1: raw.token1Decimals,
         usdc: BASE_USDC,
         sqrtPriceX96,
+        poolPrices,
       }).total
       pfFeeUsdc = earnedUsdcEquivalent({
         amount0: charged.pf0,
@@ -520,6 +679,7 @@ export function estimateCloseUsdc(
         dec1: raw.token1Decimals,
         usdc: BASE_USDC,
         sqrtPriceX96,
+        poolPrices,
       }).total
     }
   }
@@ -535,6 +695,7 @@ export function estimateCloseUsdc(
     dec1: raw.token1Decimals,
     usdc: BASE_USDC,
     sqrtPriceX96,
+    poolPrices,
   })
 
   const totalSpot = principalSpotTotal + earnedNet.total
@@ -549,11 +710,14 @@ export function estimateCloseUsdc(
     params,
     principal,
     principalConservativeTotal,
+    sqrtPriceX96,
+    poolPrices,
   })
 
   const earnedDetails = buildEarnedDetails({
     raw,
     params,
+    poolPrices,
     fee0,
     fee1,
     minEarnedRaw,

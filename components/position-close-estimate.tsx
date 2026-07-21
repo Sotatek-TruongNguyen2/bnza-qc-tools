@@ -70,14 +70,18 @@ export function PositionCloseEstimate({ raw }: Props) {
             placeholder={String(defaults.swapSlippageBps / 100)}
           />
         </label>
-        <label className="field">
-          <span>Min earned before fees ($)</span>
+        <label className="field field-with-hint">
+          <span>Earned dust threshold ($)</span>
           <input
             value={minEarnedUsd}
             onChange={(e) => setMinEarnedUsd(e.target.value)}
             inputMode="decimal"
             placeholder={String(defaults.minEarnedUsdc)}
+            title="EXBOT skips op/PF when gross earned is below this USDC equivalent"
           />
+          <span className="field-hint">
+            Below this, EXBOT skips op/PF — user keeps 100% of earned fees (default $10).
+          </span>
         </label>
       </div>
 
