@@ -1,6 +1,5 @@
 export type TxPnlHlLeg = {
   hlSizeUsdc: number
-  hlSizeEth: number
   openPriceUsdcPerWeth: number
   currentHlUnrealizedPnlUsdc: string
   currentHlTotalUsdc: string
@@ -64,7 +63,6 @@ export type TxPnlResult = {
     totalPnlPct: string
     hlLeg: {
       hlSizeUsdc: string
-      hlSizeEth: string
       openPrice: string
       currentHlUnrealizedPnl: string
       currentHlTotal: string

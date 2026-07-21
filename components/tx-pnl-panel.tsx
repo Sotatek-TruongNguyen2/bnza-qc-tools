@@ -220,10 +220,6 @@ export function TxPnlPanel() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Derived ETH size</dt>
-                  <dd className="mono">{result.human.hlLeg.hlSizeEth}</dd>
-                </div>
-                <div>
                   <dt>Pool price at open (entry proxy)</dt>
                   <dd className="mono">{result.human.hlLeg.openPrice}</dd>
                 </div>

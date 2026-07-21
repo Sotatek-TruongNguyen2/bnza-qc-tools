@@ -60,7 +60,6 @@ function computeHlLeg(args: {
 
   return {
     hlSizeUsdc: args.hlSizeUsdc,
-    hlSizeEth,
     openPriceUsdcPerWeth: args.openPriceUsdcPerWeth,
     currentHlUnrealizedPnlUsdc: hlUnrealizedPnlUsdc.toString(),
     currentHlTotalUsdc: currentHlTotalUsdc.toString(),
@@ -240,7 +239,6 @@ export async function fetchTxPnl(
       hlLeg: hlLeg
         ? {
             hlSizeUsdc: `${hlLeg.hlSizeUsdc.toLocaleString('en-US', { maximumFractionDigits: 6 })} USDC`,
-            hlSizeEth: `${hlLeg.hlSizeEth.toLocaleString('en-US', { maximumFractionDigits: 8 })} ETH (derived)`,
             openPrice: formatPrice('USDC per WETH at open', hlLeg.openPriceUsdcPerWeth),
             currentHlUnrealizedPnl: formatSignedUsdc(BigInt(hlLeg.currentHlUnrealizedPnlUsdc)),
             currentHlTotal: formatUsdc(BigInt(hlLeg.currentHlTotalUsdc)),
