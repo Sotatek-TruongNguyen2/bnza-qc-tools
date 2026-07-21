@@ -194,7 +194,9 @@ export function BotPanel() {
                       <li>Opened: {p.openedAt}</li>
                     </ul>
                     <p>
-                      <Link href={p.positionLink}>Open LP position lookup →</Link>
+                      <Link href={p.positionLink} target="_blank" rel="noopener noreferrer">
+                        Open LP position lookup (new tab) →
+                      </Link>
                     </p>
                   </article>
                 ))}
