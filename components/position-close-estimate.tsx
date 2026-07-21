@@ -23,6 +23,7 @@ export function PositionCloseEstimate({ raw }: Props) {
   const [swapSlippagePct, setSwapSlippagePct] = useState('1')
   const [minEarnedUsd, setMinEarnedUsd] = useState('10')
   const [showOnChainDerivation, setShowOnChainDerivation] = useState(false)
+  const [openHintId, setOpenHintId] = useState<string | null>(null)
 
   const estimate = useMemo(() => {
     return estimateCloseUsdc(raw, {
@@ -35,6 +36,10 @@ export function PositionCloseEstimate({ raw }: Props) {
   }, [raw, operationFeePct, performanceFeePct, swapSlippagePct, minEarnedUsd, showOnChainDerivation])
 
   const defaults = DEFAULT_CLOSE_ESTIMATE_PARAMS
+
+  function toggleHint(hintId: string) {
+    setOpenHintId((current) => (current === hintId ? null : hintId))
+  }
 
   return (
     <div className="estimate-card">
@@ -92,29 +97,40 @@ export function PositionCloseEstimate({ raw }: Props) {
             Below this, EXBOT skips op/PF — user keeps 100% of earned fees (default $10).
           </span>
         </label>
+        <label className="estimate-toggle estimate-form-full">
+          <input
+            type="checkbox"
+            checked={showOnChainDerivation}
+            onChange={(e) => setShowOnChainDerivation(e.target.checked)}
+          />
+          <span>Show on-chain math in hints (sqrtPriceX96, raw amounts)</span>
+        </label>
       </div>
-
-      <label className="estimate-toggle">
-        <input
-          type="checkbox"
-          checked={showOnChainDerivation}
-          onChange={(e) => setShowOnChainDerivation(e.target.checked)}
-        />
-        <span>Show on-chain math in hints (sqrtPriceX96, raw amounts)</span>
-      </label>
 
       <dl className="kv estimate-totals">
         <div>
           <dt className="estimate-dt-row">
             <span>Principal (USDC, conservative)</span>
-            <CalculationHint section={estimate.breakdown.details.principal} />
+            <CalculationHint
+              hintId="principal"
+              isOpen={openHintId === 'principal'}
+              onToggle={toggleHint}
+              onClose={() => setOpenHintId(null)}
+              section={estimate.breakdown.details.principal}
+            />
           </dt>
           <dd className="mono">{estimate.human.principalUsdc}</dd>
         </div>
         <div>
           <dt className="estimate-dt-row">
             <span>Earned fees net (USDC equiv.)</span>
-            <CalculationHint section={estimate.breakdown.details.earned} />
+            <CalculationHint
+              hintId="earned"
+              isOpen={openHintId === 'earned'}
+              onToggle={toggleHint}
+              onClose={() => setOpenHintId(null)}
+              section={estimate.breakdown.details.earned}
+            />
           </dt>
           <dd className="mono">{estimate.human.earnedNetUsdc}</dd>
         </div>

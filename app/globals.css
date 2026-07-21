@@ -327,16 +327,27 @@ input:focus {
 .estimate-toggle {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  margin: 0 0 0.75rem;
+  gap: 0.55rem;
+  margin: 0;
   font-size: 0.88rem;
   color: var(--muted);
   cursor: pointer;
+  line-height: 1.4;
 }
 
-.estimate-toggle input {
-  margin-top: 0.15rem;
+.estimate-form-full {
+  grid-column: 1 / -1;
+  padding-top: 0.15rem;
+}
+
+.estimate-toggle input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  flex: 0 0 auto;
   accent-color: var(--accent, #2f6fed);
+  cursor: pointer;
 }
 
 .estimate-form {
@@ -364,6 +375,11 @@ input:focus {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.kv dt.estimate-dt-row {
+  position: relative;
 }
 
 .calc-hint {
@@ -374,6 +390,7 @@ input:focus {
 .calc-hint-btn {
   width: 1.35rem;
   height: 1.35rem;
+  flex-shrink: 0;
   border-radius: 999px;
   border: 1px solid #b8c4d9;
   background: #fff;

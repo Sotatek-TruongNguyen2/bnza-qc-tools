@@ -1,29 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { CloseEstimateCalcSection } from '@/lib/position/close-estimate-types'
 
 type Props = {
   section: CloseEstimateCalcSection
+  hintId: string
+  isOpen: boolean
+  onToggle: (hintId: string) => void
+  onClose: () => void
 }
 
-export function CalculationHint({ section }: Props) {
-  const [open, setOpen] = useState(false)
+export function CalculationHint({ section, hintId, isOpen, onToggle, onClose }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    function onPointerDown(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        onClose()
+      }
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [isOpen, onClose])
 
   return (
-    <div className="calc-hint">
+    <div className="calc-hint" ref={rootRef}>
       <button
         type="button"
         className="calc-hint-btn"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
+        onClick={() => onToggle(hintId)}
+        aria-expanded={isOpen}
         aria-label={`How ${section.title} is calculated`}
         title="Show formula and inputs"
       >
         ?
       </button>
 
-      {open && (
+      {isOpen && (
         <div className="calc-hint-panel" role="region" aria-label={`${section.title} calculation`}>
           <p className="calc-hint-summary">{section.summary}</p>
           <p className="mono calc-hint-formula">{section.formula}</p>
