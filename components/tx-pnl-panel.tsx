@@ -227,7 +227,7 @@ export function TxPnlPanel() {
                     <span>{result.human.hlLeg.currentHlTotal}</span>
                   </dd>
                 </div>
-                <div>
+                <div className="estimate-highlight">
                   <dt>HL PnL</dt>
                   <dd className="mono">
                     {result.human.hlLeg.hlTotalPnl} ({result.human.hlLeg.hlTotalPnlPct})
