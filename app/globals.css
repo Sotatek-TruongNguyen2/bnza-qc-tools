@@ -633,6 +633,16 @@ input:focus {
   font-weight: 650;
 }
 
+.pnl-pct-pos {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.pnl-pct-neg {
+  color: var(--warn);
+  font-weight: 700;
+}
+
 .estimate-dt-row {
   display: flex;
   align-items: center;
