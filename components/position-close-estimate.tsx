@@ -75,7 +75,7 @@ export function PositionCloseEstimate({ raw }: Props) {
             Protocol share on earned fees after op fee — not principal. Skipped below dust threshold.
           </span>
         </label>
-        <label className="field">
+        <label className="field field-with-hint">
           <span>Principal swap slippage (%)</span>
           <input
             value={swapSlippagePct}
@@ -83,6 +83,10 @@ export function PositionCloseEstimate({ raw }: Props) {
             inputMode="decimal"
             placeholder={String(defaults.swapSlippageBps / 100)}
           />
+          <span className="field-hint">
+            QC cushion on non-USDC principal → USDC: conservative estimate = spot minus pool fee minus
+            this slippage. Does not affect earned fees (default 1%).
+          </span>
         </label>
         <label className="field field-with-hint">
           <span>Earned dust threshold ($)</span>
