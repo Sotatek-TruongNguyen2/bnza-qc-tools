@@ -107,6 +107,82 @@ code {
   display: none;
 }
 
+.token-icon {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.token-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.token-amount-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.token-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  padding: 0 0.65rem;
+  background: #fff;
+}
+
+.token-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(15, 107, 76, 0.12);
+}
+
+.token-input-wrap input {
+  border: 0;
+  padding-left: 0;
+  box-shadow: none;
+}
+
+.token-input-wrap input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.token-pair-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.token-preset-row {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.token-preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.25rem 0.65rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.token-preset:hover {
+  border-color: var(--accent);
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);

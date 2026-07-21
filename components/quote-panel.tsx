@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CopyJsonButton } from './copy-json-button'
+import { TokenIcon, TokenSymbol } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
 import type { QuoteResult } from '@/lib/quote/types'
 
@@ -107,12 +108,28 @@ export function QuotePanel() {
 
         <label className="field">
           <span>Token in</span>
-          <input
-            value={tokenIn}
-            onChange={(e) => setTokenIn(e.target.value)}
-            list="token-presets"
-            placeholder="USDC"
-          />
+          <div className="token-input-wrap">
+            <TokenIcon symbol={tokenIn} size={18} />
+            <input
+              value={tokenIn}
+              onChange={(e) => setTokenIn(e.target.value)}
+              list="token-presets"
+              placeholder="USDC"
+            />
+          </div>
+          <div className="token-preset-row">
+            {TOKEN_PRESETS.map((t) => (
+              <button
+                key={`in-${t}`}
+                type="button"
+                className="token-preset"
+                onClick={() => setTokenIn(t)}
+              >
+                <TokenIcon symbol={t} size={16} />
+                {t}
+              </button>
+            ))}
+          </div>
         </label>
 
         <div className="swap-wrap">
@@ -123,12 +140,28 @@ export function QuotePanel() {
 
         <label className="field">
           <span>Token out</span>
-          <input
-            value={tokenOut}
-            onChange={(e) => setTokenOut(e.target.value)}
-            list="token-presets"
-            placeholder="WETH"
-          />
+          <div className="token-input-wrap">
+            <TokenIcon symbol={tokenOut} size={18} />
+            <input
+              value={tokenOut}
+              onChange={(e) => setTokenOut(e.target.value)}
+              list="token-presets"
+              placeholder="WETH"
+            />
+          </div>
+          <div className="token-preset-row">
+            {TOKEN_PRESETS.map((t) => (
+              <button
+                key={`out-${t}`}
+                type="button"
+                className="token-preset"
+                onClick={() => setTokenOut(t)}
+              >
+                <TokenIcon symbol={t} size={16} />
+                {t}
+              </button>
+            ))}
+          </div>
         </label>
 
         <label className="field">
@@ -163,8 +196,10 @@ export function QuotePanel() {
         <div className="result">
           <div className="result-header">
             <div>
-              <h2>
-                {result.tokenIn.symbol} → {result.tokenOut.symbol}
+              <h2 className="token-pair-heading">
+                <TokenSymbol symbol={result.tokenIn.symbol} address={result.tokenIn.address} size={22} />
+                <span className="muted">→</span>
+                <TokenSymbol symbol={result.tokenOut.symbol} address={result.tokenOut.address} size={22} />
               </h2>
               <p className="muted">
                 Input {result.amountInHuman} · Slippage {result.slippagePercent.toFixed(2)}% (

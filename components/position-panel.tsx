@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CopyJsonButton } from './copy-json-button'
+import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
 import { apiGetJson } from '@/lib/api-client'
 import type { PositionResult } from '@/lib/position/types'
@@ -85,7 +86,14 @@ export function PositionPanel() {
         <div className="result">
           <div className="result-header">
             <div>
-              <h2>{result.human.summary}</h2>
+              <h2 className="token-pair-heading">
+                <TokenSymbol symbol={result.raw.token0Symbol} address={result.raw.token0} size={22} />
+                <span className="muted">/</span>
+                <TokenSymbol symbol={result.raw.token1Symbol} address={result.raw.token1} size={22} />
+                <span>
+                  | fee {result.raw.feeLabel} | tokenId #{result.raw.tokenId}
+                </span>
+              </h2>
               <p className="muted">{result.raw.network}</p>
             </div>
             <div className="result-actions">
@@ -120,20 +128,40 @@ export function PositionPanel() {
           <h3>Principal</h3>
           <ul className="plain-list mono">
             <li>
-              Token0 ({result.raw.token0Symbol}): {result.human.principal.token0}
+              <TokenAmountLine
+                prefix="Token0"
+                symbol={result.raw.token0Symbol}
+                address={result.raw.token0}
+                amount={result.human.principal.token0}
+              />
             </li>
             <li>
-              Token1 ({result.raw.token1Symbol}): {result.human.principal.token1}
+              <TokenAmountLine
+                prefix="Token1"
+                symbol={result.raw.token1Symbol}
+                address={result.raw.token1}
+                amount={result.human.principal.token1}
+              />
             </li>
           </ul>
 
           <h3>Uncollected fees</h3>
           <ul className="plain-list mono">
             <li>
-              Token0 ({result.raw.token0Symbol}): {result.human.uncollectedFees.token0}
+              <TokenAmountLine
+                prefix="Token0"
+                symbol={result.raw.token0Symbol}
+                address={result.raw.token0}
+                amount={result.human.uncollectedFees.token0}
+              />
             </li>
             <li>
-              Token1 ({result.raw.token1Symbol}): {result.human.uncollectedFees.token1}
+              <TokenAmountLine
+                prefix="Token1"
+                symbol={result.raw.token1Symbol}
+                address={result.raw.token1}
+                amount={result.human.uncollectedFees.token1}
+              />
             </li>
             <li className="muted">{result.human.uncollectedFees.note}</li>
           </ul>
@@ -154,12 +182,14 @@ export function PositionPanel() {
             </li>
             <li>
               <a href={result.human.links.token0} target="_blank" rel="noreferrer">
-                Token0 ({result.raw.token0Symbol})
+                <TokenSymbol symbol={result.raw.token0Symbol} address={result.raw.token0} size={16} />{' '}
+                (Token0)
               </a>
             </li>
             <li>
               <a href={result.human.links.token1} target="_blank" rel="noreferrer">
-                Token1 ({result.raw.token1Symbol})
+                <TokenSymbol symbol={result.raw.token1Symbol} address={result.raw.token1} size={16} />{' '}
+                (Token1)
               </a>
             </li>
           </ul>

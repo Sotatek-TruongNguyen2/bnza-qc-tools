@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { CopyJsonButton } from './copy-json-button'
+import { TokenIcon, TokenSymbol } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
 import type { BotResult } from '@/lib/bot/types'
 
@@ -144,21 +145,35 @@ export function BotPanel() {
               <dt>Deposit token</dt>
               <dd className="mono">
                 <a href={result.human.links.depositToken} target="_blank" rel="noreferrer">
-                  {result.human.depositTokenLabel}
+                  <TokenSymbol
+                    symbol={result.human.depositTokenSymbol}
+                    address={result.human.depositToken}
+                    size={18}
+                  />{' '}
+                  · {result.human.depositToken}
                 </a>
               </dd>
             </div>
             <div className="estimate-highlight">
               <dt>Unspent balance</dt>
-              <dd className="mono">{result.human.unspentUsdc}</dd>
+              <dd className="mono token-inline">
+                <TokenIcon symbol="USDC" size={16} />
+                <span>{result.human.unspentUsdc}</span>
+              </dd>
             </div>
             <div className="estimate-highlight">
               <dt>Deployed capital</dt>
-              <dd className="mono">{result.human.deployedUsdc}</dd>
+              <dd className="mono token-inline">
+                <TokenIcon symbol="USDC" size={16} />
+                <span>{result.human.deployedUsdc}</span>
+              </dd>
             </div>
             <div>
               <dt>Total tracked (unspent + deployed)</dt>
-              <dd className="mono">{result.human.totalTrackedUsdc}</dd>
+              <dd className="mono token-inline">
+                <TokenIcon symbol="USDC" size={16} />
+                <span>{result.human.totalTrackedUsdc}</span>
+              </dd>
             </div>
             <div>
               <dt>WL master</dt>
@@ -186,9 +201,18 @@ export function BotPanel() {
                       </span>
                     </div>
                     <ul className="plain-list mono">
-                      <li>Total deployment: {p.totalUsdc}</li>
-                      <li>Uniswap leg: {p.uniswapUsdc}</li>
-                      <li>Hyperliquid leg (on-chain accounting): {p.hyperliquidUsdc}</li>
+                      <li className="token-amount-line">
+                        <TokenIcon symbol="USDC" size={16} />
+                        <span>Total deployment: {p.totalUsdc}</span>
+                      </li>
+                      <li className="token-amount-line">
+                        <TokenIcon symbol="USDC" size={16} />
+                        <span>Uniswap leg: {p.uniswapUsdc}</span>
+                      </li>
+                      <li className="token-amount-line">
+                        <TokenIcon symbol="USDC" size={16} />
+                        <span>Hyperliquid leg (on-chain accounting): {p.hyperliquidUsdc}</span>
+                      </li>
                       <li>Tick range: {p.tickRange}</li>
                       <li>Liquidity: {p.liquidity}</li>
                       <li>Opened: {p.openedAt}</li>

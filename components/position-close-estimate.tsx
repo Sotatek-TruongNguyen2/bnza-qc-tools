@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { CalculationHint } from './calculation-hint'
+import { TokenIcon } from './token-icon'
 import {
   DEFAULT_CLOSE_ESTIMATE_PARAMS,
   estimateCloseUsdc,
@@ -123,7 +124,10 @@ export function PositionCloseEstimate({ raw }: Props) {
               section={estimate.breakdown.details.principal}
             />
           </dt>
-          <dd className="mono">{estimate.human.principalUsdc}</dd>
+          <dd className="mono token-inline">
+            <TokenIcon symbol="USDC" size={16} />
+            <span>{estimate.human.principalUsdc}</span>
+          </dd>
         </div>
         <div>
           <dt className="estimate-dt-row">
@@ -136,15 +140,24 @@ export function PositionCloseEstimate({ raw }: Props) {
               section={estimate.breakdown.details.earned}
             />
           </dt>
-          <dd className="mono">{estimate.human.earnedNetUsdc}</dd>
+          <dd className="mono token-inline">
+            <TokenIcon symbol="USDC" size={16} />
+            <span>{estimate.human.earnedNetUsdc}</span>
+          </dd>
         </div>
         <div className="estimate-highlight">
           <dt>Total (spot principal + net earned)</dt>
-          <dd className="mono">{estimate.human.totalSpot}</dd>
+          <dd className="mono token-inline">
+            <TokenIcon symbol="USDC" size={16} />
+            <span>{estimate.human.totalSpot}</span>
+          </dd>
         </div>
         <div className="estimate-highlight">
           <dt>Total (conservative principal + net earned)</dt>
-          <dd className="mono">{estimate.human.totalConservative}</dd>
+          <dd className="mono token-inline">
+            <TokenIcon symbol="USDC" size={16} />
+            <span>{estimate.human.totalConservative}</span>
+          </dd>
         </div>
       </dl>
 
