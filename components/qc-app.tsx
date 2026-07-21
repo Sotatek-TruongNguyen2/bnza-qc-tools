@@ -20,18 +20,6 @@ export function QcApp() {
   function selectTool(next: Tool) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('tool', next)
-
-    if (next === 'position') {
-      params.delete('user')
-      params.delete('botId')
-    } else if (next === 'quote') {
-      params.delete('tokenId')
-      params.delete('user')
-      params.delete('botId')
-    } else {
-      params.delete('tokenId')
-    }
-
     const qs = params.toString()
     router.replace(qs ? `/?${qs}` : '/')
   }
@@ -71,7 +59,29 @@ export function QcApp() {
         </button>
       </nav>
 
-      {tool === 'bot' ? <BotPanel /> : tool === 'position' ? <PositionPanel /> : <QuotePanel />}
+      <div className="tab-panels">
+        <div
+          className={tool === 'bot' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
+          aria-hidden={tool !== 'bot'}
+          hidden={tool !== 'bot'}
+        >
+          <BotPanel />
+        </div>
+        <div
+          className={tool === 'position' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
+          aria-hidden={tool !== 'position'}
+          hidden={tool !== 'position'}
+        >
+          <PositionPanel />
+        </div>
+        <div
+          className={tool === 'quote' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
+          aria-hidden={tool !== 'quote'}
+          hidden={tool !== 'quote'}
+        >
+          <QuotePanel />
+        </div>
+      </div>
 
       <footer className="footer">
         <code>get-bot-status</code> vault views / <code>query-uniswap-v3-position-base</code> /{' '}

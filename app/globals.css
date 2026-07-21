@@ -99,6 +99,14 @@ code {
   color: #fff;
 }
 
+.tab-panels {
+  display: block;
+}
+
+.tab-panel-hidden {
+  display: none;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
