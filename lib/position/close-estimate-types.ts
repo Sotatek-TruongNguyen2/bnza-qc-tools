@@ -7,6 +7,8 @@ export type CloseEstimateParams = {
   minEarnedUsdc: number
   /** Slippage + pool fee haircut on principal swap to USDC (bps). Default 100 = 1%. */
   swapSlippageBps: number
+  /** Include sqrtPriceX96 / raw bigint steps in calc hints. Default off for QC. */
+  showOnChainDerivation?: boolean
 }
 
 export type CloseEstimateLine = {

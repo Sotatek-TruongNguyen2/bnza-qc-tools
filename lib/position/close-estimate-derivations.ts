@@ -76,6 +76,7 @@ export function describeConservativeSwap(args: {
   poolFeeTier: number
   slippageBps: number
   outDecimals?: number
+  showOnChain?: boolean
 }): string {
   const outDecimals = args.outDecimals ?? 6
   const spotHuman = formatUnits(args.spotOut, outDecimals)
@@ -83,12 +84,12 @@ export function describeConservativeSwap(args: {
   const poolPct = args.poolFeeTier / 10_000
   const slipPct = args.slippageBps / 100
   const keepPct = 100 - poolPct - slipPct
-  const keepBps = 10_000n - BigInt(args.poolFeeTier) / 100n - BigInt(args.slippageBps)
+  const human = `${spotHuman} USDC × ${keepPct}% = ${conservativeHuman} USDC`
 
-  return (
-    `${spotHuman} USDC × ${keepPct}% = ${conservativeHuman} USDC ` +
-    `(on-chain: ${args.spotOut} × ${keepBps} / 10000 = ${args.conservativeOut})`
-  )
+  if (!args.showOnChain) return human
+
+  const keepBps = 10_000n - BigInt(args.poolFeeTier) / 100n - BigInt(args.slippageBps)
+  return `${human} (on-chain: ${args.spotOut} × ${keepBps} / 10000 = ${args.conservativeOut})`
 }
 
 export function describeFeeDeduction(args: {
@@ -98,14 +99,16 @@ export function describeFeeDeduction(args: {
   symbol: string
   decimals: number
   feeKind: string
+  showOnChain?: boolean
 }): string {
   const grossHuman = formatUnits(args.gross, args.decimals)
   const feeHuman = formatUnits(args.fee, args.decimals)
   const pct = args.bps / 100
-  return (
-    `${args.feeKind}: ${grossHuman} ${args.symbol} × ${pct}% = ${feeHuman} ${args.symbol} ` +
-    `(on-chain: ${args.gross} × ${args.bps} / 10000 = ${args.fee})`
-  )
+  const human = `${args.feeKind}: ${grossHuman} ${args.symbol} × ${pct}% = ${feeHuman} ${args.symbol}`
+
+  if (!args.showOnChain) return human
+
+  return `${human} (on-chain: ${args.gross} × ${args.bps} / 10000 = ${args.fee})`
 }
 
 export function describeNetAfterFees(args: {
@@ -135,6 +138,7 @@ export function describeSum(args: {
   total: bigint
   totalDecimals?: number
   outSymbol?: string
+  showOnChain?: boolean
 }): string {
   const outSymbol = args.outSymbol ?? 'USDC'
   const totalDecimals = args.totalDecimals ?? 6
@@ -143,8 +147,12 @@ export function describeSum(args: {
     return `${human} (${p.label})`
   })
   const totalHuman = formatUnits(args.total, totalDecimals)
+  const human = `${terms.join(' + ')} = ${totalHuman} ${outSymbol}`
+
+  if (!args.showOnChain) return human
+
   const rawTerms = args.parts.map((p) => p.raw.toString()).join(' + ')
-  return `${terms.join(' + ')} = ${totalHuman} ${outSymbol} (on-chain: ${rawTerms} = ${args.total})`
+  return `${human} (on-chain: ${rawTerms} = ${args.total})`
 }
 
 export function earnedDustThresholdNote(minEarnedUsdc: number): string {

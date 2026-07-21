@@ -22,6 +22,7 @@ export function PositionCloseEstimate({ raw }: Props) {
   const [performanceFeePct, setPerformanceFeePct] = useState('30')
   const [swapSlippagePct, setSwapSlippagePct] = useState('1')
   const [minEarnedUsd, setMinEarnedUsd] = useState('10')
+  const [showOnChainDerivation, setShowOnChainDerivation] = useState(false)
 
   const estimate = useMemo(() => {
     return estimateCloseUsdc(raw, {
@@ -29,8 +30,9 @@ export function PositionCloseEstimate({ raw }: Props) {
       performanceFeeBps: Math.round(parsePct(performanceFeePct, 30) * 100),
       swapSlippageBps: Math.round(parsePct(swapSlippagePct, 1) * 100),
       minEarnedUsdc: parsePct(minEarnedUsd, 10),
+      showOnChainDerivation,
     })
-  }, [raw, operationFeePct, performanceFeePct, swapSlippagePct, minEarnedUsd])
+  }, [raw, operationFeePct, performanceFeePct, swapSlippagePct, minEarnedUsd, showOnChainDerivation])
 
   const defaults = DEFAULT_CLOSE_ESTIMATE_PARAMS
 
@@ -84,6 +86,15 @@ export function PositionCloseEstimate({ raw }: Props) {
           </span>
         </label>
       </div>
+
+      <label className="estimate-toggle">
+        <input
+          type="checkbox"
+          checked={showOnChainDerivation}
+          onChange={(e) => setShowOnChainDerivation(e.target.checked)}
+        />
+        <span>Show on-chain math in hints (sqrtPriceX96, raw amounts)</span>
+      </label>
 
       <dl className="kv estimate-totals">
         <div>

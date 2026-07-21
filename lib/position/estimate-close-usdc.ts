@@ -27,6 +27,7 @@ export const DEFAULT_CLOSE_ESTIMATE_PARAMS: CloseEstimateParams = {
   performanceFeeBps: 3000,
   minEarnedUsdc: 10,
   swapSlippageBps: 100,
+  showOnChainDerivation: false,
 }
 
 const BPS = 10_000n
@@ -100,6 +101,7 @@ function earnedUsdcEquivalent(args: {
   usdc: string
   sqrtPriceX96: bigint
   poolPrices: ReturnType<typeof getQcPoolPrices>
+  showOnChain: boolean
 }): { total: bigint; steps: string[] } {
   const usdc = args.usdc.toLowerCase()
   const t0 = args.token0.toLowerCase()
@@ -127,7 +129,7 @@ function earnedUsdcEquivalent(args: {
         poolPrices: args.poolPrices,
       })
       steps.push(`Swap to USDC: ${swap.human}`)
-      steps.push(`On-chain: ${swap.onChain}`)
+      if (args.showOnChain) steps.push(`On-chain: ${swap.onChain}`)
       total += swapped
     }
     if (steps.length > 1) {
@@ -146,6 +148,7 @@ function earnedUsdcEquivalent(args: {
               : []),
           ],
           total,
+          showOnChain: args.showOnChain,
         }),
       )
     }
@@ -173,7 +176,7 @@ function earnedUsdcEquivalent(args: {
         poolPrices: args.poolPrices,
       })
       steps.push(`Swap to USDC: ${swap.human}`)
-      steps.push(`On-chain: ${swap.onChain}`)
+      if (args.showOnChain) steps.push(`On-chain: ${swap.onChain}`)
       total += swapped
     }
     if (steps.length > 1) {
@@ -192,6 +195,7 @@ function earnedUsdcEquivalent(args: {
               : []),
           ],
           total,
+          showOnChain: args.showOnChain,
         }),
       )
     }
@@ -328,6 +332,7 @@ function buildPrincipalDetails(args: {
   const { raw, params, principal, principalConservativeTotal, sqrtPriceX96, poolPrices } = args
   const dec0 = raw.token0Decimals
   const dec1 = raw.token1Decimals
+  const showOnChain = params.showOnChainDerivation ?? false
 
   const steps = principal.legs.flatMap((leg) => {
     if (leg.isDirectUsdc) {
@@ -360,10 +365,14 @@ function buildPrincipalDetails(args: {
         label: `${leg.label} — spot USDC out`,
         value: swap.human,
       },
-      {
-        label: `${leg.label} — on-chain spot`,
-        value: swap.onChain,
-      },
+      ...(showOnChain
+        ? [
+            {
+              label: `${leg.label} — on-chain spot`,
+              value: swap.onChain,
+            },
+          ]
+        : []),
       {
         label: `${leg.label} — conservative out`,
         value: describeConservativeSwap({
@@ -371,6 +380,7 @@ function buildPrincipalDetails(args: {
           conservativeOut: leg.conservativeOut,
           poolFeeTier: raw.fee,
           slippageBps: params.swapSlippageBps,
+          showOnChain,
         }),
       },
     ]
@@ -393,29 +403,36 @@ function buildPrincipalDetails(args: {
           { label: 'swapped (conservative)', raw: principal.conservativeSwap },
         ],
         total: principalConservativeTotal,
+        showOnChain,
       }),
     },
   )
+
+  const inputs: CloseEstimateCalcSection['inputs'] = [
+    {
+      label: `${raw.token0Symbol} principal`,
+      value: formatRawAmount(BigInt(raw.principalAmount0), dec0, raw.token0Symbol),
+    },
+    {
+      label: `${raw.token1Symbol} principal`,
+      value: formatRawAmount(BigInt(raw.principalAmount1), dec1, raw.token1Symbol),
+    },
+    { label: 'Pool price', value: poolPrices.token1PerToken0Label },
+    { label: 'Inverse price', value: poolPrices.token0PerToken1Label },
+    { label: 'Pool fee tier', value: `${raw.fee / 10_000}%` },
+    { label: 'Swap slippage haircut', value: `${params.swapSlippageBps / 100}%` },
+    { label: 'Current tick', value: String(raw.currentTick) },
+  ]
+
+  if (showOnChain) {
+    inputs.push({ label: 'sqrtPriceX96', value: raw.sqrtPriceX96 })
+  }
 
   return {
     title: 'Principal (USDC, conservative)',
     summary: 'Liquidity at current pool price; non-USDC leg valued as USDC at spot, then pool fee + slippage haircut.',
     formula: formatPrincipalFormula(),
-    inputs: [
-      {
-        label: `${raw.token0Symbol} principal`,
-        value: formatRawAmount(BigInt(raw.principalAmount0), dec0, raw.token0Symbol),
-      },
-      {
-        label: `${raw.token1Symbol} principal`,
-        value: formatRawAmount(BigInt(raw.principalAmount1), dec1, raw.token1Symbol),
-      },
-      { label: 'Pool price', value: poolPrices.token1PerToken0Label },
-      { label: 'Inverse price', value: poolPrices.token0PerToken1Label },
-      { label: 'Pool fee tier', value: `${raw.fee / 10_000}%` },
-      { label: 'Swap slippage haircut', value: `${params.swapSlippageBps / 100}%` },
-      { label: 'Current tick', value: String(raw.currentTick) },
-    ],
+    inputs,
     steps,
     result: formatUsdc(principalConservativeTotal),
   }
@@ -454,6 +471,8 @@ function buildEarnedDetails(args: {
     earnedNetSteps,
   } = args
 
+  const showOnChain = params.showOnChainDerivation ?? false
+
   const steps: { label: string; value: string }[] = [
     {
       label: 'Gross uncollected fees',
@@ -489,6 +508,7 @@ function buildEarnedDetails(args: {
           symbol: raw.token0Symbol,
           decimals: raw.token0Decimals,
           feeKind: 'Op fee',
+          showOnChain,
         }),
       },
       {
@@ -500,6 +520,7 @@ function buildEarnedDetails(args: {
           symbol: raw.token1Symbol,
           decimals: raw.token1Decimals,
           feeKind: 'Op fee',
+          showOnChain,
         }),
       },
       {
@@ -511,6 +532,7 @@ function buildEarnedDetails(args: {
           symbol: raw.token0Symbol,
           decimals: raw.token0Decimals,
           feeKind: 'PF',
+          showOnChain,
         }),
       },
       {
@@ -522,6 +544,7 @@ function buildEarnedDetails(args: {
           symbol: raw.token1Symbol,
           decimals: raw.token1Decimals,
           feeKind: 'PF',
+          showOnChain,
         }),
       },
       {
@@ -577,6 +600,7 @@ function buildEarnedDetails(args: {
       { label: 'Performance fee', value: `${params.performanceFeeBps / 100}%` },
       { label: 'Earned dust threshold', value: `$${params.minEarnedUsdc} USDC equiv.` },
       { label: 'Fee source', value: raw.uncollectedFeesSource },
+      ...(showOnChain ? [{ label: 'sqrtPriceX96', value: raw.sqrtPriceX96 }] : []),
     ],
     steps,
     result: formatUsdc(earnedNetUsdc),
@@ -591,6 +615,7 @@ export function estimateCloseUsdc(
     ...DEFAULT_CLOSE_ESTIMATE_PARAMS,
     ...inputParams,
   }
+  const showOnChain = params.showOnChainDerivation ?? false
 
   const sqrtPriceX96 = BigInt(raw.sqrtPriceX96)
   const poolPrices = getQcPoolPrices(raw)
@@ -636,6 +661,7 @@ export function estimateCloseUsdc(
     usdc: BASE_USDC,
     sqrtPriceX96,
     poolPrices,
+    showOnChain,
   })
 
   let earnedNet0 = fee0
@@ -667,6 +693,7 @@ export function estimateCloseUsdc(
         usdc: BASE_USDC,
         sqrtPriceX96,
         poolPrices,
+        showOnChain,
       }).total
       pfFeeUsdc = earnedUsdcEquivalent({
         amount0: charged.pf0,
@@ -680,6 +707,7 @@ export function estimateCloseUsdc(
         usdc: BASE_USDC,
         sqrtPriceX96,
         poolPrices,
+        showOnChain,
       }).total
     }
   }
@@ -696,6 +724,7 @@ export function estimateCloseUsdc(
     usdc: BASE_USDC,
     sqrtPriceX96,
     poolPrices,
+    showOnChain,
   })
 
   const totalSpot = principalSpotTotal + earnedNet.total
