@@ -16,6 +16,8 @@ import {
   formatEarnedFormula,
   formatPrincipalFormula,
   getQcPoolPrices,
+  operationFeeApplicabilityNote,
+  performanceFeeApplicabilityNote,
 } from './close-estimate-derivations'
 import { formatRawAmount, formatRawUsdc } from './format-raw-amount'
 import type { PositionRaw } from './types'
@@ -580,7 +582,8 @@ function buildEarnedDetails(args: {
 
   return {
     title: 'Earned fees net (USDC equiv.)',
-    summary: 'Uncollected fees after optional op + performance fee, converted to USDC at pool price.',
+    summary:
+      'Uncollected earned LP fees after op + performance fee (close/collect/rebalance), converted to USDC at pool price. Neither fee applies to principal.',
     formula: formatEarnedFormula(
       params.minEarnedUsdc,
       params.operationFeeBps / 100,
@@ -596,7 +599,9 @@ function buildEarnedDetails(args: {
         value: formatRawAmount(fee1, raw.token1Decimals, raw.token1Symbol),
       },
       { label: 'Pool price', value: poolPrices.token1PerToken0Label },
+      { label: 'When operation fee applies', value: operationFeeApplicabilityNote() },
       { label: 'Operation fee', value: `${params.operationFeeBps / 100}%` },
+      { label: 'When performance fee applies', value: performanceFeeApplicabilityNote() },
       { label: 'Performance fee', value: `${params.performanceFeeBps / 100}%` },
       { label: 'Earned dust threshold', value: `$${params.minEarnedUsdc} USDC equiv.` },
       { label: 'Fee source', value: raw.uncollectedFeesSource },

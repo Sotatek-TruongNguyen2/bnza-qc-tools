@@ -162,6 +162,22 @@ export function earnedDustThresholdNote(minEarnedUsdc: number): string {
   )
 }
 
+export function operationFeeApplicabilityNote(): string {
+  return (
+    'Charged on uncollected LP fees only — not on principal. Applies at close (redeem), ' +
+    'collect-fees, and rebalance when earned fees are harvested. Taken first, before performance fee. ' +
+    'Skipped when gross earned is below the dust threshold.'
+  )
+}
+
+export function performanceFeeApplicabilityNote(): string {
+  return (
+    'Protocol profit share on earned LP fees only — not on principal. Applies at close (redeem), ' +
+    'collect-fees, and rebalance, charged on the amount left after operation fee. ' +
+    'Skipped when gross earned is below the dust threshold.'
+  )
+}
+
 export function formatPrincipalFormula(): string {
   return 'USDC total = USDC already in position + (other token × pool price), then haircut on swapped leg'
 }

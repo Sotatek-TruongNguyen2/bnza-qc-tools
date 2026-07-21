@@ -45,7 +45,7 @@ export function PositionCloseEstimate({ raw }: Props) {
       </p>
 
       <div className="estimate-form">
-        <label className="field">
+        <label className="field field-with-hint">
           <span>Operation fee on earned (%)</span>
           <input
             value={operationFeePct}
@@ -53,8 +53,12 @@ export function PositionCloseEstimate({ raw }: Props) {
             inputMode="decimal"
             placeholder={String(defaults.operationFeeBps / 100)}
           />
+          <span className="field-hint">
+            On earned LP fees at close/collect/rebalance — not principal. Charged first; skipped below
+            dust threshold.
+          </span>
         </label>
-        <label className="field">
+        <label className="field field-with-hint">
           <span>Performance fee on earned (%)</span>
           <input
             value={performanceFeePct}
@@ -62,6 +66,9 @@ export function PositionCloseEstimate({ raw }: Props) {
             inputMode="decimal"
             placeholder={String(defaults.performanceFeeBps / 100)}
           />
+          <span className="field-hint">
+            Protocol share on earned fees after op fee — not principal. Skipped below dust threshold.
+          </span>
         </label>
         <label className="field">
           <span>Principal swap slippage (%)</span>
