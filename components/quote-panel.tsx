@@ -95,84 +95,92 @@ export function QuotePanel() {
 
   return (
     <section className="panel">
-      <form className="form-grid quote-form" onSubmit={onSubmit}>
-        <label className="field">
-          <span>Amount in</span>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="100"
-            inputMode="decimal"
-          />
-        </label>
-
-        <label className="field">
-          <span>Token in</span>
-          <div className="token-input-wrap">
-            <TokenIcon symbol={tokenIn} size={18} />
+      <form className="quote-form" onSubmit={onSubmit}>
+        <div className="quote-meta-row">
+          <label className="field">
+            <span>Amount in</span>
             <input
-              value={tokenIn}
-              onChange={(e) => setTokenIn(e.target.value)}
-              list="token-presets"
-              placeholder="USDC"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="100"
+              inputMode="decimal"
             />
-          </div>
-          <div className="token-preset-row">
-            {TOKEN_PRESETS.map((t) => (
-              <button
-                key={`in-${t}`}
-                type="button"
-                className="token-preset"
-                onClick={() => setTokenIn(t)}
-              >
-                <TokenIcon symbol={t} size={16} />
-                {t}
-              </button>
-            ))}
-          </div>
-        </label>
+          </label>
 
-        <div className="swap-wrap">
-          <button type="button" className="btn-secondary" onClick={swapTokens}>
-            Swap pair
-          </button>
+          <label className="field">
+            <span>Slippage %</span>
+            <input
+              value={slippage}
+              onChange={(e) => setSlippage(e.target.value)}
+              placeholder="0.5"
+              inputMode="decimal"
+            />
+          </label>
         </div>
 
-        <label className="field">
-          <span>Token out</span>
-          <div className="token-input-wrap">
-            <TokenIcon symbol={tokenOut} size={18} />
-            <input
-              value={tokenOut}
-              onChange={(e) => setTokenOut(e.target.value)}
-              list="token-presets"
-              placeholder="WETH"
-            />
-          </div>
-          <div className="token-preset-row">
-            {TOKEN_PRESETS.map((t) => (
-              <button
-                key={`out-${t}`}
-                type="button"
-                className="token-preset"
-                onClick={() => setTokenOut(t)}
-              >
-                <TokenIcon symbol={t} size={16} />
-                {t}
-              </button>
-            ))}
-          </div>
-        </label>
+        <div className="quote-swap-row">
+          <label className="field">
+            <span>Token in</span>
+            <div className="token-input-wrap">
+              <TokenIcon symbol={tokenIn} size={18} />
+              <input
+                value={tokenIn}
+                onChange={(e) => setTokenIn(e.target.value)}
+                list="token-presets"
+                placeholder="USDC"
+              />
+            </div>
+            <div className="token-preset-row">
+              {TOKEN_PRESETS.map((t) => (
+                <button
+                  key={`in-${t}`}
+                  type="button"
+                  className="token-preset"
+                  onClick={() => setTokenIn(t)}
+                >
+                  <TokenIcon symbol={t} size={16} />
+                  {t}
+                </button>
+              ))}
+            </div>
+          </label>
 
-        <label className="field">
-          <span>Slippage %</span>
-          <input
-            value={slippage}
-            onChange={(e) => setSlippage(e.target.value)}
-            placeholder="0.5"
-            inputMode="decimal"
-          />
-        </label>
+          <button
+            type="button"
+            className="quote-swap-btn btn-secondary"
+            onClick={swapTokens}
+            aria-label="Swap token pair"
+            title="Swap token pair"
+          >
+            ⇄
+          </button>
+
+          <label className="field">
+            <span>Token out</span>
+            <div className="token-input-wrap">
+              <TokenIcon symbol={tokenOut} size={18} />
+              <input
+                value={tokenOut}
+                onChange={(e) => setTokenOut(e.target.value)}
+                list="token-presets"
+                placeholder="WETH"
+              />
+            </div>
+            <div className="token-preset-row">
+              {TOKEN_PRESETS.map((t) => (
+                <button
+                  key={`out-${t}`}
+                  type="button"
+                  className="token-preset"
+                  onClick={() => setTokenOut(t)}
+                >
+                  <TokenIcon symbol={t} size={16} />
+                  {t}
+                </button>
+              ))}
+            </div>
+          </label>
+        </div>
 
         <datalist id="token-presets">
           {TOKEN_PRESETS.map((t) => (
@@ -180,7 +188,7 @@ export function QuotePanel() {
           ))}
         </datalist>
 
-        <button type="submit" className="btn-primary" disabled={loading}>
+        <button type="submit" className="btn-primary quote-submit" disabled={loading}>
           {loading ? 'Quoting…' : 'Quote routes'}
         </button>
       </form>

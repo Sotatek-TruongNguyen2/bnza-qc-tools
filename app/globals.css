@@ -129,10 +129,12 @@ code {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  width: 100%;
   border: 1px solid var(--line);
-  border-radius: 0.55rem;
+  border-radius: 0.65rem;
   padding: 0 0.65rem;
   background: #fff;
+  min-height: calc(0.7rem * 2 + 1.25rem);
 }
 
 .token-input-wrap:focus-within {
@@ -141,8 +143,11 @@ code {
 }
 
 .token-input-wrap input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
   border: 0;
-  padding-left: 0;
+  padding: 0.7rem 0;
   box-shadow: none;
 }
 
@@ -199,12 +204,34 @@ code {
 }
 
 .quote-form {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
-.quote-form .btn-primary,
-.quote-form .swap-wrap {
-  grid-column: 1 / -1;
+.quote-meta-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.quote-swap-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.quote-swap-btn {
+  align-self: center;
+  margin-top: 1.55rem;
+  padding: 0.55rem 0.75rem;
+  line-height: 1;
+  font-size: 1.1rem;
+}
+
+.quote-submit {
+  width: 100%;
 }
 
 .field {
@@ -673,8 +700,17 @@ tr:last-child td {
 }
 
 @media (max-width: 720px) {
-  .form-grid,
-  .quote-form {
+  .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .quote-meta-row,
+  .quote-swap-row {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-swap-btn {
+    margin-top: 0;
+    justify-self: center;
   }
 }
