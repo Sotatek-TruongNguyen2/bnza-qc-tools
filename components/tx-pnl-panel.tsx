@@ -17,7 +17,9 @@ export function TxPnlPanel() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const txHashFromUrl = searchParams.get('txHash')
+  const hlSizeFromUrl = searchParams.get('hlSize')
   const [txHash, setTxHash] = useState('')
+  const [hlSize, setHlSize] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TxPnlResult | null>(null)
@@ -25,11 +27,12 @@ export function TxPnlPanel() {
   useEffect(() => {
     if (!txHashFromUrl || !/^0x[a-fA-F0-9]{64}$/.test(txHashFromUrl)) return
     setTxHash(txHashFromUrl)
-    void runQuery(txHashFromUrl)
+    if (hlSizeFromUrl != null) setHlSize(hlSizeFromUrl)
+    void runQuery(txHashFromUrl, hlSizeFromUrl ?? '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txHashFromUrl])
+  }, [txHashFromUrl, hlSizeFromUrl])
 
-  async function runQuery(hash: string) {
+  async function runQuery(hash: string, hlSizeInput: string) {
     setLoading(true)
     setError(null)
     setResult(null)
@@ -37,10 +40,19 @@ export function TxPnlPanel() {
     const params = new URLSearchParams(searchParams.toString())
     params.set('tool', 'tx-pnl')
     params.set('txHash', hash)
+    const trimmedHlSize = hlSizeInput.trim()
+    if (trimmedHlSize) {
+      params.set('hlSize', trimmedHlSize)
+    } else {
+      params.delete('hlSize')
+    }
     router.replace(`/?${params.toString()}`)
 
+    const query = new URLSearchParams({ txHash: hash })
+    if (trimmedHlSize) query.set('hlSize', trimmedHlSize)
+
     try {
-      const data = await apiGetJson<TxPnlResult>(`/api/tx-pnl?txHash=${encodeURIComponent(hash)}`)
+      const data = await apiGetJson<TxPnlResult>(`/api/tx-pnl?${query.toString()}`)
       setResult(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed')
@@ -56,8 +68,20 @@ export function TxPnlPanel() {
       setError('txHash must be a full 0x transaction hash')
       return
     }
-    void runQuery(hash)
+    if (hlSize.trim() && !Number.isFinite(Number(hlSize.trim()))) {
+      setError('HL size must be a number (use signed ETH size from Hyperliquid, e.g. -0.00285)')
+      return
+    }
+    void runQuery(hash, hlSize)
   }
+
+  const headlinePnl = result?.human.combinedLeg ?? null
+  const headlinePnlLabel = headlinePnl ? 'Combined total PnL' : 'Uniswap total PnL incl. fees'
+  const headlinePnlValue = headlinePnl
+    ? `${headlinePnl.combinedTotalPnl} (${headlinePnl.combinedTotalPnlPct})`
+    : result
+      ? `${result.human.totalPnl} (${result.human.totalPnlPct})`
+      : ''
 
   return (
     <section className="panel">
@@ -72,15 +96,26 @@ export function TxPnlPanel() {
             autoComplete="off"
           />
         </label>
+        <label className="field">
+          <span>HL position size (ETH, optional)</span>
+          <input
+            value={hlSize}
+            onChange={(e) => setHlSize(e.target.value)}
+            placeholder="-0.00285"
+            spellCheck={false}
+            autoComplete="off"
+            inputMode="decimal"
+          />
+        </label>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Calculating…' : 'Compute Uniswap PnL'}
+          {loading ? 'Calculating…' : 'Compute PnL'}
         </button>
       </form>
 
       <p className="hint">
-        Paste the EXBOT open-position tx hash. The tool extracts the minted LP NFT and recorded
-        <code> uniswapUsdc </code> entry basis from on-chain logs, then marks the Uniswap leg to
-        current pool price.
+        Paste the EXBOT open-position tx hash. Optionally add your current Hyperliquid ETH position
+        size (signed: negative for short) to compute combined Uniswap + HL PnL against the full{' '}
+        <code>totalUsdc</code> entry basis.
       </p>
 
       {error && <p className="error">{error}</p>}
@@ -95,13 +130,41 @@ export function TxPnlPanel() {
               </p>
             </div>
             <div className="result-actions">
-              <span className={pnlClass(result.human.totalPnl)}>
-                {result.human.totalPnl} ({result.human.totalPnlPct})
-              </span>
+              <span className={pnlClass(headlinePnlValue)}>{headlinePnlValue}</span>
               <CopyJsonButton value={result} />
             </div>
           </div>
 
+          {result.human.combinedLeg && (
+            <>
+              <h3>Combined legs</h3>
+              <dl className="kv pnl-totals">
+                <div>
+                  <dt>Entry total basis</dt>
+                  <dd className="mono token-inline">
+                    <TokenIcon symbol="USDC" size={16} />
+                    <span>{result.human.entryTotalUsdc}</span>
+                  </dd>
+                </div>
+                <div className="estimate-highlight">
+                  <dt>Current combined total</dt>
+                  <dd className="mono token-inline">
+                    <TokenIcon symbol="USDC" size={16} />
+                    <span>{result.human.combinedLeg.currentCombinedTotal}</span>
+                  </dd>
+                </div>
+                <div className="estimate-highlight">
+                  <dt>{headlinePnlLabel}</dt>
+                  <dd className="mono">
+                    {result.human.combinedLeg.combinedTotalPnl} (
+                    {result.human.combinedLeg.combinedTotalPnlPct})
+                  </dd>
+                </div>
+              </dl>
+            </>
+          )}
+
+          <h3>Uniswap leg</h3>
           <dl className="kv pnl-totals">
             <div>
               <dt>Entry Uniswap basis</dt>
@@ -133,13 +196,50 @@ export function TxPnlPanel() {
             </div>
             <div>
               <dt>Principal-only PnL</dt>
-              <dd className="mono">{result.human.principalOnlyPnl} ({result.human.principalOnlyPnlPct})</dd>
+              <dd className="mono">
+                {result.human.principalOnlyPnl} ({result.human.principalOnlyPnlPct})
+              </dd>
             </div>
-            <div className="estimate-highlight">
+            <div>
               <dt>Total PnL incl. fees</dt>
-              <dd className="mono">{result.human.totalPnl} ({result.human.totalPnlPct})</dd>
+              <dd className="mono">
+                {result.human.totalPnl} ({result.human.totalPnlPct})
+              </dd>
             </div>
           </dl>
+
+          {result.human.hlLeg && (
+            <>
+              <h3>Hyperliquid leg</h3>
+              <dl className="kv pnl-totals">
+                <div>
+                  <dt>HL size input</dt>
+                  <dd className="mono">{result.human.hlLeg.hlSizeEth}</dd>
+                </div>
+                <div>
+                  <dt>Pool price at open (entry proxy)</dt>
+                  <dd className="mono">{result.human.hlLeg.openPrice}</dd>
+                </div>
+                <div>
+                  <dt>HL unrealized PnL</dt>
+                  <dd className="mono">{result.human.hlLeg.currentHlUnrealizedPnl}</dd>
+                </div>
+                <div>
+                  <dt>Current HL leg value</dt>
+                  <dd className="mono token-inline">
+                    <TokenIcon symbol="USDC" size={16} />
+                    <span>{result.human.hlLeg.currentHlTotal}</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>HL total PnL</dt>
+                  <dd className="mono">
+                    {result.human.hlLeg.hlTotalPnl} ({result.human.hlLeg.hlTotalPnlPct})
+                  </dd>
+                </div>
+              </dl>
+            </>
+          )}
 
           <h3>Open tx split</h3>
           <p className="mono">{result.human.entrySplit}</p>
@@ -148,16 +248,32 @@ export function TxPnlPanel() {
           <ul className="plain-list mono">
             <li>{result.human.currentPrice}</li>
             <li>
-              <TokenAmountLine symbol={result.raw.token0Symbol} amount={result.human.currentPrincipal.token0} prefix="Principal token0" />
+              <TokenAmountLine
+                symbol={result.raw.token0Symbol}
+                amount={result.human.currentPrincipal.token0}
+                prefix="Principal token0"
+              />
             </li>
             <li>
-              <TokenAmountLine symbol={result.raw.token1Symbol} amount={result.human.currentPrincipal.token1} prefix="Principal token1" />
+              <TokenAmountLine
+                symbol={result.raw.token1Symbol}
+                amount={result.human.currentPrincipal.token1}
+                prefix="Principal token1"
+              />
             </li>
             <li>
-              <TokenAmountLine symbol={result.raw.token0Symbol} amount={result.human.currentUncollectedFees.token0} prefix="Fees token0" />
+              <TokenAmountLine
+                symbol={result.raw.token0Symbol}
+                amount={result.human.currentUncollectedFees.token0}
+                prefix="Fees token0"
+              />
             </li>
             <li>
-              <TokenAmountLine symbol={result.raw.token1Symbol} amount={result.human.currentUncollectedFees.token1} prefix="Fees token1" />
+              <TokenAmountLine
+                symbol={result.raw.token1Symbol}
+                amount={result.human.currentUncollectedFees.token1}
+                prefix="Fees token1"
+              />
             </li>
             <li className="muted">{result.human.currentUncollectedFees.note}</li>
           </ul>

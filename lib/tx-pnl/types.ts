@@ -1,3 +1,18 @@
+export type TxPnlHlLeg = {
+  hlSizeEth: number
+  openPriceUsdcPerWeth: number
+  currentHlUnrealizedPnlUsdc: string
+  currentHlTotalUsdc: string
+  hlTotalPnlUsdc: string
+  hlTotalPnlPct: number
+}
+
+export type TxPnlCombinedLeg = {
+  currentCombinedTotalUsdc: string
+  combinedTotalPnlUsdc: string
+  combinedTotalPnlPct: number
+}
+
 export type TxPnlResult = {
   raw: {
     chainId: number
@@ -18,6 +33,8 @@ export type TxPnlResult = {
     totalPnlUsdc: string
     principalOnlyPnlPct: number
     totalPnlPct: number
+    hlLeg: TxPnlHlLeg | null
+    combinedLeg: TxPnlCombinedLeg | null
     currentPriceUsdcPerWeth: number
     currentPrincipalAmount0: string
     currentPrincipalAmount1: string
@@ -36,6 +53,7 @@ export type TxPnlResult = {
     summary: string
     tokenId: string
     entryUniswapUsdc: string
+    entryTotalUsdc: string
     currentPrincipalUsdc: string
     currentFeesUsdc: string
     currentTotalUsdc: string
@@ -43,6 +61,19 @@ export type TxPnlResult = {
     totalPnl: string
     principalOnlyPnlPct: string
     totalPnlPct: string
+    hlLeg: {
+      hlSizeEth: string
+      openPrice: string
+      currentHlUnrealizedPnl: string
+      currentHlTotal: string
+      hlTotalPnl: string
+      hlTotalPnlPct: string
+    } | null
+    combinedLeg: {
+      currentCombinedTotal: string
+      combinedTotalPnl: string
+      combinedTotalPnlPct: string
+    } | null
     entrySplit: string
     currentPrice: string
     currentPrincipal: {
