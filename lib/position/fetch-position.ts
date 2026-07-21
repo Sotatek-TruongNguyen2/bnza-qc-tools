@@ -1,5 +1,6 @@
 import { getAddress } from 'viem'
 import type { BasePublicClient } from '@/lib/rpc'
+import { normalizeTokenSymbol } from '@/lib/base-known-tokens'
 import {
   CHAIN_ID,
   ERC20_ABI,
@@ -122,6 +123,8 @@ export async function fetchPosition(
 
   const dec0 = Number(token0Decimals)
   const dec1 = Number(token1Decimals)
+  const sym0 = normalizeTokenSymbol(token0, token0Symbol)
+  const sym1 = normalizeTokenSymbol(token1, token1Symbol)
 
   const priceLower = tickToPriceRatio(Number(tickLower), dec0, dec1)
   const priceUpper = tickToPriceRatio(Number(tickUpper), dec0, dec1)
@@ -136,11 +139,11 @@ export async function fetchPosition(
     nonce: nonce.toString(),
     token0,
     token1,
-    token0Symbol,
-    token1Symbol,
+    token0Symbol: sym0,
+    token1Symbol: sym1,
     token0Decimals: dec0,
     token1Decimals: dec1,
-    pair: `${token0Symbol}/${token1Symbol}`,
+    pair: `${sym0}/${sym1}`,
     fee: Number(fee),
     feeLabel: feeTierLabel(Number(fee)),
     tickLower: Number(tickLower),
@@ -175,26 +178,26 @@ export async function fetchPosition(
   }
 
   const human = {
-    summary: `${token0Symbol}/${token1Symbol} | fee ${feeTierLabel(Number(fee))} | tokenId #${tokenId}`,
+    summary: `${sym0}/${sym1} | fee ${feeTierLabel(Number(fee))} | tokenId #${tokenId}`,
     owner: getAddress(owner),
     status: raw.rangeStatus,
     tickRange: `[${tickLower}, ${tickUpper}) vs current ${currentTick}`,
     prices: {
-      atLowerTick: formatPrice(`${token1Symbol} per ${token0Symbol}`, priceLower),
-      atUpperTick: formatPrice(`${token1Symbol} per ${token0Symbol}`, priceUpper),
-      atCurrentTick: formatPrice(`${token1Symbol} per ${token0Symbol}`, priceCurrent),
+      atLowerTick: formatPrice(`${sym1} per ${sym0}`, priceLower),
+      atUpperTick: formatPrice(`${sym1} per ${sym0}`, priceUpper),
+      atCurrentTick: formatPrice(`${sym1} per ${sym0}`, priceCurrent),
       inverseAtCurrentTick: formatPrice(
-        `${token0Symbol} per ${token1Symbol}`,
+        `${sym0} per ${sym1}`,
         raw.priceToken0PerToken1AtCurrentTick ?? 0,
       ),
     },
     principal: {
-      token0: formatTokenAmount(amount0, dec0, token0Symbol),
-      token1: formatTokenAmount(amount1, dec1, token1Symbol),
+      token0: formatTokenAmount(amount0, dec0, sym0),
+      token1: formatTokenAmount(amount1, dec1, sym1),
     },
     uncollectedFees: {
-      token0: formatTokenAmount(uncollected0, dec0, token0Symbol),
-      token1: formatTokenAmount(uncollected1, dec1, token1Symbol),
+      token0: formatTokenAmount(uncollected0, dec0, sym0),
+      token1: formatTokenAmount(uncollected1, dec1, sym1),
       note: collectSimulation,
     },
     liquidity: liquidity.toString(),

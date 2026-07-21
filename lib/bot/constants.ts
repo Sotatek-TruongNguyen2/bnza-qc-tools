@@ -1,13 +1,13 @@
 import { parseAbi } from 'viem'
 
+export { BASE_USDC_ADDRESS } from '@/lib/base-known-tokens'
+
 /** Base mainnet — override via env on Vercel. */
 export const VAULT_ADDRESS = (process.env.BASE_BNZA_EX_VAULT_ADDRESS ??
   '0x71C6Bc7d0Ca95C1d901A2A185E8c90d4530e3005') as `0x${string}`
 
 export const POSITION_MANAGER_ADDRESS = (process.env.BASE_BNZA_EX_POSITION_MANAGER_ADDRESS ??
   '0x5D1A6AC93895d17C8312Ffbd1C38B3beb8C46D6A') as `0x${string}`
-
-export const BASE_USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const
 
 export const CHAIN_ID = 8453
 

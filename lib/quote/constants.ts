@@ -1,4 +1,5 @@
 import { parseAbi } from 'viem'
+import { BASE_KNOWN_TOKEN_META, BASE_KNOWN_TOKENS } from '@/lib/base-known-tokens'
 
 export const CHAIN_ID = 8453
 export const DEFAULT_SLIPPAGE_BPS = 50
@@ -9,16 +10,8 @@ export const QUOTER_ADDRESS = '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a' as co
 
 export const FEE_TIERS = [100, 500, 3000, 10_000] as const
 
-export const KNOWN_TOKENS = {
-  USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  WETH: '0x4200000000000000000000000000000000000006',
-  ETH: '0x4200000000000000000000000000000000000006',
-} as const
-
-export const KNOWN_TOKEN_META: Record<string, { symbol: string; decimals: number }> = {
-  [KNOWN_TOKENS.USDC.toLowerCase()]: { symbol: 'USDC', decimals: 6 },
-  [KNOWN_TOKENS.WETH.toLowerCase()]: { symbol: 'WETH', decimals: 18 },
-}
+export const KNOWN_TOKENS = BASE_KNOWN_TOKENS
+export const KNOWN_TOKEN_META = BASE_KNOWN_TOKEN_META
 
 export const INTERMEDIATE_TOKENS = [KNOWN_TOKENS.WETH, KNOWN_TOKENS.USDC] as const
 

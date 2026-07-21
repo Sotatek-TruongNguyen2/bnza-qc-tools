@@ -1,5 +1,7 @@
 import { formatUnits, getAddress, zeroAddress } from 'viem'
 import type { BasePublicClient } from '@/lib/rpc'
+import { formatTokenLabel, knownTokenSymbol } from '@/lib/base-known-tokens'
+import { ERC20_ABI } from '@/lib/position/constants'
 import { basescanLink } from '@/lib/position/format'
 import {
   BASE_USDC_ADDRESS,
@@ -152,6 +154,14 @@ export async function fetchBot(
   const depositToken =
     depositTokenRaw === zeroAddress ? getAddress(usdcAddress) : getAddress(depositTokenRaw)
 
+  const depositTokenSymbol =
+    knownTokenSymbol(depositToken) ??
+    (await client.readContract({
+      address: depositToken,
+      abi: ERC20_ABI,
+      functionName: 'symbol',
+    }))
+
   const positions = await fetchPositionSummaries(client, user, botIdBytes32, tokenIds)
   const capitalState = formatBotCapitalState({
     unspent,
@@ -171,6 +181,7 @@ export async function fetchBot(
     vaultAddress: VAULT_ADDRESS,
     positionManagerAddress: POSITION_MANAGER_ADDRESS,
     depositToken,
+    depositTokenSymbol,
     usdcAddress: getAddress(usdcAddress),
     unspentBalance: unspent.toString(),
     deployedCapital: deployed.toString(),
@@ -191,6 +202,8 @@ export async function fetchBot(
       botIdInput: botIdInput.trim(),
       botIdBytes32,
       depositToken,
+      depositTokenSymbol,
+      depositTokenLabel: formatTokenLabel(depositToken, depositTokenSymbol),
       unspentUsdc: formatUsdc(unspent),
       deployedUsdc: formatUsdc(deployed),
       totalTrackedUsdc: formatUsdc(totalTracked),

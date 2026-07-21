@@ -23,6 +23,7 @@ export type BotRaw = {
   vaultAddress: string
   positionManagerAddress: string
   depositToken: string
+  depositTokenSymbol: string
   usdcAddress: string
   unspentBalance: string
   deployedCapital: string
@@ -43,6 +44,8 @@ export type BotResult = {
     botIdInput: string
     botIdBytes32: string
     depositToken: string
+    depositTokenSymbol: string
+    depositTokenLabel: string
     unspentUsdc: string
     deployedUsdc: string
     totalTrackedUsdc: string

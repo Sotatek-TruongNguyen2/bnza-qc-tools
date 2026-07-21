@@ -144,7 +144,7 @@ export function BotPanel() {
               <dt>Deposit token</dt>
               <dd className="mono">
                 <a href={result.human.links.depositToken} target="_blank" rel="noreferrer">
-                  {result.human.depositToken}
+                  {result.human.depositTokenLabel}
                 </a>
               </dd>
             </div>

@@ -119,14 +119,22 @@ export function PositionPanel() {
 
           <h3>Principal</h3>
           <ul className="plain-list mono">
-            <li>{result.human.principal.token0}</li>
-            <li>{result.human.principal.token1}</li>
+            <li>
+              Token0 ({result.raw.token0Symbol}): {result.human.principal.token0}
+            </li>
+            <li>
+              Token1 ({result.raw.token1Symbol}): {result.human.principal.token1}
+            </li>
           </ul>
 
           <h3>Uncollected fees</h3>
           <ul className="plain-list mono">
-            <li>{result.human.uncollectedFees.token0}</li>
-            <li>{result.human.uncollectedFees.token1}</li>
+            <li>
+              Token0 ({result.raw.token0Symbol}): {result.human.uncollectedFees.token0}
+            </li>
+            <li>
+              Token1 ({result.raw.token1Symbol}): {result.human.uncollectedFees.token1}
+            </li>
             <li className="muted">{result.human.uncollectedFees.note}</li>
           </ul>
 
