@@ -66,7 +66,7 @@ export function TxPnlPanel() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TxPnlResult | null>(null)
   const [openHintId, setOpenHintId] = useState<string | null>(null)
-  const [principalInTokens, setPrincipalInTokens] = useState(false)
+  const [showBothTokens, setShowBothTokens] = useState(false)
 
   function toggleHint(hintId: string) {
     setOpenHintId((current) => (current === hintId ? null : hintId))
@@ -228,7 +228,21 @@ export function TxPnlPanel() {
             </>
           )}
 
-          <h3>Uniswap leg</h3>
+          <div className="pnl-uniswap-header">
+            <h3>Uniswap leg</h3>
+            <label className="pnl-slide-toggle">
+              <span className="pnl-slide-label">Show both tokens</span>
+              <input
+                type="checkbox"
+                checked={showBothTokens}
+                onChange={(e) => setShowBothTokens(e.target.checked)}
+                aria-label="Show principal and fees in both tokens"
+              />
+              <span className="pnl-slide-track" aria-hidden="true">
+                <span className="pnl-slide-thumb" />
+              </span>
+            </label>
+          </div>
           <dl className="kv pnl-totals">
             <div>
               <dt>Entry Uniswap basis</dt>
@@ -246,40 +260,26 @@ export function TxPnlPanel() {
                 onToggle={toggleHint}
                 onClose={() => setOpenHintId(null)}
               />
-              <div className="pnl-principal-display">
-                <label className="pnl-slide-toggle">
-                  <span className="pnl-slide-label">Show both tokens</span>
-                  <input
-                    type="checkbox"
-                    checked={principalInTokens}
-                    onChange={(e) => setPrincipalInTokens(e.target.checked)}
-                    aria-label="Show principal in both tokens"
+              {!showBothTokens ? (
+                <dd className="mono token-inline">
+                  <TokenIcon symbol="USDC" size={16} />
+                  <span>{result.human.currentPrincipalUsdc}</span>
+                </dd>
+              ) : (
+                <dd className="pnl-token-breakdown">
+                  <TokenAmountLine
+                    symbol={result.raw.token0Symbol}
+                    amount={result.human.currentPrincipal.token0}
                   />
-                  <span className="pnl-slide-track" aria-hidden="true">
-                    <span className="pnl-slide-thumb" />
+                  <TokenAmountLine
+                    symbol={result.raw.token1Symbol}
+                    amount={result.human.currentPrincipal.token1}
+                  />
+                  <span className="muted mono pnl-usdc-equiv">
+                    ≈ {result.human.currentPrincipalUsdc}
                   </span>
-                </label>
-                {!principalInTokens ? (
-                  <dd className="mono token-inline">
-                    <TokenIcon symbol="USDC" size={16} />
-                    <span>{result.human.currentPrincipalUsdc}</span>
-                  </dd>
-                ) : (
-                  <dd className="pnl-principal-tokens">
-                    <TokenAmountLine
-                      symbol={result.raw.token0Symbol}
-                      amount={result.human.currentPrincipal.token0}
-                    />
-                    <TokenAmountLine
-                      symbol={result.raw.token1Symbol}
-                      amount={result.human.currentPrincipal.token1}
-                    />
-                    <span className="muted mono pnl-principal-usdc-equiv">
-                      ≈ {result.human.currentPrincipalUsdc}
-                    </span>
-                  </dd>
-                )}
-              </div>
+                </dd>
+              )}
             </div>
             <div>
               <DtWithHint
@@ -290,10 +290,26 @@ export function TxPnlPanel() {
                 onToggle={toggleHint}
                 onClose={() => setOpenHintId(null)}
               />
-              <dd className="mono token-inline">
-                <TokenIcon symbol="USDC" size={16} />
-                <span>{result.human.currentFeesUsdc}</span>
-              </dd>
+              {!showBothTokens ? (
+                <dd className="mono token-inline">
+                  <TokenIcon symbol="USDC" size={16} />
+                  <span>{result.human.currentFeesUsdc}</span>
+                </dd>
+              ) : (
+                <dd className="pnl-token-breakdown">
+                  <TokenAmountLine
+                    symbol={result.raw.token0Symbol}
+                    amount={result.human.currentUncollectedFees.token0}
+                  />
+                  <TokenAmountLine
+                    symbol={result.raw.token1Symbol}
+                    amount={result.human.currentUncollectedFees.token1}
+                  />
+                  <span className="muted mono pnl-usdc-equiv">
+                    ≈ {result.human.currentFeesUsdc}
+                  </span>
+                </dd>
+              )}
             </div>
             <div className="estimate-highlight">
               <DtWithHint

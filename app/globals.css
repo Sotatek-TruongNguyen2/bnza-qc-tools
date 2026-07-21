@@ -612,9 +612,17 @@ input:focus {
   margin-top: 1rem;
 }
 
-.pnl-principal-display {
-  display: grid;
-  gap: 0.45rem;
+.pnl-uniswap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+.pnl-uniswap-header h3 {
+  margin: 0;
 }
 
 .pnl-slide-toggle {
@@ -676,17 +684,17 @@ input:focus {
   outline-offset: 2px;
 }
 
-.pnl-principal-tokens {
+.pnl-token-breakdown {
   display: grid;
   gap: 0.35rem;
   margin: 0;
 }
 
-.pnl-principal-tokens .token-amount-line {
+.pnl-token-breakdown .token-amount-line {
   display: flex;
 }
 
-.pnl-principal-usdc-equiv {
+.pnl-usdc-equiv {
   font-size: 0.85rem;
 }
 
