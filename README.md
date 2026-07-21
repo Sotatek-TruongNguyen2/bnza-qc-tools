@@ -2,7 +2,7 @@
 
 Standalone Next.js app for QA/QC on **Base mainnet** (read-only):
 
-1. **Position lookup** — Uniswap V3 LP NFT by `tokenId`
+1. **Position lookup** — Uniswap V3 LP NFT by `tokenId` (+ estimated USDC after close)
 2. **Swap quote** — route comparison + slippage `amountOutMinimum`
 
 Logic mirrors the helper scripts formerly in `bonanzapool` / `contracts/bnza-exbot/scripts/`:

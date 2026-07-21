@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CopyJsonButton } from './copy-json-button'
+import { PositionCloseEstimate } from './position-close-estimate'
 import { apiGetJson } from '@/lib/api-client'
 import type { PositionResult } from '@/lib/position/types'
 
@@ -127,6 +128,8 @@ export function PositionPanel() {
             <li>{result.human.uncollectedFees.token1}</li>
             <li className="muted">{result.human.uncollectedFees.note}</li>
           </ul>
+
+          <PositionCloseEstimate raw={result.raw} />
 
           <h3>Basescan</h3>
           <ul className="plain-list">
