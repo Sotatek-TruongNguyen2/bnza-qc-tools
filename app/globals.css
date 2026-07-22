@@ -94,7 +94,9 @@ code {
 
 .hero-brand img {
   display: block;
-  border-radius: 999px;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }
 
 .hero-brand-sep {
