@@ -1,6 +1,6 @@
 import type { CloseEstimateCalcSection } from './close-estimate-types'
 import { formatRawAmount } from './format-raw-amount'
-import { getSqrtRatioAtTick } from './format'
+import { getSqrtRatioAtTick, tickToPriceRatio } from './format'
 import type { PositionRaw } from './types'
 
 /**
@@ -17,6 +17,11 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
 
   const token0 = formatRawAmount(amount0, raw.token0Decimals, raw.token0Symbol)
   const token1 = formatRawAmount(amount1, raw.token1Decimals, raw.token1Symbol)
+
+  const priceLower = tickToPriceRatio(raw.tickLower, raw.token0Decimals, raw.token1Decimals)
+  const priceUpper = tickToPriceRatio(raw.tickUpper, raw.token0Decimals, raw.token1Decimals)
+  const priceLowerLabel = formatHumanPrice(priceLower, raw.token0Symbol, raw.token1Symbol)
+  const priceUpperLabel = formatHumanPrice(priceUpper, raw.token0Symbol, raw.token1Symbol)
 
   const rangeBranch =
     liquidity === 0n
@@ -46,6 +51,45 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
           : 'amount0 = 0; amount1 = 0'
 
   const steps: CloseEstimateCalcSection['steps'] = [
+    {
+      label: 'What is a tick?',
+      value:
+        'A tick is a price step on Uniswap V3. Each position has a lower and upper tick ' +
+        '(tickLower, tickUpper). The pool’s current tick is where price is right now.',
+    },
+    {
+      label: 'Price from tick',
+      value:
+        `Human price ≈ 1.0001^tick (then adjust for token decimals). ` +
+        `Example: tickLower ${raw.tickLower} → about ${priceLowerLabel}; ` +
+        `tickUpper ${raw.tickUpper} → about ${priceUpperLabel}.`,
+    },
+    {
+      label: '√P from tick (on-chain form)',
+      value:
+        'Contracts do not store √P as a normal float. They store √P × 2^96 ' +
+        '(called sqrtPriceX96 / √P×2^96). We compute it with Uniswap’s getSqrtRatioAtTick(tick): ' +
+        '√Pl = getSqrtRatioAtTick(tickLower), √Pu = getSqrtRatioAtTick(tickUpper). ' +
+        'Same idea as: √(1.0001^tick) × 2^96.',
+    },
+    {
+      label: 'tickLower → √Pl',
+      value:
+        `tickLower = ${raw.tickLower} → √Pl = getSqrtRatioAtTick(${raw.tickLower}) = ${sqrtLower.toString()} ` +
+        `(≈ √(${priceLower.toPrecision(6)}) × 2^96).`,
+    },
+    {
+      label: 'tickUpper → √Pu',
+      value:
+        `tickUpper = ${raw.tickUpper} → √Pu = getSqrtRatioAtTick(${raw.tickUpper}) = ${sqrtUpper.toString()} ` +
+        `(≈ √(${priceUpper.toPrecision(6)}) × 2^96).`,
+    },
+    {
+      label: 'Current price √Pc',
+      value:
+        `Read from the pool slot0 as sqrtPriceX96 = ${raw.sqrtPriceX96} ` +
+        `(currentTick = ${raw.currentTick}). This is √Pc in the formulas below.`,
+    },
     { label: 'Range branch', value: branchLabel },
   ]
 
@@ -96,13 +140,32 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
     formula,
     inputs: [
       { label: 'Liquidity L', value: raw.liquidity },
-      { label: 'tickLower / √Pl', value: `${raw.tickLower} / ${sqrtLower.toString()}` },
-      { label: 'tickUpper / √Pu', value: `${raw.tickUpper} / ${sqrtUpper.toString()}` },
+      {
+        label: 'tickLower → √Pl',
+        value:
+          `${raw.tickLower} → ${sqrtLower.toString()} ` +
+          `(getSqrtRatioAtTick; ≈ √(1.0001^tick) × 2^96; human price ≈ ${priceLowerLabel})`,
+      },
+      {
+        label: 'tickUpper → √Pu',
+        value:
+          `${raw.tickUpper} → ${sqrtUpper.toString()} ` +
+          `(getSqrtRatioAtTick; ≈ √(1.0001^tick) × 2^96; human price ≈ ${priceUpperLabel})`,
+      },
       { label: 'currentTick', value: String(raw.currentTick) },
-      { label: '√Pc (sqrtPriceX96)', value: raw.sqrtPriceX96 },
+      {
+        label: '√Pc (sqrtPriceX96 from pool)',
+        value: `${raw.sqrtPriceX96} (same X96 encoding as √Pl / √Pu)`,
+      },
       { label: 'Status', value: raw.rangeStatus },
     ],
     steps,
     result: `${token0} + ${token1}`,
   }
+}
+
+function formatHumanPrice(price: number, token0Symbol: string, token1Symbol: string): string {
+  if (!Number.isFinite(price) || price <= 0) return 'n/a'
+  const digits = price >= 1000 || price < 0.001 ? 6 : 4
+  return `${price.toPrecision(digits)} ${token1Symbol} per ${token0Symbol}`
 }
