@@ -151,21 +151,53 @@ code {
 }
 
 .token-icon {
+  display: block;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  line-height: 0;
 }
 
 .token-inline {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+.token-inline > span {
+  line-height: 1.2;
 }
 
 .token-amount-line {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  line-height: 1.2;
+}
+
+.deposit-token-row > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.deposit-token-row > a:hover .deposit-token-address {
+  text-decoration: underline;
+}
+
+.deposit-token-sep {
+  color: var(--muted);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.deposit-token-address {
+  line-height: 1.2;
+  word-break: break-all;
 }
 
 .plain-list > li.token-amount-line,

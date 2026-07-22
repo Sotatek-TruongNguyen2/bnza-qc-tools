@@ -143,14 +143,17 @@ export function BotPanel() {
             </div>
             <div>
               <dt>Deposit token</dt>
-              <dd className="mono">
+              <dd className="mono deposit-token-row">
                 <a href={result.human.links.depositToken} target="_blank" rel="noreferrer">
                   <TokenSymbol
                     symbol={result.human.depositTokenSymbol}
                     address={result.human.depositToken}
                     size={18}
-                  />{' '}
-                  · {result.human.depositToken}
+                  />
+                  <span className="deposit-token-sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span className="deposit-token-address">{result.human.depositToken}</span>
                 </a>
               </dd>
             </div>
