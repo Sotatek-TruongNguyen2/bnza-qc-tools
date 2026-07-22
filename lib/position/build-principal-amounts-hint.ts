@@ -60,38 +60,43 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
         `  tickUpper ${raw.tickUpper} → about ${priceUpperLabel}`,
     },
     {
-      label: '√P from tick (on-chain form)',
+      label: '√P from tick',
       value:
-        `Contracts do not store √P as a normal float.\n` +
-        `They store √P × 2^96 (called sqrtPriceX96).\n` +
+        `Uniswap math uses the square root of price (√P), not the price itself.\n` +
         `\n` +
-        `We compute it with Uniswap’s getSqrtRatioAtTick(tick):\n` +
-        `  √Pl = getSqrtRatioAtTick(tickLower)\n` +
-        `  √Pu = getSqrtRatioAtTick(tickUpper)\n` +
+        `On chain, √P is stored as a big integer:\n` +
+        `  √P × 2^96\n` +
         `\n` +
-        `Same idea as: √(1.0001^tick) × 2^96`,
+        `So for any tick:\n` +
+        `  √P ≈ √(1.0001^tick) × 2^96\n` +
+        `\n` +
+        `We write:\n` +
+        `  √Pl = √P at tickLower\n` +
+        `  √Pu = √P at tickUpper`,
     },
     {
       label: 'tickLower → √Pl',
       value:
         `tickLower = ${raw.tickLower}\n` +
-        `√Pl = getSqrtRatioAtTick(${raw.tickLower})\n` +
-        `    = ${sqrtLower.toString()}\n` +
-        `(≈ √(${priceLower.toPrecision(6)}) × 2^96)`,
+        `human price ≈ ${priceLowerLabel}\n` +
+        `\n` +
+        `√Pl = √(price) × 2^96\n` +
+        `    = ${sqrtLower.toString()}`,
     },
     {
       label: 'tickUpper → √Pu',
       value:
         `tickUpper = ${raw.tickUpper}\n` +
-        `√Pu = getSqrtRatioAtTick(${raw.tickUpper})\n` +
-        `    = ${sqrtUpper.toString()}\n` +
-        `(≈ √(${priceUpper.toPrecision(6)}) × 2^96)`,
+        `human price ≈ ${priceUpperLabel}\n` +
+        `\n` +
+        `√Pu = √(price) × 2^96\n` +
+        `    = ${sqrtUpper.toString()}`,
     },
     {
       label: 'Current price √Pc',
       value:
-        `Read from the pool slot0:\n` +
-        `  sqrtPriceX96 = ${raw.sqrtPriceX96}\n` +
+        `Read from the pool’s current price:\n` +
+        `  √Pc = ${raw.sqrtPriceX96}\n` +
         `  currentTick = ${raw.currentTick}\n` +
         `\n` +
         `This is √Pc in the formulas below.`,
@@ -149,23 +154,23 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
       {
         label: 'tickLower → √Pl',
         value:
-          `${raw.tickLower} → ${sqrtLower.toString()}\n` +
-          `getSqrtRatioAtTick(tick)\n` +
+          `tick = ${raw.tickLower}\n` +
+          `√Pl = ${sqrtLower.toString()}\n` +
           `≈ √(1.0001^tick) × 2^96\n` +
           `human price ≈ ${priceLowerLabel}`,
       },
       {
         label: 'tickUpper → √Pu',
         value:
-          `${raw.tickUpper} → ${sqrtUpper.toString()}\n` +
-          `getSqrtRatioAtTick(tick)\n` +
+          `tick = ${raw.tickUpper}\n` +
+          `√Pu = ${sqrtUpper.toString()}\n` +
           `≈ √(1.0001^tick) × 2^96\n` +
           `human price ≈ ${priceUpperLabel}`,
       },
       { label: 'currentTick', value: String(raw.currentTick) },
       {
-        label: '√Pc (sqrtPriceX96 from pool)',
-        value: `${raw.sqrtPriceX96}\n(same X96 encoding as √Pl / √Pu)`,
+        label: '√Pc (current pool price)',
+        value: `${raw.sqrtPriceX96}\n(same √P × 2^96 form as √Pl / √Pu)`,
       },
       { label: 'Status', value: raw.rangeStatus },
     ],
