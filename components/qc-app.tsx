@@ -1,11 +1,13 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AddressesPanel } from './addresses-panel'
 import { BotPanel } from './bot-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
 import { TxPnlPanel } from './tx-pnl-panel'
+import { replaceQueryParams } from '@/lib/url-query'
 
 type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl'
 
@@ -23,15 +25,20 @@ function toolFromParam(value: string | null): Tool {
 }
 
 export function QcApp() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const tool = toolFromParam(searchParams.get('tool'))
+  const [tool, setTool] = useState<Tool>(() => toolFromParam(searchParams.get('tool')))
+
+  // Sync if the URL is changed by the browser (back/forward) or a full load.
+  useEffect(() => {
+    setTool(toolFromParam(searchParams.get('tool')))
+  }, [searchParams])
 
   function selectTool(next: Tool) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tool', next)
-    const qs = params.toString()
-    router.replace(qs ? `/?${qs}` : '/')
+    if (next === tool) return
+    setTool(next)
+    replaceQueryParams((params) => {
+      params.set('tool', next)
+    })
   }
 
   return (
@@ -101,41 +108,12 @@ export function QcApp() {
       </nav>
 
       <div className="tab-panels">
-        <div
-          className={tool === 'bot' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
-          aria-hidden={tool !== 'bot'}
-          hidden={tool !== 'bot'}
-        >
-          <BotPanel />
-        </div>
-        <div
-          className={tool === 'position' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
-          aria-hidden={tool !== 'position'}
-          hidden={tool !== 'position'}
-        >
-          <PositionPanel />
-        </div>
-        <div
-          className={tool === 'quote' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
-          aria-hidden={tool !== 'quote'}
-          hidden={tool !== 'quote'}
-        >
-          <QuotePanel />
-        </div>
-        <div
-          className={tool === 'tx-pnl' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
-          aria-hidden={tool !== 'tx-pnl'}
-          hidden={tool !== 'tx-pnl'}
-        >
-          <TxPnlPanel />
-        </div>
-        <div
-          className={tool === 'addresses' ? 'tab-panel' : 'tab-panel tab-panel-hidden'}
-          aria-hidden={tool !== 'addresses'}
-          hidden={tool !== 'addresses'}
-        >
-          <AddressesPanel />
-        </div>
+        {/* Mount only the active tool — avoids hidden panels rewriting the URL / refetching. */}
+        {tool === 'bot' && <BotPanel />}
+        {tool === 'position' && <PositionPanel />}
+        {tool === 'quote' && <QuotePanel />}
+        {tool === 'tx-pnl' && <TxPnlPanel />}
+        {tool === 'addresses' && <AddressesPanel />}
       </div>
 
       <footer className="footer">

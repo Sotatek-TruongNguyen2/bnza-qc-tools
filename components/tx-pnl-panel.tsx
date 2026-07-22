@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenIcon } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
 import type { CloseEstimateCalcSection } from '@/lib/position/close-estimate-types'
 import type { TxPnlResult } from '@/lib/tx-pnl/types'
+import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
 
 function pnlClass(value: string): string {
   if (value.startsWith('+')) return 'badge-ok'
@@ -56,11 +56,6 @@ function DtWithHint({
 }
 
 export function TxPnlPanel() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const txHashFromUrl = searchParams.get('txHash')
-  const closeTxHashFromUrl = searchParams.get('closeTxHash')
-  const hlCurrentFromUrl = searchParams.get('hlCurrent') ?? searchParams.get('hlSize')
   const [txHash, setTxHash] = useState('')
   const [closeTxHash, setCloseTxHash] = useState('')
   const [hlCurrent, setHlCurrent] = useState('')
@@ -69,37 +64,54 @@ export function TxPnlPanel() {
   const [result, setResult] = useState<TxPnlResult | null>(null)
   const [openHintId, setOpenHintId] = useState<string | null>(null)
   const [showBothTokens, setShowBothTokens] = useState(false)
+  const autoFetchedKeyRef = useRef<string | null>(null)
 
   function toggleHint(hintId: string) {
     setOpenHintId((current) => (current === hintId ? null : hintId))
   }
 
   useEffect(() => {
-    if (!txHashFromUrl || !/^0x[a-fA-F0-9]{64}$/.test(txHashFromUrl)) return
-    setTxHash(txHashFromUrl)
-    if (closeTxHashFromUrl) setCloseTxHash(closeTxHashFromUrl)
-    if (hlCurrentFromUrl != null) setHlCurrent(hlCurrentFromUrl)
-    void runQuery(txHashFromUrl, closeTxHashFromUrl ?? '', hlCurrentFromUrl ?? '')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txHashFromUrl, closeTxHashFromUrl, hlCurrentFromUrl])
+    const hash = readQueryParam('txHash')
+    const closeHash = readQueryParam('closeTxHash') ?? ''
+    const hl = readQueryParam('hlCurrent') ?? readQueryParam('hlSize') ?? ''
+    if (!hash || !/^0x[a-fA-F0-9]{64}$/.test(hash)) return
 
-  async function runQuery(hash: string, closeHash: string, hlCurrentInput: string) {
+    setTxHash(hash)
+    if (closeHash) setCloseTxHash(closeHash)
+    if (hl) setHlCurrent(hl)
+
+    const key = `${hash}|${closeHash}|${hl}`
+    if (autoFetchedKeyRef.current === key) return
+    autoFetchedKeyRef.current = key
+    void runQuery(hash, closeHash, hl, { syncUrl: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function runQuery(
+    hash: string,
+    closeHash: string,
+    hlCurrentInput: string,
+    opts?: { syncUrl?: boolean },
+  ) {
     setLoading(true)
     setError(null)
     setResult(null)
     setOpenHintId(null)
 
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tool', 'tx-pnl')
-    params.set('txHash', hash)
     const trimmedClose = closeHash.trim()
     const trimmedHlCurrent = hlCurrentInput.trim()
-    if (trimmedClose) params.set('closeTxHash', trimmedClose)
-    else params.delete('closeTxHash')
-    if (trimmedHlCurrent) params.set('hlCurrent', trimmedHlCurrent)
-    else params.delete('hlCurrent')
-    params.delete('hlSize')
-    router.replace(`/?${params.toString()}`)
+
+    if (opts?.syncUrl !== false) {
+      replaceQueryParams((params) => {
+        params.set('tool', 'tx-pnl')
+        params.set('txHash', hash)
+        if (trimmedClose) params.set('closeTxHash', trimmedClose)
+        else params.delete('closeTxHash')
+        if (trimmedHlCurrent) params.set('hlCurrent', trimmedHlCurrent)
+        else params.delete('hlCurrent')
+        params.delete('hlSize')
+      })
+    }
 
     const query = new URLSearchParams({ txHash: hash })
     if (trimmedClose) query.set('closeTxHash', trimmedClose)
@@ -131,7 +143,8 @@ export function TxPnlPanel() {
       setError('HL value must be a USDC number (e.g. 5.48)')
       return
     }
-    void runQuery(hash, closeHash, hlCurrent)
+    autoFetchedKeyRef.current = `${hash}|${closeHash}|${hlCurrent.trim()}`
+    void runQuery(hash, closeHash, hlCurrent, { syncUrl: true })
   }
 
   const needsCloseTx = result?.human.needsCloseTx === true

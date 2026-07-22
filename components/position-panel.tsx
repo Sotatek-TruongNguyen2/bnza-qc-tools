@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenSymbol } from './token-icon'
@@ -9,6 +8,7 @@ import { PositionCloseEstimate } from './position-close-estimate'
 import { apiGetJson } from '@/lib/api-client'
 import { buildPrincipalAmountsHint } from '@/lib/position/build-principal-amounts-hint'
 import type { PositionResult } from '@/lib/position/types'
+import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
 
 function statusClass(status: string): string {
   if (status.startsWith('IN RANGE')) return 'badge-ok'
@@ -17,14 +17,12 @@ function statusClass(status: string): string {
 }
 
 export function PositionPanel() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const tokenIdFromUrl = searchParams.get('tokenId')
   const [tokenId, setTokenId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<PositionResult | null>(null)
   const [openHintId, setOpenHintId] = useState<string | null>(null)
+  const autoFetchedIdRef = useRef<string | null>(null)
 
   const principalHint = useMemo(
     () => (result ? buildPrincipalAmountsHint(result.raw) : null),
@@ -32,22 +30,27 @@ export function PositionPanel() {
   )
 
   useEffect(() => {
-    if (!tokenIdFromUrl || !/^\d+$/.test(tokenIdFromUrl)) return
-    setTokenId(tokenIdFromUrl)
-    void runQuery(tokenIdFromUrl)
+    const id = readQueryParam('tokenId')
+    if (!id || !/^\d+$/.test(id)) return
+    setTokenId(id)
+    if (autoFetchedIdRef.current === id) return
+    autoFetchedIdRef.current = id
+    void runQuery(id, { syncUrl: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokenIdFromUrl])
+  }, [])
 
-  async function runQuery(id: string) {
+  async function runQuery(id: string, opts?: { syncUrl?: boolean }) {
     setLoading(true)
     setError(null)
     setResult(null)
     setOpenHintId(null)
 
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tool', 'position')
-    params.set('tokenId', id)
-    router.replace(`/?${params.toString()}`)
+    if (opts?.syncUrl !== false) {
+      replaceQueryParams((params) => {
+        params.set('tool', 'position')
+        params.set('tokenId', id)
+      })
+    }
 
     try {
       const data = await apiGetJson<PositionResult>(
@@ -68,7 +71,8 @@ export function PositionPanel() {
       setError('tokenId must be a positive integer')
       return
     }
-    void runQuery(id)
+    autoFetchedIdRef.current = id
+    void runQuery(id, { syncUrl: true })
   }
 
   return (
