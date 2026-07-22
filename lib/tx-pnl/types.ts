@@ -15,26 +15,32 @@ export type TxPnlCombinedLeg = {
   combinedTotalPnlPct: number
 }
 
+export type TxPnlPositionStatus = 'open' | 'closed'
+
 export type TxPnlResult = {
   raw: {
     chainId: number
     network: string
     txHash: string
+    closeTxHash: string | null
     tokenId: string
     openedAtIso: string
     poolAddress: string
     txFrom: string
     txTo: string | null
+    positionStatus: TxPnlPositionStatus
+    needsCloseTx: boolean
+    pnlMode: 'live' | 'realized' | 'closed-needs-close-tx'
     entryTotalUsdc: string
     entryUniswapUsdc: string
     entryHyperliquidUsdc: string
     currentPrincipalUsdc: string
     currentFeesUsdc: string
     currentTotalUsdc: string
-    principalOnlyPnlUsdc: string
-    totalPnlUsdc: string
-    principalOnlyPnlPct: number
-    totalPnlPct: number
+    principalOnlyPnlUsdc: string | null
+    totalPnlUsdc: string | null
+    principalOnlyPnlPct: number | null
+    totalPnlPct: number | null
     hlLeg: TxPnlHlLeg | null
     combinedLeg: TxPnlCombinedLeg | null
     currentPriceUsdcPerWeth: number
@@ -46,6 +52,7 @@ export type TxPnlResult = {
     token1Symbol: string
     links: {
       tx: string
+      closeTx: string | null
       pool: string
       positionManager: string
       owner: string
@@ -54,16 +61,20 @@ export type TxPnlResult = {
   human: {
     summary: string
     tokenId: string
+    positionStatus: TxPnlPositionStatus
+    needsCloseTx: boolean
+    pnlMode: 'live' | 'realized' | 'closed-needs-close-tx'
+    closedNotice: string | null
     entryUniswapUsdc: string
     entryHyperliquidUsdc: string
     entryTotalUsdc: string
     currentPrincipalUsdc: string
     currentFeesUsdc: string
     currentTotalUsdc: string
-    principalOnlyPnl: string
-    totalPnl: string
-    principalOnlyPnlPct: string
-    totalPnlPct: string
+    principalOnlyPnl: string | null
+    totalPnl: string | null
+    principalOnlyPnlPct: string | null
+    totalPnlPct: string | null
     hlLeg: {
       entryHyperliquidUsdc: string
       currentHlTotal: string

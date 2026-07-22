@@ -18,10 +18,18 @@ function parseCurrentHlUsdc(value: string | null): number | null {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const txHash = searchParams.get('txHash')?.trim() ?? ''
+  const closeTxHash = searchParams.get('closeTxHash')?.trim() || null
 
   if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
     return NextResponse.json(
       { error: 'txHash must be a full 0x transaction hash' },
+      { status: 400 },
+    )
+  }
+
+  if (closeTxHash && !/^0x[a-fA-F0-9]{64}$/.test(closeTxHash)) {
+    return NextResponse.json(
+      { error: 'closeTxHash must be a full 0x transaction hash' },
       { status: 400 },
     )
   }
@@ -41,7 +49,7 @@ export async function GET(request: Request) {
 
   try {
     const client = createBasePublicClient(20_000)
-    const result = await fetchTxPnl(client, txHash, { currentHlTotalUsdc })
+    const result = await fetchTxPnl(client, txHash, { currentHlTotalUsdc, closeTxHash })
     return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json(
