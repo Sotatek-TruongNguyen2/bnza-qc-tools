@@ -37,7 +37,24 @@ export function QcApp() {
   return (
     <main className="shell">
       <header className="hero">
-        <p className="eyebrow">BNZA · Base mainnet</p>
+        <div className="hero-top">
+          <p className="eyebrow">BNZA · Base mainnet</p>
+          <div className="hero-brands" aria-label="Integrations">
+            <span className="hero-brand">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brands/uniswap.svg" alt="" width={22} height={22} />
+              Uniswap
+            </span>
+            <span className="hero-brand-sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="hero-brand">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brands/hyperliquid.svg" alt="" width={22} height={22} />
+              Hyperliquid
+            </span>
+          </div>
+        </div>
         <h1>QC Uniswap tools</h1>
         <p className="lede">
           Read-only helpers for EXBOT bot vault state, LP position inspection, and swap route

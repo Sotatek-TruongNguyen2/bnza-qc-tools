@@ -53,11 +53,51 @@ code {
   margin-bottom: 1.75rem;
 }
 
+.hero-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.4rem;
+}
+
 .eyebrow {
-  margin: 0 0 0.4rem;
+  margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.hero-brands {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.hero-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 88%, var(--line));
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.hero-brand img {
+  display: block;
+  border-radius: 999px;
+}
+
+.hero-brand-sep {
   color: var(--muted);
   font-weight: 700;
 }

@@ -1,5 +1,4 @@
 import type { CloseEstimateCalcSection } from './close-estimate-types'
-import { NPM_ADDRESS } from './constants'
 import { formatRawAmount } from './format-raw-amount'
 import { getSqrtRatioAtTick, tickToPriceRatio } from './format'
 import type { PositionRaw } from './types'
@@ -23,9 +22,6 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
   const priceUpper = tickToPriceRatio(raw.tickUpper, raw.token0Decimals, raw.token1Decimals)
   const priceLowerLabel = formatHumanPrice(priceLower, raw.token0Symbol, raw.token1Symbol)
   const priceUpperLabel = formatHumanPrice(priceUpper, raw.token0Symbol, raw.token1Symbol)
-
-  const npmAddress = raw.npmAddress || NPM_ADDRESS
-  const poolAddress = raw.poolAddress
 
   const rangeBranch =
     liquidity === 0n
@@ -55,26 +51,6 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
           : 'amount0 = 0\namount1 = 0'
 
   const steps: CloseEstimateCalcSection['steps'] = [
-    {
-      label: 'Where L, tickLower, tickUpper come from',
-      value:
-        `These are read from the Uniswap V3 LP NFT contract\n` +
-        `(NonfungiblePositionManager on Base).\n` +
-        `\n` +
-        `Call:\n` +
-        `  positions(tokenId)\n` +
-        `\n` +
-        `With:\n` +
-        `  tokenId = ${raw.tokenId}\n` +
-        `  contract = ${npmAddress}\n` +
-        `\n` +
-        `That call returns (among other fields):\n` +
-        `  tickLower = ${raw.tickLower}\n` +
-        `  tickUpper = ${raw.tickUpper}\n` +
-        `  liquidity L = ${raw.liquidity}\n` +
-        `\n` +
-        `You can check the same values on Basescan → Contract → Read → positions.`,
-    },
     {
       label: 'Price from tick',
       value:
@@ -117,18 +93,10 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
         `    = ${sqrtUpper.toString()}`,
     },
     {
-      label: 'Where current price √Pc comes from',
+      label: 'Current price √Pc',
       value:
-        `Read from the Uniswap V3 pool contract for this pair.\n` +
-        `\n` +
-        `Call:\n` +
-        `  slot0()\n` +
-        `\n` +
-        `With:\n` +
-        `  pool = ${poolAddress}\n` +
-        `\n` +
-        `That call returns (among other fields):\n` +
-        `  √Pc (current price) = ${raw.sqrtPriceX96}\n` +
+        `Read from the pool’s current price:\n` +
+        `  √Pc = ${raw.sqrtPriceX96}\n` +
         `  currentTick = ${raw.currentTick}\n` +
         `\n` +
         `This is √Pc in the formulas below.`,
@@ -182,17 +150,11 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
       'This does not include uncollected fees (those are listed separately).',
     formula,
     inputs: [
-      {
-        label: 'Liquidity L',
-        value:
-          `${raw.liquidity}\n` +
-          `from positions(tokenId) on the LP NFT contract`,
-      },
+      { label: 'Liquidity L', value: raw.liquidity },
       {
         label: 'tickLower → √Pl',
         value:
           `tick = ${raw.tickLower}\n` +
-          `from positions(tokenId)\n` +
           `√Pl = ${sqrtLower.toString()}\n` +
           `≈ √(1.0001^tick) × 2^96\n` +
           `human price ≈ ${priceLowerLabel}`,
@@ -201,21 +163,14 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
         label: 'tickUpper → √Pu',
         value:
           `tick = ${raw.tickUpper}\n` +
-          `from positions(tokenId)\n` +
           `√Pu = ${sqrtUpper.toString()}\n` +
           `≈ √(1.0001^tick) × 2^96\n` +
           `human price ≈ ${priceUpperLabel}`,
       },
-      {
-        label: 'currentTick',
-        value: `${raw.currentTick}\nfrom slot0() on the pool`,
-      },
+      { label: 'currentTick', value: String(raw.currentTick) },
       {
         label: '√Pc (current pool price)',
-        value:
-          `${raw.sqrtPriceX96}\n` +
-          `from slot0() on the pool\n` +
-          `(same √P × 2^96 form as √Pl / √Pu)`,
+        value: `${raw.sqrtPriceX96}\n(same √P × 2^96 form as √Pl / √Pu)`,
       },
       { label: 'Status', value: raw.rangeStatus },
     ],
