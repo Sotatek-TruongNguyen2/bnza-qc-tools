@@ -27,6 +27,13 @@ function PnlPct({ value }: { value: string }) {
   return <span className={pnlPctClass(value)}>({value})</span>
 }
 
+function entrySplitPct(partRaw: string, totalRaw: string): number {
+  const part = Number(partRaw)
+  const total = Number(totalRaw)
+  if (!Number.isFinite(part) || !Number.isFinite(total) || total <= 0) return 0
+  return Math.min(100, Math.max(0, (part / total) * 100))
+}
+
 function DtWithHint({
   label,
   hintId,
@@ -464,7 +471,86 @@ export function TxPnlPanel() {
           )}
 
           <h3>Open tx split</h3>
-          <p className="mono">{result.human.entrySplit}</p>
+          <p className="hint section-hint">How entry capital was allocated at open (from PositionOpened).</p>
+          <div className="entry-split" role="group" aria-label="Open tx capital split">
+            <div className="entry-split-card">
+              <div className="entry-split-brand">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brands/uniswap.svg" alt="" width={28} height={28} />
+                <div>
+                  <span className="entry-split-label">Uniswap</span>
+                  <span className="entry-split-sub muted">LP principal basis</span>
+                </div>
+              </div>
+              <div className="entry-split-amount mono token-inline">
+                <TokenIcon symbol="USDC" size={16} />
+                <span>{result.human.entryUniswapUsdc}</span>
+              </div>
+              <div className="entry-split-bar" aria-hidden="true">
+                <span
+                  className="entry-split-bar-fill entry-split-bar-uni"
+                  style={{
+                    width: `${entrySplitPct(result.raw.entryUniswapUsdc, result.raw.entryTotalUsdc)}%`,
+                  }}
+                />
+              </div>
+              <span className="entry-split-pct muted">
+                {entrySplitPct(result.raw.entryUniswapUsdc, result.raw.entryTotalUsdc).toFixed(1)}% of
+                total
+              </span>
+            </div>
+
+            <div className="entry-split-plus" aria-hidden="true">
+              +
+            </div>
+
+            <div className="entry-split-card">
+              <div className="entry-split-brand">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brands/hyperliquid.svg" alt="" width={28} height={28} />
+                <div>
+                  <span className="entry-split-label">Hyperliquid</span>
+                  <span className="entry-split-sub muted">Hedge basis</span>
+                </div>
+              </div>
+              <div className="entry-split-amount mono token-inline">
+                <TokenIcon symbol="USDC" size={16} />
+                <span>{result.human.entryHyperliquidUsdc}</span>
+              </div>
+              <div className="entry-split-bar" aria-hidden="true">
+                <span
+                  className="entry-split-bar-fill entry-split-bar-hl"
+                  style={{
+                    width: `${entrySplitPct(result.raw.entryHyperliquidUsdc, result.raw.entryTotalUsdc)}%`,
+                  }}
+                />
+              </div>
+              <span className="entry-split-pct muted">
+                {entrySplitPct(result.raw.entryHyperliquidUsdc, result.raw.entryTotalUsdc).toFixed(1)}%
+                of total
+              </span>
+            </div>
+
+            <div className="entry-split-eq" aria-hidden="true">
+              =
+            </div>
+
+            <div className="entry-split-card entry-split-card-total">
+              <div className="entry-split-brand">
+                <span className="entry-split-total-mark" aria-hidden="true">
+                  Σ
+                </span>
+                <div>
+                  <span className="entry-split-label">Total</span>
+                  <span className="entry-split-sub muted">Entry capital</span>
+                </div>
+              </div>
+              <div className="entry-split-amount mono token-inline">
+                <TokenIcon symbol="USDC" size={16} />
+                <span>{result.human.entryTotalUsdc}</span>
+              </div>
+            </div>
+          </div>
 
           {!needsCloseTx && !realized && (
             <>
