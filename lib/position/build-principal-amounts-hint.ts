@@ -43,52 +43,58 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
 
   const formula =
     rangeBranch === 'below'
-      ? 'amount0 = L × (√Pu − √Pl) / (√Pu × √Pl); amount1 = 0'
+      ? 'amount0 = L × (√Pu − √Pl) / (√Pu × √Pl)\namount1 = 0'
       : rangeBranch === 'above'
-        ? 'amount0 = 0; amount1 = L × (√Pu − √Pl) / 2^96'
+        ? 'amount0 = 0\namount1 = L × (√Pu − √Pl) / 2^96'
         : rangeBranch === 'in-range'
-          ? 'amount0 = L × (√Pu − √Pc) / (√Pu × √Pc); amount1 = L × (√Pc − √Pl) / 2^96'
-          : 'amount0 = 0; amount1 = 0'
+          ? 'amount0 = L × (√Pu − √Pc) / (√Pu × √Pc)\namount1 = L × (√Pc − √Pl) / 2^96'
+          : 'amount0 = 0\namount1 = 0'
 
   const steps: CloseEstimateCalcSection['steps'] = [
     {
-      label: 'What is a tick?',
-      value:
-        'A tick is a price step on Uniswap V3. Each position has a lower and upper tick ' +
-        '(tickLower, tickUpper). The pool’s current tick is where price is right now.',
-    },
-    {
       label: 'Price from tick',
       value:
-        `Human price ≈ 1.0001^tick (then adjust for token decimals). ` +
-        `Example: tickLower ${raw.tickLower} → about ${priceLowerLabel}; ` +
-        `tickUpper ${raw.tickUpper} → about ${priceUpperLabel}.`,
+        `Human price ≈ 1.0001^tick (then adjust for token decimals).\n` +
+        `Example:\n` +
+        `  tickLower ${raw.tickLower} → about ${priceLowerLabel}\n` +
+        `  tickUpper ${raw.tickUpper} → about ${priceUpperLabel}`,
     },
     {
       label: '√P from tick (on-chain form)',
       value:
-        'Contracts do not store √P as a normal float. They store √P × 2^96 ' +
-        '(called sqrtPriceX96 / √P×2^96). We compute it with Uniswap’s getSqrtRatioAtTick(tick): ' +
-        '√Pl = getSqrtRatioAtTick(tickLower), √Pu = getSqrtRatioAtTick(tickUpper). ' +
-        'Same idea as: √(1.0001^tick) × 2^96.',
+        `Contracts do not store √P as a normal float.\n` +
+        `They store √P × 2^96 (called sqrtPriceX96).\n` +
+        `\n` +
+        `We compute it with Uniswap’s getSqrtRatioAtTick(tick):\n` +
+        `  √Pl = getSqrtRatioAtTick(tickLower)\n` +
+        `  √Pu = getSqrtRatioAtTick(tickUpper)\n` +
+        `\n` +
+        `Same idea as: √(1.0001^tick) × 2^96`,
     },
     {
       label: 'tickLower → √Pl',
       value:
-        `tickLower = ${raw.tickLower} → √Pl = getSqrtRatioAtTick(${raw.tickLower}) = ${sqrtLower.toString()} ` +
-        `(≈ √(${priceLower.toPrecision(6)}) × 2^96).`,
+        `tickLower = ${raw.tickLower}\n` +
+        `√Pl = getSqrtRatioAtTick(${raw.tickLower})\n` +
+        `    = ${sqrtLower.toString()}\n` +
+        `(≈ √(${priceLower.toPrecision(6)}) × 2^96)`,
     },
     {
       label: 'tickUpper → √Pu',
       value:
-        `tickUpper = ${raw.tickUpper} → √Pu = getSqrtRatioAtTick(${raw.tickUpper}) = ${sqrtUpper.toString()} ` +
-        `(≈ √(${priceUpper.toPrecision(6)}) × 2^96).`,
+        `tickUpper = ${raw.tickUpper}\n` +
+        `√Pu = getSqrtRatioAtTick(${raw.tickUpper})\n` +
+        `    = ${sqrtUpper.toString()}\n` +
+        `(≈ √(${priceUpper.toPrecision(6)}) × 2^96)`,
     },
     {
       label: 'Current price √Pc',
       value:
-        `Read from the pool slot0 as sqrtPriceX96 = ${raw.sqrtPriceX96} ` +
-        `(currentTick = ${raw.currentTick}). This is √Pc in the formulas below.`,
+        `Read from the pool slot0:\n` +
+        `  sqrtPriceX96 = ${raw.sqrtPriceX96}\n` +
+        `  currentTick = ${raw.currentTick}\n` +
+        `\n` +
+        `This is √Pc in the formulas below.`,
     },
     { label: 'Range branch', value: branchLabel },
   ]
@@ -99,8 +105,8 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
     steps.push({
       label: `${raw.token0Symbol} (amount0)`,
       value:
-        `L × (√B − √A) / (√B × √A) ` +
-        `= L × (${sqrtB} − ${sqrtA}) / (${sqrtB} × ${sqrtA}) ` +
+        `L × (√B − √A) / (√B × √A)\n` +
+        `= L × (${sqrtB} − ${sqrtA}) / (${sqrtB} × ${sqrtA})\n` +
         `→ ${token0}`,
     })
   } else {
@@ -116,8 +122,8 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
     steps.push({
       label: `${raw.token1Symbol} (amount1)`,
       value:
-        `L × (√B − √A) / 2^96 ` +
-        `= L × (${sqrtB} − ${sqrtA}) / 2^96 ` +
+        `L × (√B − √A) / 2^96\n` +
+        `= L × (${sqrtB} − ${sqrtA}) / 2^96\n` +
         `→ ${token1}`,
     })
   } else {
@@ -129,13 +135,13 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
 
   steps.push({
     label: 'Note',
-    value: 'Principal = locked tokens only. Uncollected fees are shown in the next section.',
+    value: 'Principal = locked tokens only.\nUncollected fees are shown in the next section.',
   })
 
   return {
     title: 'Principal (token amounts)',
     summary:
-      'How many of each token are locked in this Uniswap V3 position right now. ' +
+      'How many of each token are locked in this Uniswap V3 position right now.\n' +
       'This does not include uncollected fees (those are listed separately).',
     formula,
     inputs: [
@@ -143,24 +149,28 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
       {
         label: 'tickLower → √Pl',
         value:
-          `${raw.tickLower} → ${sqrtLower.toString()} ` +
-          `(getSqrtRatioAtTick; ≈ √(1.0001^tick) × 2^96; human price ≈ ${priceLowerLabel})`,
+          `${raw.tickLower} → ${sqrtLower.toString()}\n` +
+          `getSqrtRatioAtTick(tick)\n` +
+          `≈ √(1.0001^tick) × 2^96\n` +
+          `human price ≈ ${priceLowerLabel}`,
       },
       {
         label: 'tickUpper → √Pu',
         value:
-          `${raw.tickUpper} → ${sqrtUpper.toString()} ` +
-          `(getSqrtRatioAtTick; ≈ √(1.0001^tick) × 2^96; human price ≈ ${priceUpperLabel})`,
+          `${raw.tickUpper} → ${sqrtUpper.toString()}\n` +
+          `getSqrtRatioAtTick(tick)\n` +
+          `≈ √(1.0001^tick) × 2^96\n` +
+          `human price ≈ ${priceUpperLabel}`,
       },
       { label: 'currentTick', value: String(raw.currentTick) },
       {
         label: '√Pc (sqrtPriceX96 from pool)',
-        value: `${raw.sqrtPriceX96} (same X96 encoding as √Pl / √Pu)`,
+        value: `${raw.sqrtPriceX96}\n(same X96 encoding as √Pl / √Pu)`,
       },
       { label: 'Status', value: raw.rangeStatus },
     ],
     steps,
-    result: `${token0} + ${token1}`,
+    result: `${token0}\n${token1}`,
   }
 }
 
