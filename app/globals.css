@@ -380,6 +380,22 @@ input:focus {
   font-size: 1.1rem;
 }
 
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.section-heading-row h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.section-hint {
+  margin: 0.35rem 0 0.5rem;
+}
+
 .result-actions {
   display: flex;
   gap: 0.5rem;

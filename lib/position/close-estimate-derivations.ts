@@ -179,7 +179,10 @@ export function performanceFeeApplicabilityNote(): string {
 }
 
 export function formatPrincipalFormula(): string {
-  return 'USDC total = USDC already in position + (other token × pool price), then haircut on swapped leg'
+  return (
+    'USDC total = USDC already in position + (other token × pool price), ' +
+    'then subtract pool fee + slippage from the part that needs swapping'
+  )
 }
 
 export function formatEarnedFormula(minEarnedUsdc: number, opPct: number, pfPct: number): string {

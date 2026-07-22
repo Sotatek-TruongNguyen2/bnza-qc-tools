@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
 import { apiGetJson } from '@/lib/api-client'
+import { buildPrincipalAmountsHint } from '@/lib/position/build-principal-amounts-hint'
 import type { PositionResult } from '@/lib/position/types'
 
 function statusClass(status: string): string {
@@ -22,6 +24,12 @@ export function PositionPanel() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<PositionResult | null>(null)
+  const [openHintId, setOpenHintId] = useState<string | null>(null)
+
+  const principalHint = useMemo(
+    () => (result ? buildPrincipalAmountsHint(result.raw) : null),
+    [result],
+  )
 
   useEffect(() => {
     if (!tokenIdFromUrl || !/^\d+$/.test(tokenIdFromUrl)) return
@@ -34,6 +42,7 @@ export function PositionPanel() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setOpenHintId(null)
 
     const params = new URLSearchParams(searchParams.toString())
     params.set('tool', 'position')
@@ -125,7 +134,22 @@ export function PositionPanel() {
             <li>{result.human.prices.inverseAtCurrentTick}</li>
           </ul>
 
-          <h3>Principal</h3>
+          <div className="section-heading-row">
+            <h3>Principal</h3>
+            {principalHint && (
+              <CalculationHint
+                hintId="principal-amounts"
+                isOpen={openHintId === 'principal-amounts'}
+                onToggle={(id) => setOpenHintId((cur) => (cur === id ? null : id))}
+                onClose={() => setOpenHintId(null)}
+                section={principalHint}
+              />
+            )}
+          </div>
+          <p className="hint section-hint">
+            Token amounts locked in the LP NFT (not fees). Click <strong>?</strong> to see how they
+            are calculated.
+          </p>
           <ul className="plain-list mono">
             <li>
               <TokenAmountLine

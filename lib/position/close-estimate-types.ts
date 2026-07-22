@@ -5,7 +5,7 @@ export type CloseEstimateParams = {
   performanceFeeBps: number
   /** Min earned USDC (6 decimals) before op/PF apply. EXBOT default $10. */
   minEarnedUsdc: number
-  /** Slippage + pool fee haircut on principal swap to USDC (bps). Default 100 = 1%. */
+  /** Extra slippage buffer on principal swap to USDC (bps), applied with pool fee. Default 100 = 1%. */
   swapSlippageBps: number
   /** Include sqrtPriceX96 / raw bigint steps in calc hints. Default off for QC. */
   showOnChainDerivation?: boolean

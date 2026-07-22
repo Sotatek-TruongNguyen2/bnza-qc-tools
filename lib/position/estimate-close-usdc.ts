@@ -139,7 +139,7 @@ function earnedUsdcEquivalent(args: {
             ...(args.amount1 > 0n && t1 !== usdc
               ? [
                   {
-                    label: 'swapped leg',
+                    label: 'from other token (swap)',
                     raw: total - args.amount0,
                     decimals: 6,
                   },
@@ -186,7 +186,7 @@ function earnedUsdcEquivalent(args: {
             ...(args.amount0 > 0n && t0 !== usdc
               ? [
                   {
-                    label: 'swapped leg',
+                    label: 'from other token (swap)',
                     raw: total - args.amount1,
                     decimals: 6,
                   },
@@ -373,7 +373,7 @@ function buildPrincipalDetails(args: {
           ]
         : []),
       {
-        label: `${leg.label} — conservative out`,
+        label: `${leg.label} — after pool fee + slippage`,
         value: describeConservativeSwap({
           spotOut: leg.spotOut,
           conservativeOut: leg.conservativeOut,
@@ -387,19 +387,19 @@ function buildPrincipalDetails(args: {
 
   steps.push(
     {
-      label: 'USDC direct subtotal',
+      label: 'USDC already in position',
       value: formatRawUsdc(principal.direct),
     },
     {
-      label: 'Swapped principal subtotal (conservative)',
+      label: 'From other token after fee + slippage',
       value: formatRawUsdc(principal.conservativeSwap),
     },
     {
-      label: 'Principal total (conservative)',
+      label: 'Principal total (safer estimate)',
       value: describeSum({
         parts: [
-          { label: 'USDC direct', raw: principal.direct },
-          { label: 'swapped (conservative)', raw: principal.conservativeSwap },
+          { label: 'USDC already in position', raw: principal.direct },
+          { label: 'from other token after fee + slippage', raw: principal.conservativeSwap },
         ],
         total: principalConservativeTotal,
         showOnChain,
@@ -419,7 +419,7 @@ function buildPrincipalDetails(args: {
     { label: 'Pool price', value: poolPrices.token1PerToken0Label },
     { label: 'Inverse price', value: poolPrices.token0PerToken1Label },
     { label: 'Pool fee tier', value: `${raw.fee / 10_000}%` },
-    { label: 'Swap slippage haircut', value: `${params.swapSlippageBps / 100}%` },
+    { label: 'Extra slippage buffer', value: `${params.swapSlippageBps / 100}%` },
     { label: 'Current tick', value: String(raw.currentTick) },
   ]
 
@@ -428,8 +428,10 @@ function buildPrincipalDetails(args: {
   }
 
   return {
-    title: 'Principal (USDC, conservative)',
-    summary: 'Liquidity at current pool price; non-USDC leg valued as USDC at spot, then pool fee + slippage haircut.',
+    title: 'Principal (USDC, after fee & slippage)',
+    summary:
+      'Convert the position to USDC at today’s pool price. For the non-USDC token, ' +
+      'subtract pool fee and slippage so the estimate is a bit lower (safer for QC).',
     formula: formatPrincipalFormula(),
     inputs,
     steps,
@@ -625,9 +627,9 @@ export function estimateCloseUsdc(
   const minEarnedRaw = BigInt(Math.round(params.minEarnedUsdc * 1_000_000))
 
   const assumptions: string[] = [
-    'Principal swapped to USDC at pool spot price (EXBOT redeem `convertPrincipalToUsdc`).',
-    'Earned fees stay in pair currency on-chain; USDC equivalent shown at spot.',
-    'Does not include gas, HL redemption leg, or BNZA buyback.',
+    'Non-USDC principal is converted to USDC using today’s pool price (same idea as EXBOT redeem).',
+    'Earned fees stay in the pair tokens on-chain; USDC number is only an estimate at pool price.',
+    'Does not include gas, Hyperliquid redemption, or BNZA buyback.',
   ]
 
   const principal = principalToUsdc({

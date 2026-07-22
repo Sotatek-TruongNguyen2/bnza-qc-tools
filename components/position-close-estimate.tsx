@@ -77,7 +77,7 @@ export function PositionCloseEstimate({ raw }: Props) {
           </span>
         </label>
         <label className="field field-with-hint">
-          <span>Principal swap slippage (%)</span>
+          <span>Extra slippage buffer on principal swap (%)</span>
           <input
             value={swapSlippagePct}
             onChange={(e) => setSwapSlippagePct(e.target.value)}
@@ -85,8 +85,8 @@ export function PositionCloseEstimate({ raw }: Props) {
             placeholder={String(defaults.swapSlippageBps / 100)}
           />
           <span className="field-hint">
-            QC cushion on non-USDC principal → USDC: conservative estimate = spot minus pool fee minus
-            this slippage. Does not affect earned fees (default 1%).
+            When converting non-USDC principal to USDC, we subtract pool fee and this extra %. Makes
+            the estimate a bit lower (safer). Does not change earned fees (default 1%).
           </span>
         </label>
         <label className="field field-with-hint">
@@ -115,7 +115,7 @@ export function PositionCloseEstimate({ raw }: Props) {
       <dl className="kv estimate-totals">
         <div>
           <dt className="estimate-dt-row">
-            <span>Principal (USDC, conservative)</span>
+            <span>Principal (USDC, after fee &amp; slippage)</span>
             <CalculationHint
               hintId="principal"
               isOpen={openHintId === 'principal'}
@@ -153,7 +153,7 @@ export function PositionCloseEstimate({ raw }: Props) {
           </dd>
         </div>
         <div className="estimate-highlight">
-          <dt>Total (conservative principal + net earned)</dt>
+          <dt>Total (principal after fee &amp; slippage + net earned)</dt>
           <dd className="mono token-inline">
             <TokenIcon symbol="USDC" size={16} />
             <span>{estimate.human.totalConservative}</span>
