@@ -5,9 +5,11 @@ import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenIcon } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
+import { formatUtcDateTime } from '@/lib/format-datetime'
 import type { CloseEstimateCalcSection } from '@/lib/position/close-estimate-types'
 import type { TxPnlResult } from '@/lib/tx-pnl/types'
 import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
+import { highlightKeywords } from './highlight-keywords'
 
 function pnlClass(value: string): string {
   if (value.startsWith('+')) return 'badge-ok'
@@ -220,7 +222,8 @@ export function TxPnlPanel() {
             <div>
               <h2>{result.human.summary}</h2>
               <p className="muted">
-                Base mainnet · tokenId #{result.human.tokenId} · opened {result.raw.openedAtIso}
+                Base mainnet · tokenId #{result.human.tokenId} · opened{' '}
+                {formatUtcDateTime(result.raw.openedAtIso)}
                 {result.human.positionStatus === 'closed' ? ' · CLOSED' : ''}
               </p>
             </div>
@@ -236,11 +239,10 @@ export function TxPnlPanel() {
           {result.human.closedNotice && (
             <div className="pnl-closed-banner" role="status">
               <strong>Position is closed.</strong>
-              <p>{result.human.closedNotice}</p>
+              <p>{highlightKeywords(result.human.closedNotice)}</p>
               {needsCloseTx && (
                 <p>
-                  Enter the close tx hash above (example:{' '}
-                  <code>0xc1b10ddd…17f2</code>) and click <strong>Compute PnL</strong> again.
+                  Enter the close tx hash above and click <strong>Compute PnL</strong> again.
                 </p>
               )}
             </div>
@@ -503,9 +505,9 @@ export function TxPnlPanel() {
           )}
 
           <h3>Caveats</h3>
-          <ul className="plain-list">
+          <ul className="caveat-list">
             {result.human.caveats.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line}>{highlightKeywords(line)}</li>
             ))}
           </ul>
 

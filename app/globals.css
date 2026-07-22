@@ -492,6 +492,44 @@ input:focus {
   line-height: 1.7;
 }
 
+.caveat-list {
+  margin: 0.5rem 0 0;
+  padding: 0.85rem 1rem 0.85rem 1.6rem;
+  list-style: disc;
+  border-radius: 0.55rem;
+  border: 1px solid #e0b56a;
+  background: var(--warn-bg);
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.caveat-list li {
+  margin: 0.45rem 0;
+  padding-left: 0.15rem;
+}
+
+.caveat-list li::marker {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.caveat-kw {
+  display: inline;
+  padding: 0.05rem 0.28rem;
+  border-radius: 0.25rem;
+  background: #fff8e8;
+  border: 1px solid #e8d2a0;
+  color: #6b4a12;
+  font-family: var(--mono);
+  font-size: 0.86em;
+  font-weight: 650;
+}
+
+.caveat-kw-strong {
+  color: #6b4a12;
+  font-weight: 750;
+}
+
 .badge-ok,
 .badge-warn,
 .badge-muted {
