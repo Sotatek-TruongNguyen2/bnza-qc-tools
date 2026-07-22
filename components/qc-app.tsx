@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AddressesPanel } from './addresses-panel'
 import { BotPanel } from './bot-panel'
+import { GasEstimatePanel } from './gas-estimate-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
 import { TxPnlPanel } from './tx-pnl-panel'
 import { replaceQueryParams } from '@/lib/url-query'
 
-type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl'
+type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl' | 'gas'
 
 function toolFromParam(value: string | null): Tool {
   if (
@@ -17,7 +18,8 @@ function toolFromParam(value: string | null): Tool {
     value === 'quote' ||
     value === 'position' ||
     value === 'addresses' ||
-    value === 'tx-pnl'
+    value === 'tx-pnl' ||
+    value === 'gas'
   ) {
     return value
   }
@@ -64,8 +66,8 @@ export function QcApp() {
         </div>
         <h1>QC Uniswap tools</h1>
         <p className="lede">
-          Read-only helpers for EXBOT bot vault state, LP position inspection, and swap route
-          quotes. No wallet or private key needed.
+          Read-only helpers for EXBOT bot vault state, LP position inspection, swap quotes, and
+          gas fee samples. No wallet or private key needed.
         </p>
       </header>
 
@@ -100,6 +102,13 @@ export function QcApp() {
         </button>
         <button
           type="button"
+          className={tool === 'gas' ? 'tab active' : 'tab'}
+          onClick={() => selectTool('gas')}
+        >
+          Gas estimate
+        </button>
+        <button
+          type="button"
           className={tool === 'addresses' ? 'tab active' : 'tab'}
           onClick={() => selectTool('addresses')}
         >
@@ -113,6 +122,7 @@ export function QcApp() {
         {tool === 'position' && <PositionPanel />}
         {tool === 'quote' && <QuotePanel />}
         {tool === 'tx-pnl' && <TxPnlPanel />}
+        {tool === 'gas' && <GasEstimatePanel />}
         {tool === 'addresses' && <AddressesPanel />}
       </div>
 

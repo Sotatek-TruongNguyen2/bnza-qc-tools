@@ -31,6 +31,26 @@ export function createBasePublicClient(timeoutMs = 20_000) {
   })
 }
 
+/**
+ * Prefer public Base endpoints for eth_getLogs.
+ * Alchemy free tier caps getLogs to a 10-block range (unusable for historical scans).
+ * Skip publicnode — often rejects archive eth_getLogs without a token.
+ */
+export function createBaseLogsPublicClient(timeoutMs = 45_000) {
+  const urls = [
+    'https://mainnet.base.org',
+    'https://base.llamarpc.com',
+    'https://1rpc.io/base',
+  ]
+  return createPublicClient({
+    chain: base,
+    transport: fallback(
+      urls.map((url) => http(url, { timeout: timeoutMs, retryCount: 1 })),
+      { rank: false },
+    ),
+  })
+}
+
 export type BasePublicClient = ReturnType<typeof createBasePublicClient>
 
 /** Short, QC-friendly message from viem / RPC failures. */
