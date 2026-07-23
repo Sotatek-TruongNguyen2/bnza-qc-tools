@@ -11,6 +11,7 @@ import {
   type DensityPoint,
 } from '@/lib/position/range-chart-math'
 import type { PositionRaw } from '@/lib/position/types'
+import { PositionRangeLegend } from './position-range-legend'
 
 type Props = { raw: PositionRaw }
 
@@ -150,20 +151,41 @@ export function PositionRangeChart({ raw }: Props) {
 
       <div className="range-chart-svg-wrap">
         <svg viewBox={`0 0 ${W} ${H}`} className="range-chart-svg" role="img" aria-label="Price range">
-          {densityPath && <path d={densityPath} className="range-density" />}
+          {densityPath && (
+            <path d={densityPath} className="range-density">
+              <title>
+                Pool liquidity density — relative liquidityGross at sampled ticks (whole pool, not
+                only this position)
+              </title>
+            </path>
+          )}
           <rect
             x={Math.min(rangeX1, rangeX2)}
             y={PAD_T}
             width={Math.max(Math.abs(rangeX2 - rangeX1), 2)}
             height={H - PAD_T - PAD_B}
             className="range-band"
-          />
-          {[rangeX1, rangeX2].map((x, i) => (
+          >
+            <title>
+              This position’s tick range — min {formatChartPrice(minPrice)} → max{' '}
+              {formatChartPrice(maxPrice)} {quote.unit}
+            </title>
+          </rect>
+          {[
+            { x: rangeX1, label: 'Min', price: minPrice, tick: quote.inverted ? raw.tickUpper : raw.tickLower },
+            { x: rangeX2, label: 'Max', price: maxPrice, tick: quote.inverted ? raw.tickLower : raw.tickUpper },
+          ].map((h, i) => (
             <g key={i}>
-              <line x1={x} y1={PAD_T} x2={x} y2={H - PAD_B} className="range-handle-line" />
-              <rect x={x - 6} y={PAD_T - 2} width={12} height={18} rx={3} className="range-handle-cap" />
-              <line x1={x - 2} y1={PAD_T + 4} x2={x - 2} y2={PAD_T + 12} className="range-handle-grip" />
-              <line x1={x + 2} y1={PAD_T + 4} x2={x + 2} y2={PAD_T + 12} className="range-handle-grip" />
+              <line x1={h.x} y1={PAD_T} x2={h.x} y2={H - PAD_B} className="range-handle-line" />
+              {/* Wider invisible hit target for hover */}
+              <rect x={h.x - 8} y={PAD_T} width={16} height={H - PAD_T - PAD_B} className="range-hit">
+                <title>
+                  {h.label} price {formatChartPrice(h.price)} {quote.unit} (tick {h.tick})
+                </title>
+              </rect>
+              <rect x={h.x - 6} y={PAD_T - 2} width={12} height={18} rx={3} className="range-handle-cap" />
+              <line x1={h.x - 2} y1={PAD_T + 4} x2={h.x - 2} y2={PAD_T + 12} className="range-handle-grip" />
+              <line x1={h.x + 2} y1={PAD_T + 4} x2={h.x + 2} y2={PAD_T + 12} className="range-handle-grip" />
             </g>
           ))}
           <line
@@ -173,6 +195,13 @@ export function PositionRangeChart({ raw }: Props) {
             y2={H - PAD_B}
             className={inRange ? 'range-current-line in' : 'range-current-line out'}
           />
+          <rect x={currentX - 8} y={PAD_T} width={16} height={H - PAD_T - PAD_B} className="range-hit">
+            <title>
+              Current pool price {formatChartPrice(currentPrice)} {quote.unit} (tick{' '}
+              {raw.currentTick})
+              {inRange ? ' — in range' : raw.liquidity === '0' ? ' — closed' : ' — out of range'}
+            </title>
+          </rect>
           <line x1={PAD_L} y1={H - PAD_B} x2={W - PAD_R} y2={H - PAD_B} className="range-axis" />
           {axisTicks.map((p, i) => (
             <text key={i} x={xOfPrice(p)} y={H - 8} textAnchor="middle" className="range-axis-label">
@@ -181,6 +210,8 @@ export function PositionRangeChart({ raw }: Props) {
           ))}
         </svg>
       </div>
+
+      <PositionRangeLegend showDensity={Boolean(densityPath)} />
 
       <div className="range-price-cards">
         <div className="range-price-card">

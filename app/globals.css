@@ -626,6 +626,70 @@ input:focus {
   font-family: var(--mono);
 }
 
+.range-hit {
+  fill: transparent;
+  pointer-events: all;
+  cursor: help;
+}
+
+.range-density,
+.range-band {
+  cursor: help;
+}
+
+.range-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.1rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.range-legend li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  max-width: 22rem;
+}
+
+.range-legend strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.range-legend-swatch {
+  flex-shrink: 0;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.12rem;
+  border-radius: 0.2rem;
+  border: 1px solid transparent;
+}
+
+.range-legend-swatch.density {
+  background: #f5a3c7;
+  opacity: 0.85;
+}
+
+.range-legend-swatch.band {
+  background: #c9dbff;
+  border-color: #4b7cf0;
+}
+
+.range-legend-swatch.current {
+  background: transparent;
+  border: 0;
+  border-left: 2px solid #5c6578;
+  width: 0;
+  height: 0.95rem;
+  margin-left: 0.35rem;
+  margin-right: 0.45rem;
+}
+
 .range-price-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
