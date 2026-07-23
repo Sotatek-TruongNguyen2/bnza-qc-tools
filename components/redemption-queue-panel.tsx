@@ -190,6 +190,16 @@ export function RedemptionQueuePanel() {
   )
 }
 
+function shorten(addr: string, left = 4, right = 4): string {
+  if (addr.length < left + right + 2) return addr
+  return `${addr.slice(0, left + 2)}…${addr.slice(-right)}`
+}
+
+function shortenBytes32(hex: string): string {
+  if (hex.length < 18) return hex
+  return `${hex.slice(0, 10)}…${hex.slice(-8)}`
+}
+
 function RequestCard({ row }: { row: RedemptionPendingRequest }) {
   return (
     <li className={row.isHead ? 'rq-card rq-card-head' : 'rq-card'}>
@@ -200,10 +210,10 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           ) : (
             <span className="badge-muted">#{row.queueIndex + 1} in line</span>
           )}
-          <strong className="mono">requestId {row.requestId}</strong>
+          <strong className="mono">id {row.requestId}</strong>
         </div>
         <span className="rq-wait" title={`${row.waitSeconds}s`}>
-          waiting {row.waitLabel}
+          {row.waitLabel}
         </span>
       </div>
       <dl className="kv rq-card-kv">
@@ -211,7 +221,9 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>Request ID</dt>
           <dd>
             <span className="rq-copyable">
-              <span className="mono">{row.requestId}</span>
+              <span className="mono" title={row.requestId}>
+                {row.requestId}
+              </span>
               <CopyIconButton value={row.requestId} label="Copy request ID" />
             </span>
           </dd>
@@ -220,8 +232,14 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>User</dt>
           <dd>
             <span className="rq-copyable">
-              <a href={row.basescanUser} target="_blank" rel="noreferrer" className="mono">
-                {row.user}
+              <a
+                href={row.basescanUser}
+                target="_blank"
+                rel="noreferrer"
+                className="mono"
+                title={row.user}
+              >
+                {shorten(row.user)}
               </a>
               <CopyIconButton value={row.user} label="Copy user address" />
             </span>
@@ -231,7 +249,9 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>Bot ID</dt>
           <dd>
             <span className="rq-copyable">
-              <span className="mono">{row.botId}</span>
+              <span className="mono" title={row.botId}>
+                {shortenBytes32(row.botId)}
+              </span>
               <CopyIconButton value={row.botId} label="Copy bot ID" />
             </span>
           </dd>
@@ -240,14 +260,16 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>Position ID</dt>
           <dd>
             <span className="rq-copyable">
-              <span className="mono">{row.positionId}</span>
+              <span className="mono" title={row.positionId}>
+                {row.positionId}
+              </span>
               <CopyIconButton value={row.positionId} label="Copy position ID" />
             </span>
           </dd>
         </div>
         <div>
           <dt>Created</dt>
-          <dd>{formatLocalDateTime(row.createdAtIso)}</dd>
+          <dd title={row.createdAtIso}>{formatLocalDateTime(row.createdAtIso)}</dd>
         </div>
       </dl>
     </li>
