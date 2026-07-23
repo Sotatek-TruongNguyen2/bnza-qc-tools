@@ -1,11 +1,8 @@
-import { getAddress, parseAbiItem, type Hex } from 'viem'
+import { getAddress, type Hex } from 'viem'
 import type { BasePublicClient } from '@/lib/rpc'
-import { formatRpcError } from '@/lib/rpc'
 import { basescanLink } from '@/lib/position/format'
 import {
   BASESCAN_QUEUE,
-  FULFILL_LOOKBACK_BLOCKS,
-  LOGS_CHUNK_BLOCKS,
   REDEMPTION_QUEUE_ABI,
   REDEMPTION_QUEUE_ADDRESS,
 } from './constants'
@@ -27,53 +24,31 @@ function formatWait(seconds: number): string {
   return h > 0 ? `${days}d ${h}h` : `${days}d`
 }
 
-async function countRecentFulfills(
-  client: BasePublicClient,
-  warnings: string[],
-): Promise<number | null> {
-  try {
-    const latest = await client.getBlockNumber()
-    const fromBlock = latest > FULFILL_LOOKBACK_BLOCKS ? latest - FULFILL_LOOKBACK_BLOCKS : 0n
-    const event = parseAbiItem(
-      'event RequestFulfilled(uint256 indexed requestId, address indexed user, bytes32 indexed hlPortionId, address operator, bytes32 botId, uint256 positionId, address wlRecipient, address[] tokens, uint256[] principalAmounts, uint256[] profitAmounts)',
-    )
-
-    let total = 0
-    for (let start = fromBlock; start <= latest; start += LOGS_CHUNK_BLOCKS + 1n) {
-      const end = start + LOGS_CHUNK_BLOCKS > latest ? latest : start + LOGS_CHUNK_BLOCKS
-      const logs = await client.getLogs({
-        address: REDEMPTION_QUEUE_ADDRESS,
-        event,
-        fromBlock: start,
-        toBlock: end,
-      })
-      total += logs.length
-    }
-    return total
-  } catch (err) {
-    warnings.push(formatRpcError(err, 'Could not scan recent RequestFulfilled logs'))
-    return null
-  }
-}
-
+/**
+ * Pending FIFO via Multicall3 only (no eth_getLogs).
+ * Contract views: pendingQueueLength, nextPendingRequestId,
+ * pendingRequestAt(i), getRequest(id).
+ */
 export async function fetchRedemptionQueue(
   client: BasePublicClient,
 ): Promise<RedemptionQueueResult> {
-  const warnings: string[] = []
   const nowSec = Math.floor(Date.now() / 1000)
 
-  const [pendingCountRaw, headRaw] = await Promise.all([
-    client.readContract({
-      address: REDEMPTION_QUEUE_ADDRESS,
-      abi: REDEMPTION_QUEUE_ABI,
-      functionName: 'pendingQueueLength',
-    }),
-    client.readContract({
-      address: REDEMPTION_QUEUE_ADDRESS,
-      abi: REDEMPTION_QUEUE_ABI,
-      functionName: 'nextPendingRequestId',
-    }),
-  ])
+  const [pendingCountRaw, headRaw] = await client.multicall({
+    allowFailure: false,
+    contracts: [
+      {
+        address: REDEMPTION_QUEUE_ADDRESS,
+        abi: REDEMPTION_QUEUE_ABI,
+        functionName: 'pendingQueueLength',
+      },
+      {
+        address: REDEMPTION_QUEUE_ADDRESS,
+        abi: REDEMPTION_QUEUE_ABI,
+        functionName: 'nextPendingRequestId',
+      },
+    ],
+  })
 
   const pendingCount = Number(pendingCountRaw)
   const headRequestId = headRaw === 0n ? null : headRaw.toString()
@@ -81,7 +56,7 @@ export async function fetchRedemptionQueue(
   let pending: RedemptionPendingRequest[] = []
 
   if (pendingCount > 0) {
-    const idResults = await client.multicall({
+    const requestIds = (await client.multicall({
       allowFailure: false,
       contracts: Array.from({ length: pendingCount }, (_, i) => ({
         address: REDEMPTION_QUEUE_ADDRESS,
@@ -89,9 +64,7 @@ export async function fetchRedemptionQueue(
         functionName: 'pendingRequestAt' as const,
         args: [BigInt(i)] as const,
       })),
-    })
-
-    const requestIds = idResults as readonly bigint[]
+    })) as readonly bigint[]
 
     const reqResults = await client.multicall({
       allowFailure: false,
@@ -132,8 +105,6 @@ export async function fetchRedemptionQueue(
   const avgWaitSeconds =
     waits.length > 0 ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : null
 
-  const fulfilledRecentCount = await countRecentFulfills(client, warnings)
-
   return {
     queueAddress: REDEMPTION_QUEUE_ADDRESS,
     basescanQueue: BASESCAN_QUEUE,
@@ -145,10 +116,7 @@ export async function fetchRedemptionQueue(
       oldestWaitLabel: oldestWaitSeconds == null ? null : formatWait(oldestWaitSeconds),
       avgWaitSeconds,
       avgWaitLabel: avgWaitSeconds == null ? null : formatWait(avgWaitSeconds),
-      fulfilledRecentCount,
-      fulfillLookbackLabel: '~7 days',
     },
     pending,
-    warnings,
   }
 }

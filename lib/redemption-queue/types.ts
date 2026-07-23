@@ -20,9 +20,6 @@ export type RedemptionQueueStats = {
   oldestWaitLabel: string | null
   avgWaitSeconds: number | null
   avgWaitLabel: string | null
-  /** Fulfilled events found in lookback window (null if log scan skipped/failed). */
-  fulfilledRecentCount: number | null
-  fulfillLookbackLabel: string
 }
 
 export type RedemptionQueueResult = {
@@ -31,5 +28,4 @@ export type RedemptionQueueResult = {
   fetchedAtIso: string
   stats: RedemptionQueueStats
   pending: RedemptionPendingRequest[]
-  warnings: string[]
 }

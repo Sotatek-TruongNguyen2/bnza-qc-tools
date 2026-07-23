@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
 import { fetchRedemptionQueue } from '@/lib/redemption-queue/fetch-redemption-queue'
-import { createBaseLogsPublicClient, formatRpcError } from '@/lib/rpc'
+import { createBasePublicClient, formatRpcError } from '@/lib/rpc'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+/** Pending FIFO via Multicall3 views only. */
 export async function GET() {
   try {
-    // Logs-friendly RPC: pending views + recent RequestFulfilled scan.
-    const client = createBaseLogsPublicClient(45_000)
+    const client = createBasePublicClient(20_000)
     const result = await fetchRedemptionQueue(client)
     return NextResponse.json(result)
   } catch (err) {

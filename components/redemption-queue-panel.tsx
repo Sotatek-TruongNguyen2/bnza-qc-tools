@@ -120,22 +120,7 @@ export function RedemptionQueuePanel() {
               <span className="rq-stat-value">{stats.avgWaitLabel ?? '—'}</span>
               <span className="rq-stat-hint">across pending</span>
             </div>
-            <div className="rq-stat">
-              <span className="rq-stat-label">Fulfilled ({stats.fulfillLookbackLabel})</span>
-              <span className="rq-stat-value">
-                {stats.fulfilledRecentCount == null ? '—' : stats.fulfilledRecentCount}
-              </span>
-              <span className="rq-stat-hint">RequestFulfilled logs</span>
-            </div>
           </div>
-
-          {result.warnings.length > 0 && (
-            <ul className="calldata-warnings">
-              {result.warnings.map((w) => (
-                <li key={w}>{w}</li>
-              ))}
-            </ul>
-          )}
 
           <p className="muted rq-fetched">
             Fetched {formatLocalDateTime(result.fetchedAtIso)} ·{' '}
