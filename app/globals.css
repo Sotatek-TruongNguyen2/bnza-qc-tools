@@ -239,8 +239,8 @@ code {
 
 @keyframes tab-panel-enter {
   from {
-    opacity: 0;
-    transform: translate3d(0, 0.9rem, 0);
+    opacity: 0.72;
+    transform: translate3d(0, 0.28rem, 0);
   }
   to {
     opacity: 1;
@@ -249,7 +249,7 @@ code {
 }
 
 .tab-panel-enter {
-  animation: tab-panel-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: tab-panel-enter 0.48s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
