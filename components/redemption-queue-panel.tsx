@@ -273,12 +273,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
       <dl className="kv rq-card-kv">
         <div>
           <dt>Request ID</dt>
-          <dd>
-            <span className="rq-copyable">
-              <span className="mono">{row.requestId}</span>
-              <CopyIconButton value={row.requestId} label="Copy request ID" />
-            </span>
-          </dd>
+          <dd className="mono">{row.requestId}</dd>
         </div>
         <div>
           <dt>User</dt>
@@ -300,12 +295,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
         </div>
         <div>
           <dt>Position ID</dt>
-          <dd>
-            <span className="rq-copyable">
-              <span className="mono">{row.positionId}</span>
-              <CopyIconButton value={row.positionId} label="Copy position ID" />
-            </span>
-          </dd>
+          <dd className="mono">{row.positionId}</dd>
         </div>
         <div>
           <dt>Created</dt>
