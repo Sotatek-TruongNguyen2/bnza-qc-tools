@@ -98,71 +98,69 @@ export function CalldataBuilderPanel() {
 
   return (
     <section className="panel">
-      <form className="form-grid calldata-form" onSubmit={onSubmit}>
-        <fieldset className="calldata-action">
-          <legend>Action</legend>
-          <label className="radio-row">
+      <div className="result-header addresses-header">
+        <div>
+          <h2>Calldata builder</h2>
+          <p className="muted">
+            Build vault <code>executeStrategy</code> args for Basescan paste. Does not send txs.
+          </p>
+        </div>
+      </div>
+
+      <form className="calldata-form" onSubmit={onSubmit}>
+        <label className="field">
+          <span>Action</span>
+          <select
+            className="calldata-select"
+            value={action}
+            onChange={(e) => {
+              setAction(e.target.value as CalldataAction)
+              setResult(null)
+            }}
+          >
+            <option value="close">Close position</option>
+            <option value="rebalance">Rebalance position</option>
+          </select>
+        </label>
+
+        <div className="calldata-row">
+          <label className="field field-with-hint">
+            <span>User address (custody wallet)</span>
             <input
-              type="radio"
-              name="action"
-              checked={action === 'close'}
-              onChange={() => {
-                setAction('close')
-                setResult(null)
-              }}
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              placeholder="0x…"
+              autoComplete="off"
+              spellCheck={false}
             />
-            Close position
+            <span className="field-hint">Vault `user`, not investor EOA.</span>
           </label>
-          <label className="radio-row">
+
+          <label className="field">
+            <span>Bot ID</span>
             <input
-              type="radio"
-              name="action"
-              checked={action === 'rebalance'}
-              onChange={() => {
-                setAction('rebalance')
-                setResult(null)
-              }}
+              value={botId}
+              onChange={(e) => setBotId(e.target.value)}
+              placeholder="UUID or 0x bytes32"
+              autoComplete="off"
+              spellCheck={false}
             />
-            Rebalance position
           </label>
-        </fieldset>
+        </div>
 
-        <label className="field field-with-hint">
-          <span>User address (custody wallet)</span>
-          <input
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-            placeholder="0x…"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <span className="field-hint">Same as Bot lookup — vault `user`, not investor EOA.</span>
-        </label>
+        <div className="calldata-row">
+          <label className="field">
+            <span>Position tokenId</span>
+            <input
+              value={tokenId}
+              onChange={(e) => setTokenId(e.target.value)}
+              placeholder="e.g. 42"
+              inputMode="numeric"
+              autoComplete="off"
+            />
+          </label>
 
-        <label className="field field-with-hint">
-          <span>Bot ID</span>
-          <input
-            value={botId}
-            onChange={(e) => setBotId(e.target.value)}
-            placeholder="UUID or 0x bytes32"
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </label>
-
-        <label className="field field-with-hint">
-          <span>Position tokenId</span>
-          <input
-            value={tokenId}
-            onChange={(e) => setTokenId(e.target.value)}
-            placeholder="e.g. 42"
-            inputMode="numeric"
-            autoComplete="off"
-          />
-        </label>
-
-        {action === 'close' ? (
-          <>
+          {action === 'close' ? (
             <label className="field">
               <span>performanceFeeBps</span>
               <input
@@ -171,15 +169,43 @@ export function CalldataBuilderPanel() {
                 inputMode="numeric"
               />
             </label>
-            <label className="field field-with-hint">
-              <span>amountOutMinimum (USDC raw, 6 decimals)</span>
+          ) : (
+            <label className="field">
+              <span>slippageBps</span>
               <input
-                value={amountOutMinimum}
-                onChange={(e) => setAmountOutMinimum(e.target.value)}
+                value={slippageBps}
+                onChange={(e) => setSlippageBps(e.target.value)}
                 inputMode="numeric"
               />
-              <span className="field-hint">0 = no floor (risky). 1 USDC = 1000000.</span>
             </label>
+          )}
+        </div>
+
+        {action === 'close' ? (
+          <>
+            <div className="calldata-row">
+              <label className="field field-with-hint">
+                <span>amountOutMinimum (USDC raw)</span>
+                <input
+                  value={amountOutMinimum}
+                  onChange={(e) => setAmountOutMinimum(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">0 = no floor. 1 USDC = 1000000.</span>
+              </label>
+
+              <label className="field field-with-hint">
+                <span>Default swap fee (if path empty)</span>
+                <input
+                  value={defaultSwapFee}
+                  onChange={(e) => setDefaultSwapFee(e.target.value)}
+                  inputMode="numeric"
+                  placeholder="500"
+                />
+                <span className="field-hint">500 = 0.05%, 3000 = 0.3%.</span>
+              </label>
+            </div>
+
             <label className="field field-with-hint">
               <span>swapPath (hex, optional)</span>
               <input
@@ -189,55 +215,41 @@ export function CalldataBuilderPanel() {
                 autoComplete="off"
                 spellCheck={false}
               />
-              <span className="field-hint">Empty fills a default WETH→USDC single-hop path.</span>
+              <span className="field-hint">Empty fills WETH→USDC single-hop with the fee above.</span>
             </label>
-            <label className="field field-with-hint">
-              <span>Default swap fee (if path empty)</span>
-              <input
-                value={defaultSwapFee}
-                onChange={(e) => setDefaultSwapFee(e.target.value)}
-                inputMode="numeric"
-                placeholder="500"
-              />
-              <span className="field-hint">Uniswap V3 fee tier: 500 = 0.05%, 3000 = 0.3%.</span>
-            </label>
-            <label className="radio-row checkbox-row">
+
+            <label className="calldata-check">
               <input
                 type="checkbox"
                 checked={convertPrincipalToUsdc}
                 onChange={(e) => setConvertPrincipalToUsdc(e.target.checked)}
               />
-              convertPrincipalToUsdc (recommended)
+              <span>convertPrincipalToUsdc (recommended)</span>
             </label>
           </>
         ) : (
           <>
-            <label className="field">
-              <span>newTickLower</span>
-              <input
-                value={newTickLower}
-                onChange={(e) => setNewTickLower(e.target.value)}
-                placeholder="e.g. -200100"
-                inputMode="numeric"
-              />
-            </label>
-            <label className="field">
-              <span>newTickUpper</span>
-              <input
-                value={newTickUpper}
-                onChange={(e) => setNewTickUpper(e.target.value)}
-                placeholder="e.g. -199500"
-                inputMode="numeric"
-              />
-            </label>
-            <label className="field">
-              <span>slippageBps</span>
-              <input
-                value={slippageBps}
-                onChange={(e) => setSlippageBps(e.target.value)}
-                inputMode="numeric"
-              />
-            </label>
+            <div className="calldata-row">
+              <label className="field">
+                <span>newTickLower</span>
+                <input
+                  value={newTickLower}
+                  onChange={(e) => setNewTickLower(e.target.value)}
+                  placeholder="e.g. -200100"
+                  inputMode="numeric"
+                />
+              </label>
+              <label className="field">
+                <span>newTickUpper</span>
+                <input
+                  value={newTickUpper}
+                  onChange={(e) => setNewTickUpper(e.target.value)}
+                  placeholder="e.g. -199500"
+                  inputMode="numeric"
+                />
+              </label>
+            </div>
+
             <label className="field field-with-hint">
               <span>amountOutMinimum</span>
               <input
@@ -250,15 +262,10 @@ export function CalldataBuilderPanel() {
           </>
         )}
 
-        <button type="submit" className="btn-primary">
+        <button type="submit" className="btn-primary calldata-submit">
           Build Basescan params
         </button>
       </form>
-
-      <p className="hint">
-        Builds vault <code>executeStrategy(strategy, user, botId, params)</code> fields for QC to
-        paste on Basescan. Operator wallet must send the tx — this tab never broadcasts.
-      </p>
 
       {error && <p className="error">{error}</p>}
       {result && <CalldataBuilderResult result={result} />}
