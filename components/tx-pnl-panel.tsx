@@ -5,7 +5,7 @@ import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenIcon } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
-import { formatUtcDateTime } from '@/lib/format-datetime'
+import { formatLocalDateTime } from '@/lib/format-datetime'
 import type { CloseEstimateCalcSection } from '@/lib/position/close-estimate-types'
 import type { TxPnlResult } from '@/lib/tx-pnl/types'
 import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
@@ -230,7 +230,7 @@ export function TxPnlPanel() {
               <h2>{result.human.summary}</h2>
               <p className="muted">
                 Base mainnet · tokenId #{result.human.tokenId} · opened{' '}
-                {formatUtcDateTime(result.raw.openedAtIso)}
+                {formatLocalDateTime(result.raw.openedAtIso)}
                 {result.human.positionStatus === 'closed' ? ' · CLOSED' : ''}
               </p>
             </div>

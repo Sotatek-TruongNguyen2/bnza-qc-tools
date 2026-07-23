@@ -1,4 +1,5 @@
 import type { CloseEstimateCalcSection } from './close-estimate-types'
+import { formatLocalDateTime } from '@/lib/format-datetime'
 import { formatRawAmount } from './format-raw-amount'
 import { formatChartPrice, getDisplayQuote } from './range-chart-math'
 import type { PositionOpenPrice, PositionRaw } from './types'
@@ -36,7 +37,9 @@ export function buildOriginalPrincipalHint(
       { label: 'Mint tx', value: open.txHash ?? '—' },
       {
         label: 'Opened at',
-        value: open.openedAtLabel ?? open.openedAtIso ?? '—',
+        value: open.openedAtIso
+          ? formatLocalDateTime(open.openedAtIso)
+          : open.openedAtLabel ?? '—',
       },
       {
         label: 'Pool spot at open',

@@ -8,7 +8,6 @@ import {
   toHex,
   type Hex,
 } from 'viem'
-import { formatUtcDateTime } from '@/lib/format-datetime'
 import type { BasePublicClient } from '@/lib/rpc'
 import { formatRpcError } from '@/lib/rpc'
 import { NPM_ADDRESS } from './constants'
@@ -258,7 +257,8 @@ export async function fetchPositionOpenPrice(
       txHash,
       blockNumber: receipt.blockNumber.toString(),
       openedAtIso,
-      openedAtLabel: formatUtcDateTime(openedAtIso),
+      // Label left null — client formats in local timezone via formatLocalDateTime.
+      openedAtLabel: null,
       tick,
       sqrtPriceX96: sqrtPriceX96.toString(),
       priceToken1PerToken0,

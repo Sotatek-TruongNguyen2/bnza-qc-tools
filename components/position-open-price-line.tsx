@@ -1,6 +1,6 @@
 'use client'
 
-import { formatUtcDateTime } from '@/lib/format-datetime'
+import { formatLocalDateTime } from '@/lib/format-datetime'
 import { formatChartPrice, getDisplayQuote } from '@/lib/position/range-chart-math'
 import type { PositionOpenPrice, PositionRaw } from '@/lib/position/types'
 
@@ -34,10 +34,9 @@ export function PositionOpenPriceLine({ raw, openPrice, loading }: Props) {
     ? `1 ${raw.token1Symbol} = ${formatChartPrice(display)} ${raw.token0Symbol}`
     : `1 ${raw.token0Symbol} = ${formatChartPrice(display)} ${raw.token1Symbol}`
 
-  const openedWhen =
-    openPrice.openedAtLabel ||
-    formatUtcDateTime(openPrice.openedAtIso) ||
-    null
+  const openedWhen = openPrice.openedAtIso
+    ? formatLocalDateTime(openPrice.openedAtIso)
+    : openPrice.openedAtLabel || null
 
   return (
     <p className="range-open-price">
