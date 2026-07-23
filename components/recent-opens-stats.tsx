@@ -122,7 +122,8 @@ export function RecentOpensStats() {
           <h2 className="recent-opens-title">Recent opens</h2>
           <p className="muted recent-opens-sub">
             <code>PositionOpened</code> events · live open/closed via{' '}
-            <code>getPositionDeployment</code> · last{' '}
+            <code>getPositionDeployment</code> · Uni PnL = live open + realized close · HL marked
+            flat · last{' '}
             {result
               ? `${Number(result.lookbackBlocks).toLocaleString('en-US')} blocks (${result.lookbackApproxLabel})`
               : `${Number(RECENT_OPENS_DEFAULT_LOOKBACK_BLOCKS).toLocaleString('en-US')} blocks`}
@@ -162,16 +163,62 @@ export function RecentOpensStats() {
               <span className="ro-stat-value">{stats.closedCount}</span>
             </div>
             <div className="ro-stat">
-              <span className="ro-stat-label">Total USDC</span>
+              <span className="ro-stat-label">Open USDC</span>
               <span className="ro-stat-value ro-stat-value-sm">{stats.totalUsdcHuman}</span>
             </div>
             <div className="ro-stat">
-              <span className="ro-stat-label">Uniswap leg</span>
+              <span className="ro-stat-label">Closed USDC</span>
+              <span className="ro-stat-value ro-stat-value-sm">{stats.closedTotalUsdcHuman}</span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">Uniswap open</span>
               <span className="ro-stat-value ro-stat-value-sm">{stats.uniswapUsdcHuman}</span>
             </div>
             <div className="ro-stat">
-              <span className="ro-stat-label">HL leg</span>
+              <span className="ro-stat-label">Uniswap closed</span>
+              <span className="ro-stat-value ro-stat-value-sm">{stats.closedUniswapUsdcHuman}</span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">HL open</span>
               <span className="ro-stat-value ro-stat-value-sm">{stats.hyperliquidUsdcHuman}</span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">HL closed</span>
+              <span className="ro-stat-value ro-stat-value-sm">{stats.closedHyperliquidUsdcHuman}</span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">Uniswap PnL</span>
+              <span
+                className={`ro-stat-value ro-stat-value-sm ${
+                  stats.uniswapPnlUsdc.startsWith('-') ? 'ro-stat-pnl-neg' : 'ro-stat-pnl-pos'
+                }`}
+                title={
+                  stats.uniswapPnlSkipped > 0
+                    ? `Sampled ${stats.uniswapPnlSampled}, skipped ${stats.uniswapPnlSkipped}`
+                    : `Sampled ${stats.uniswapPnlSampled}`
+                }
+              >
+                {stats.uniswapPnlUsdcHuman}
+              </span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">HL PnL</span>
+              <span
+                className="ro-stat-value ro-stat-value-sm ro-stat-pnl-flat"
+                title={stats.hlPnlNote}
+              >
+                {stats.hlPnlUsdcHuman}
+              </span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">Total PnL</span>
+              <span
+                className={`ro-stat-value ro-stat-value-sm ${
+                  stats.totalPnlUsdc.startsWith('-') ? 'ro-stat-pnl-neg' : 'ro-stat-pnl-pos'
+                }`}
+              >
+                {stats.totalPnlUsdcHuman}
+              </span>
             </div>
             <div className="ro-stat">
               <span className="ro-stat-label">Users</span>

@@ -2575,6 +2575,18 @@ select.calldata-select {
   font-weight: 650;
 }
 
+.ro-stat-pnl-pos {
+  color: var(--ok);
+}
+
+.ro-stat-pnl-neg {
+  color: var(--error);
+}
+
+.ro-stat-pnl-flat {
+  color: var(--muted);
+}
+
 .recent-opens-meta {
   margin: 0.65rem 0 0.55rem;
   font-size: 0.78rem;

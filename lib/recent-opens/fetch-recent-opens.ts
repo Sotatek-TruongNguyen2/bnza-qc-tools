@@ -15,6 +15,7 @@ import {
   RECENT_OPENS_STATUS_MULTICALL_CHUNK,
 } from './constants'
 import type { RecentOpenRow, RecentOpenStatus, RecentOpensResult } from './types'
+import { fetchRecentOpensPnlTotals } from './fetch-recent-opens-pnl'
 
 function formatUsdc(raw: bigint): string {
   return `${Number(formatUnits(raw, 6)).toLocaleString('en-US', {
@@ -84,8 +85,11 @@ async function resolveOpenStatuses(
   client: BasePublicClient,
   opens: Array<{ owner: `0x${string}`; botId: Hex; positionId: bigint }>,
   warnings: string[],
-): Promise<RecentOpenStatus[]> {
-  const statuses: RecentOpenStatus[] = Array.from({ length: opens.length }, () => 'unknown')
+): Promise<Array<{ status: RecentOpenStatus; liveTokenId: string | null }>> {
+  const out: Array<{ status: RecentOpenStatus; liveTokenId: string | null }> = Array.from(
+    { length: opens.length },
+    () => ({ status: 'unknown', liveTokenId: null }),
+  )
   const chunk = RECENT_OPENS_STATUS_MULTICALL_CHUNK
 
   for (let i = 0; i < opens.length; i += chunk) {
@@ -103,9 +107,10 @@ async function resolveOpenStatuses(
       for (let j = 0; j < results.length; j++) {
         const r = results[j]!
         if (r.status === 'success') {
-          statuses[i + j] = r.result.active ? 'open' : 'closed'
-        } else {
-          statuses[i + j] = 'unknown'
+          out[i + j] = {
+            status: r.result.active ? 'open' : 'closed',
+            liveTokenId: r.result.tokenId === 0n ? null : r.result.tokenId.toString(),
+          }
         }
       }
     } catch (err) {
@@ -118,7 +123,7 @@ async function resolveOpenStatuses(
     }
   }
 
-  return statuses
+  return out
 }
 
 export async function fetchRecentOpens(
@@ -185,35 +190,61 @@ export async function fetchRecentOpens(
     return b.tokenId.localeCompare(a.tokenId, undefined, { numeric: true })
   })
 
-  const statuses = await resolveOpenStatuses(
+  const statusRows = await resolveOpenStatuses(
     client,
     drafts.map((d) => ({ owner: d.owner, botId: d.botId, positionId: d.positionIdBig })),
     warnings,
   )
 
+  const liveTokenIdByKey = new Map<string, string>()
   const opens: RecentOpenRow[] = drafts.map((d, i) => {
     const { positionIdBig: _, ...row } = d
-    return { ...row, status: statuses[i] ?? 'unknown' }
+    const resolved = statusRows[i] ?? { status: 'unknown' as const, liveTokenId: null }
+    const key = `${row.txHash}-${row.tokenId}`
+    if (resolved.liveTokenId) liveTokenIdByKey.set(key, resolved.liveTokenId)
+    return { ...row, status: resolved.status }
   })
 
   let totalUsdc = 0n
   let uniswapUsdc = 0n
   let hyperliquidUsdc = 0n
+  let closedTotalUsdc = 0n
+  let closedUniswapUsdc = 0n
+  let closedHyperliquidUsdc = 0n
   let stillOpenCount = 0
   let closedCount = 0
   let unknownCount = 0
   const users = new Set<string>()
   const bots = new Set<string>()
   for (const row of opens) {
-    totalUsdc += BigInt(row.totalUsdc)
-    uniswapUsdc += BigInt(row.uniswapUsdc)
-    hyperliquidUsdc += BigInt(row.hyperliquidUsdc)
+    const rowTotal = BigInt(row.totalUsdc)
+    const rowUni = BigInt(row.uniswapUsdc)
+    const rowHl = BigInt(row.hyperliquidUsdc)
     users.add(row.owner.toLowerCase())
     bots.add(row.botId.toLowerCase())
-    if (row.status === 'open') stillOpenCount += 1
-    else if (row.status === 'closed') closedCount += 1
-    else unknownCount += 1
+    if (row.status === 'open') {
+      stillOpenCount += 1
+      totalUsdc += rowTotal
+      uniswapUsdc += rowUni
+      hyperliquidUsdc += rowHl
+    } else if (row.status === 'closed') {
+      closedCount += 1
+      closedTotalUsdc += rowTotal
+      closedUniswapUsdc += rowUni
+      closedHyperliquidUsdc += rowHl
+    } else {
+      unknownCount += 1
+    }
   }
+
+  const pnl = await fetchRecentOpensPnlTotals(
+    client,
+    opens,
+    liveTokenIdByKey,
+    fromBlock,
+    toBlock,
+    warnings,
+  )
 
   return {
     positionManager: POSITION_MANAGER_ADDRESS,
@@ -236,6 +267,21 @@ export async function fetchRecentOpens(
       uniswapUsdcHuman: formatUsdc(uniswapUsdc),
       hyperliquidUsdc: hyperliquidUsdc.toString(),
       hyperliquidUsdcHuman: formatUsdc(hyperliquidUsdc),
+      closedTotalUsdc: closedTotalUsdc.toString(),
+      closedTotalUsdcHuman: formatUsdc(closedTotalUsdc),
+      closedUniswapUsdc: closedUniswapUsdc.toString(),
+      closedUniswapUsdcHuman: formatUsdc(closedUniswapUsdc),
+      closedHyperliquidUsdc: closedHyperliquidUsdc.toString(),
+      closedHyperliquidUsdcHuman: formatUsdc(closedHyperliquidUsdc),
+      uniswapPnlUsdc: pnl.uniswapPnlUsdc,
+      uniswapPnlUsdcHuman: pnl.uniswapPnlUsdcHuman,
+      hlPnlUsdc: pnl.hlPnlUsdc,
+      hlPnlUsdcHuman: pnl.hlPnlUsdcHuman,
+      totalPnlUsdc: pnl.totalPnlUsdc,
+      totalPnlUsdcHuman: pnl.totalPnlUsdcHuman,
+      uniswapPnlSampled: pnl.uniswapPnlSampled,
+      uniswapPnlSkipped: pnl.uniswapPnlSkipped,
+      hlPnlNote: pnl.hlPnlNote,
     },
     opens,
     warnings,

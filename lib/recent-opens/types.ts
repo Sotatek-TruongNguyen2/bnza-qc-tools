@@ -29,12 +29,31 @@ export type RecentOpensStats = {
   unknownCount: number
   uniqueUsers: number
   uniqueBots: number
+  /** Entry capital still in open positions. */
   totalUsdc: string
   totalUsdcHuman: string
   uniswapUsdc: string
   uniswapUsdcHuman: string
   hyperliquidUsdc: string
   hyperliquidUsdcHuman: string
+  /** Entry capital from positions that are now closed. */
+  closedTotalUsdc: string
+  closedTotalUsdcHuman: string
+  closedUniswapUsdc: string
+  closedUniswapUsdcHuman: string
+  closedHyperliquidUsdc: string
+  closedHyperliquidUsdcHuman: string
+  /** Live open + realized closed Uniswap leg PnL. */
+  uniswapPnlUsdc: string
+  uniswapPnlUsdcHuman: string
+  /** Assumed flat without per-position HL equity. */
+  hlPnlUsdc: string
+  hlPnlUsdcHuman: string
+  totalPnlUsdc: string
+  totalPnlUsdcHuman: string
+  uniswapPnlSampled: number
+  uniswapPnlSkipped: number
+  hlPnlNote: string
 }
 
 export type RecentOpensResult = {

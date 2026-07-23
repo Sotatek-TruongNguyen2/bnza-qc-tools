@@ -2,6 +2,10 @@ import { POSITION_MANAGER_ABI, POSITION_MANAGER_ADDRESS } from '@/lib/bot/consta
 
 export { POSITION_MANAGER_ABI, POSITION_MANAGER_ADDRESS }
 
+/** RedeemStrategyV1 — PositionLiquidated / CloseFeesCollected. */
+export const REDEEM_STRATEGY_ADDRESS =
+  '0x1C46D4B32a6FA5D3Bb14Ddd137EDBd71E1C8501b' as const
+
 /** Batch size for getPositionDeployment multicalls. */
 export const RECENT_OPENS_STATUS_MULTICALL_CHUNK = 80
 
@@ -24,3 +28,9 @@ export const RECENT_OPENS_DISMISSED_STORAGE_KEY = 'bnza-qc:recent-opens-dismisse
 
 export const POSITION_OPENED_EVENT =
   'event PositionOpened(address indexed owner, bytes32 indexed botId, uint256 indexed positionId, uint256 tokenId, address pool, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 totalUsdc, uint256 uniswapUsdc, uint256 hyperliquidUsdc)' as const
+
+export const POSITION_LIQUIDATED_EVENT =
+  'event PositionLiquidated(address indexed user, uint256 indexed tokenId, uint256 principalUsdc)' as const
+
+export const CLOSE_FEES_COLLECTED_EVENT =
+  'event CloseFeesCollected(address indexed user, uint256 indexed tokenId, address token0, address token1, uint256 gross0, uint256 gross1, uint256 operationFee0, uint256 operationFee1, uint256 performanceFee0, uint256 performanceFee1)' as const
