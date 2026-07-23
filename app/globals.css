@@ -905,6 +905,53 @@ input:focus {
   border: 1px solid #cfe3d7;
 }
 
+.quote-best-route {
+  margin: 0.35rem 0 0.85rem;
+}
+
+.quote-route-path {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.15rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.quote-route-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.quote-route-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+
+.quote-route-hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.quote-route-fee {
+  font-variant-numeric: tabular-nums;
+}
+
+.quote-route-arrow {
+  opacity: 0.7;
+}
+
+.table-wrap .quote-route-path {
+  max-width: 28rem;
+}
+
 .estimate-card {
   margin-top: 1.25rem;
   padding: 1rem;

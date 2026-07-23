@@ -2,15 +2,21 @@ import { knownTokenSymbol } from '@/lib/base-known-tokens'
 
 const ICON_BY_SYMBOL: Record<string, string> = {
   USDC: '/tokens/usdc.svg',
+  USDBC: '/tokens/usdbc.svg',
+  USDT: '/tokens/usdt.svg',
+  DAI: '/tokens/dai.svg',
   WETH: '/tokens/weth.svg',
   ETH: '/tokens/weth.svg',
+  CBETH: '/tokens/cbeth.svg',
+  WSTETH: '/tokens/wsteth.svg',
+  CBBTC: '/tokens/cbbtc.svg',
 }
 
 function resolveIconSymbol(symbol?: string | null, address?: string | null): string | null {
   const fromSymbol = symbol?.trim().toUpperCase()
   if (fromSymbol && ICON_BY_SYMBOL[fromSymbol]) return fromSymbol
 
-  const fromAddress = address ? knownTokenSymbol(address) : null
+  const fromAddress = address ? knownTokenSymbol(address)?.toUpperCase() : null
   if (fromAddress && ICON_BY_SYMBOL[fromAddress]) return fromAddress
 
   return null
@@ -23,7 +29,7 @@ type TokenIconProps = {
   className?: string
 }
 
-/** Circular token logo for known Base tokens (USDC, WETH). */
+/** Circular token logo for known Base hubs (USDC, WETH, DAI, USDT, …). */
 export function TokenIcon({ symbol, address, size = 20, className }: TokenIconProps) {
   const resolved = resolveIconSymbol(symbol, address)
   if (!resolved) return null

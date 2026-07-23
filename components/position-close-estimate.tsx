@@ -13,8 +13,13 @@ import type { PositionRaw } from '@/lib/position/types'
 
 type Props = {
   raw: PositionRaw
-  /** EXBOT / mint open tx — prefills PnL tab when opening full analysis. */
+  /** Mint tx from open-price (same as “mint tx” on Position tab). Prefills PnL. */
   openTxHash?: string | null
+  openTxHashLoading?: boolean
+}
+
+function isTxHash(value: string | null | undefined): value is string {
+  return typeof value === 'string' && /^0x[a-fA-F0-9]{64}$/.test(value)
 }
 
 function parsePct(value: string, fallback: number): number {
@@ -50,7 +55,7 @@ function ExternalLinkIcon() {
   )
 }
 
-export function PositionCloseEstimate({ raw, openTxHash }: Props) {
+export function PositionCloseEstimate({ raw, openTxHash, openTxHashLoading }: Props) {
   const [operationFeePct, setOperationFeePct] = useState('0.5')
   const [performanceFeePct, setPerformanceFeePct] = useState('30')
   const [swapSlippagePct, setSwapSlippagePct] = useState('1')
@@ -238,24 +243,24 @@ export function PositionCloseEstimate({ raw, openTxHash }: Props) {
             <span className="muted estimate-uni-pnl-hint">
               {' '}
               · mark vs EXBOT entry ·{' '}
-              <a
-                className="estimate-pnl-link"
-                href={
-                  openTxHash && /^0x[a-fA-F0-9]{64}$/.test(openTxHash)
-                    ? `/?tool=tx-pnl&txHash=${encodeURIComponent(openTxHash)}`
-                    : '/?tool=tx-pnl'
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                title={
-                  openTxHash
-                    ? 'Open PnL tab in a new window with this position’s open tx filled'
-                    : 'Open PnL tab in a new window'
-                }
-              >
-                Open full PnL tab
-                <ExternalLinkIcon />
-              </a>
+              {openTxHashLoading ? (
+                <span>resolving mint tx…</span>
+              ) : isTxHash(openTxHash) ? (
+                <a
+                  className="estimate-pnl-link"
+                  href={`/?tool=tx-pnl&txHash=${encodeURIComponent(openTxHash)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open PnL tab with this position’s mint/open tx filled"
+                >
+                  Open full PnL tab
+                  <ExternalLinkIcon />
+                </a>
+              ) : (
+                <span title="Mint tx not resolved yet — wait for Opened at / mint tx above">
+                  Open full PnL tab (mint tx unavailable)
+                </span>
+              )}
             </span>
           </dd>
         </div>

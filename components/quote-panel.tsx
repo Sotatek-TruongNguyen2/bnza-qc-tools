@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CopyJsonButton } from './copy-json-button'
+import { QuoteRoutePath } from './quote-route-path'
 import { TokenIcon, TokenSymbol } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
 import type { QuoteResult } from '@/lib/quote/types'
@@ -250,7 +251,14 @@ export function QuotePanel() {
                   ({best.kind === 'multi-hop' ? `${best.hopCount ?? best.hops.length}-hop` : best.kind})
                 </span>
               </h3>
-              <p className="mono">{best.description}</p>
+              <p className="quote-best-route">
+                <QuoteRoutePath
+                  hops={best.hops}
+                  tokenIn={result.tokenIn}
+                  tokenOut={result.tokenOut}
+                  description={best.description}
+                />
+              </p>
               <dl className="kv">
                 <div>
                   <dt>Amount out</dt>
@@ -302,7 +310,14 @@ export function QuotePanel() {
                           <td className="mono">
                             {q.kind === 'multi-hop' ? `${q.hopCount ?? q.hops.length}-hop` : q.kind}
                           </td>
-                          <td>{q.description}</td>
+                          <td>
+                            <QuoteRoutePath
+                              hops={q.hops}
+                              tokenIn={result.tokenIn}
+                              tokenOut={result.tokenOut}
+                              description={q.description}
+                            />
+                          </td>
                           <td className="mono">{q.amountOutHuman}</td>
                           <td className="mono">{q.amountOutMinimumHuman}</td>
                           <td className="mono">{q.gasEstimate}</td>

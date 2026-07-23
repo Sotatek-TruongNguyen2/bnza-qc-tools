@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenIcon } from './token-icon'
@@ -8,7 +9,7 @@ import { apiGetJson } from '@/lib/api-client'
 import { formatLocalDateTime } from '@/lib/format-datetime'
 import type { CloseEstimateCalcSection } from '@/lib/position/close-estimate-types'
 import type { TxPnlResult } from '@/lib/tx-pnl/types'
-import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
+import { replaceQueryParams } from '@/lib/url-query'
 import { highlightKeywords } from './highlight-keywords'
 
 function pnlClass(value: string): string {
@@ -64,10 +65,20 @@ function DtWithHint({
   )
 }
 
+function readTxHashParam(value: string | null): string | null {
+  const hash = value?.trim() ?? null
+  if (!hash || !/^0x[a-fA-F0-9]{64}$/.test(hash)) return null
+  return hash
+}
+
 export function TxPnlPanel() {
-  const [txHash, setTxHash] = useState('')
-  const [closeTxHash, setCloseTxHash] = useState('')
-  const [hlCurrent, setHlCurrent] = useState('')
+  const searchParams = useSearchParams()
+  const initialHash = readTxHashParam(searchParams.get('txHash'))
+  const [txHash, setTxHash] = useState(initialHash ?? '')
+  const [closeTxHash, setCloseTxHash] = useState(() => searchParams.get('closeTxHash') ?? '')
+  const [hlCurrent, setHlCurrent] = useState(
+    () => searchParams.get('hlCurrent') ?? searchParams.get('hlSize') ?? '',
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TxPnlResult | null>(null)
@@ -79,11 +90,14 @@ export function TxPnlPanel() {
     setOpenHintId((current) => (current === hintId ? null : hintId))
   }
 
+  // Prefill + auto-run from `/?tool=tx-pnl&txHash=…` (e.g. Position “Open full PnL tab”).
   useEffect(() => {
-    const hash = readQueryParam('txHash')
-    const closeHash = readQueryParam('closeTxHash') ?? ''
-    const hl = readQueryParam('hlCurrent') ?? readQueryParam('hlSize') ?? ''
-    if (!hash || !/^0x[a-fA-F0-9]{64}$/.test(hash)) return
+    const hash =
+      readTxHashParam(searchParams.get('txHash')) ??
+      readTxHashParam(new URLSearchParams(window.location.search).get('txHash'))
+    const closeHash = searchParams.get('closeTxHash') ?? ''
+    const hl = searchParams.get('hlCurrent') ?? searchParams.get('hlSize') ?? ''
+    if (!hash) return
 
     setTxHash(hash)
     if (closeHash) setCloseTxHash(closeHash)
@@ -94,7 +108,7 @@ export function TxPnlPanel() {
     autoFetchedKeyRef.current = key
     void runQuery(hash, closeHash, hl, { syncUrl: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [searchParams])
 
   async function runQuery(
     hash: string,

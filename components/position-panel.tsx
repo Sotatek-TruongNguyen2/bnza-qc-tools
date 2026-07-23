@@ -308,7 +308,11 @@ export function PositionPanel() {
             <li className="muted">{result.human.uncollectedFees.note}</li>
           </ul>
 
-          <PositionCloseEstimate raw={result.raw} openTxHash={openPrice?.txHash ?? null} />
+          <PositionCloseEstimate
+            raw={result.raw}
+            openTxHash={openPrice?.txHash ?? openPrice?.links.tx?.match(/\/tx\/(0x[a-fA-F0-9]{64})/i)?.[1] ?? null}
+            openTxHashLoading={openPriceLoading}
+          />
 
           <h3>Basescan</h3>
           <ul className="plain-list">

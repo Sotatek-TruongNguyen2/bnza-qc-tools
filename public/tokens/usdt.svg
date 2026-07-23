@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <circle cx="16" cy="16" r="16" fill="#26A17B"/>
+  <text x="16" y="17.5" text-anchor="middle" dominant-baseline="middle"
+        font-family="system-ui,Segoe UI,sans-serif" font-size="7.5" font-weight="700" fill="#fff">USDT</text>
+</svg>
