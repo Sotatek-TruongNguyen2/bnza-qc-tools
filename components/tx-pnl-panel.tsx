@@ -253,7 +253,7 @@ export function TxPnlPanel() {
             </div>
             <div className="result-actions">
               {result.human.positionStatus === 'closed' && (
-                <span className="badge-warn">Closed</span>
+                <span className="badge-closed">Closed</span>
               )}
               <span className={pnlClass(headlinePnlValue)}>{headlinePnlValue}</span>
               <CopyJsonButton value={result} />

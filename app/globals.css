@@ -13,6 +13,8 @@
   --warn-bg: #fff1d6;
   --ok: #0f6b4c;
   --ok-bg: #dff5ea;
+  --closed: #a33a3a;
+  --closed-bg: #fdeeee;
   --error: #9b1c1c;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: "Source Sans 3", "Segoe UI", sans-serif;
@@ -941,6 +943,7 @@ input:focus {
 
 .badge-ok,
 .badge-warn,
+.badge-closed,
 .badge-muted {
   display: inline-flex;
   align-items: center;
@@ -958,6 +961,11 @@ input:focus {
 .badge-warn {
   background: var(--warn-bg);
   color: var(--warn);
+}
+
+.badge-closed {
+  background: var(--closed-bg);
+  color: var(--closed);
 }
 
 .badge-muted {
@@ -1212,9 +1220,9 @@ input:focus {
   margin: 1rem 0 1.25rem;
   padding: 0.85rem 1rem;
   border-radius: 0.55rem;
-  border: 1px solid #e0b56a;
-  background: var(--warn-bg);
-  color: var(--warn);
+  border: 1px solid color-mix(in srgb, var(--closed) 35%, var(--line));
+  background: var(--closed-bg);
+  color: var(--closed);
 }
 
 .pnl-closed-banner strong {

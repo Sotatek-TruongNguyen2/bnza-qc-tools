@@ -17,7 +17,7 @@ import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
 
 function statusClass(status: string): string {
   if (status.startsWith('IN RANGE')) return 'badge-ok'
-  if (status.startsWith('CLOSED')) return 'badge-muted'
+  if (status.startsWith('CLOSED')) return 'badge-closed'
   return 'badge-warn'
 }
 

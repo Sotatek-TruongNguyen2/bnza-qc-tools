@@ -247,7 +247,7 @@ export function RecentOpensStats() {
                             row.status === 'open'
                               ? 'badge-ok'
                               : row.status === 'closed'
-                                ? 'badge-warn'
+                                ? 'badge-closed'
                                 : 'muted'
                           }
                         >
