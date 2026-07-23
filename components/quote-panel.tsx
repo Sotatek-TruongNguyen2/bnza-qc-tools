@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CopyJsonButton } from './copy-json-button'
+import { CompactTokenAmount } from './compact-token-amount'
 import { QuoteRoutePath } from './quote-route-path'
 import { TokenIcon, TokenSymbol } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
@@ -262,11 +263,15 @@ export function QuotePanel() {
               <dl className="kv">
                 <div>
                   <dt>Amount out</dt>
-                  <dd className="mono">{best.amountOutHuman}</dd>
+                  <dd>
+                    <CompactTokenAmount value={best.amountOutHuman} />
+                  </dd>
                 </div>
                 <div>
                   <dt>Min out</dt>
-                  <dd className="mono">{best.amountOutMinimumHuman}</dd>
+                  <dd>
+                    <CompactTokenAmount value={best.amountOutMinimumHuman} />
+                  </dd>
                 </div>
                 <div>
                   <dt>Gas est.</dt>
@@ -318,8 +323,12 @@ export function QuotePanel() {
                               description={q.description}
                             />
                           </td>
-                          <td className="mono">{q.amountOutHuman}</td>
-                          <td className="mono">{q.amountOutMinimumHuman}</td>
+                          <td>
+                            <CompactTokenAmount value={q.amountOutHuman} />
+                          </td>
+                          <td>
+                            <CompactTokenAmount value={q.amountOutMinimumHuman} />
+                          </td>
                           <td className="mono">{q.gasEstimate}</td>
                           <td className="mono">{delta}</td>
                         </tr>

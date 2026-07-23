@@ -14,6 +14,34 @@ export function formatTokenAmount(raw: bigint, decimals: number, symbol: string)
   return `${negative ? '-' : ''}${display} ${symbol}`
 }
 
+/**
+ * Trim a `formatTokenAmount` string to ~`maxFractionDigits` for display.
+ * Full string is unchanged for hover / copy.
+ */
+export function compactHumanTokenAmount(
+  human: string,
+  maxFractionDigits = 6,
+): { compact: string; full: string; truncated: boolean } {
+  const full = human.trim()
+  const match = full.match(/^([+-]?)([\d,]+)(?:\.(\d+))?(.*)$/)
+  if (!match) return { compact: full, full, truncated: false }
+
+  const sign = match[1] ?? ''
+  const whole = match[2] ?? '0'
+  const fraction = match[3] ?? ''
+  const suffix = match[4] ?? ''
+
+  if (fraction.length <= maxFractionDigits) {
+    return { compact: full, full, truncated: false }
+  }
+
+  const trimmed = fraction.slice(0, maxFractionDigits).replace(/0+$/, '')
+  const compact = trimmed
+    ? `${sign}${whole}.${trimmed}${suffix}`
+    : `${sign}${whole}${suffix}`
+  return { compact, full, truncated: true }
+}
+
 /** Decimal-adjusted pool price with sensible precision (not capped at 8 for all cases). */
 export function formatPrice(label: string, price: number): string {
   if (!Number.isFinite(price) || price <= 0) return `${label}: n/a`
