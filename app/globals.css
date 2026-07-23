@@ -1571,6 +1571,50 @@ td {
   vertical-align: top;
 }
 
+/* Full cell is the hover target (incl. padding) for compact Out / Min out. */
+.table-wrap td:has(> .compact-token-amount) {
+  padding: 0;
+}
+
+.table-wrap td > .compact-token-amount {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.8rem;
+}
+
+.compact-token-amount.is-truncated {
+  cursor: help;
+}
+
+.compact-token-amount.is-truncated .compact-token-amount-full {
+  display: none;
+}
+
+.compact-token-amount.is-truncated:hover .compact-token-amount-short,
+.compact-token-amount.is-truncated:focus-within .compact-token-amount-short {
+  display: none;
+}
+
+.compact-token-amount.is-truncated:hover .compact-token-amount-full,
+.compact-token-amount.is-truncated:focus-within .compact-token-amount-full {
+  display: inline;
+}
+
+.kv dd:has(> .compact-token-amount.is-truncated) {
+  margin: -0.15rem -0.35rem;
+}
+
+.kv dd > .compact-token-amount.is-truncated {
+  display: block;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+}
+
+.kv dd > .compact-token-amount.is-truncated:hover {
+  background: #eef3f0;
+}
+
 th {
   background: #f4f7f4;
   color: var(--muted);

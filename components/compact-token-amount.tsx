@@ -7,15 +7,23 @@ type Props = {
   className?: string
 }
 
-/** Compact token amount for tables; hover reveals full precision. */
+/**
+ * Compact token amount for tables / kv rows.
+ * Hover anywhere on the control (fills the cell hit area) shows full precision immediately.
+ */
 export function CompactTokenAmount({ value, maxFractionDigits = 6, className }: Props) {
   const { compact, full, truncated } = compactHumanTokenAmount(value, maxFractionDigits)
+
+  if (!truncated) {
+    return <span className={['mono', 'compact-token-amount', className].filter(Boolean).join(' ')}>{full}</span>
+  }
+
   return (
     <span
-      className={['mono', className].filter(Boolean).join(' ')}
-      title={truncated ? full : undefined}
+      className={['mono', 'compact-token-amount', 'is-truncated', className].filter(Boolean).join(' ')}
     >
-      {compact}
+      <span className="compact-token-amount-short">{compact}</span>
+      <span className="compact-token-amount-full">{full}</span>
     </span>
   )
 }
