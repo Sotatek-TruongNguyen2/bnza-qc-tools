@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { ButtonLoadingLabel } from './button-loading-label'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenIcon, TokenSymbol } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
@@ -103,7 +104,7 @@ export function BotPanel() {
           </span>
         </label>
         <button type="submit" className="btn-primary bot-submit" disabled={loading}>
-          {loading ? 'Querying…' : 'Query bot'}
+          {loading ? <ButtonLoadingLabel>Querying…</ButtonLoadingLabel> : 'Query bot'}
         </button>
       </form>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { ButtonLoadingLabel } from './button-loading-label'
 import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenIcon } from './token-icon'
@@ -227,7 +228,7 @@ export function TxPnlPanel() {
           />
         </label>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Calculating…' : 'Compute PnL'}
+          {loading ? <ButtonLoadingLabel>Calculating…</ButtonLoadingLabel> : 'Compute PnL'}
         </button>
       </form>
 

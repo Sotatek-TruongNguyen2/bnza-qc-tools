@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ButtonLoadingLabel } from './button-loading-label'
 import { CopyJsonButton } from './copy-json-button'
 import { apiGetJson } from '@/lib/api-client'
 import type { GasEstimateResult, GasOpEstimate } from '@/lib/gas/types'
@@ -53,7 +54,13 @@ export function GasEstimatePanel() {
         <div className="result-actions">
           {result && <CopyJsonButton value={result} label="Copy JSON" />}
           <button type="button" className="btn-primary" onClick={() => void reload()} disabled={loading}>
-            {loading ? 'Estimating…' : result ? 'Reload' : 'Load estimates'}
+            {loading ? (
+              <ButtonLoadingLabel>Estimating…</ButtonLoadingLabel>
+            ) : result ? (
+              'Reload'
+            ) : (
+              'Load estimates'
+            )}
           </button>
         </div>
       </div>

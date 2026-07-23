@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { CalldataBuilderResult } from './calldata-builder-result'
 import { CalldataSwapPathSelect } from './calldata-swap-path-select'
+import { ButtonLoadingLabel } from './button-loading-label'
 import { apiGetJson, apiPostJson } from '@/lib/api-client'
 import type { OpenTxPrefill } from '@/lib/calldata/fetch-from-open-tx'
 import {
@@ -191,6 +192,7 @@ export function CalldataBuilderPanel() {
     if (tokenId.trim()) url.searchParams.set('tokenId', tokenId.trim())
     window.history.replaceState({}, '', url)
 
+    setSimulationLoading(true)
     try {
       let built: ExecuteStrategyFields
       if (action === 'open') {
@@ -247,6 +249,7 @@ export function CalldataBuilderPanel() {
       setResult(built)
       void runSimulation(built)
     } catch (err) {
+      setSimulationLoading(false)
       setError(err instanceof Error ? err.message : 'Build failed')
     }
   }
@@ -672,8 +675,16 @@ export function CalldataBuilderPanel() {
           </>
         )}
 
-        <button type="submit" className="btn-primary calldata-submit">
-          Build + simulate
+        <button
+          type="submit"
+          className="btn-primary calldata-submit"
+          disabled={simulationLoading}
+        >
+          {simulationLoading ? (
+            <ButtonLoadingLabel>Building…</ButtonLoadingLabel>
+          ) : (
+            'Build + simulate'
+          )}
         </button>
       </form>
 

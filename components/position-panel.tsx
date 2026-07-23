@@ -6,6 +6,7 @@ import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
 import { PositionRangeChart } from './position-range-chart'
+import { ButtonLoadingLabel } from './button-loading-label'
 import { apiGetJson } from '@/lib/api-client'
 import { buildOriginalPrincipalHint } from '@/lib/position/build-original-principal-hint'
 import { buildPrincipalAmountsHint } from '@/lib/position/build-principal-amounts-hint'
@@ -163,7 +164,7 @@ export function PositionPanel() {
           />
         </label>
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Querying…' : 'Query position'}
+          {loading ? <ButtonLoadingLabel>Querying…</ButtonLoadingLabel> : 'Query position'}
         </button>
       </form>
 

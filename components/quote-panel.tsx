@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ButtonLoadingLabel } from './button-loading-label'
 import { CopyJsonButton } from './copy-json-button'
 import { CompactTokenAmount } from './compact-token-amount'
 import { QuoteRoutePath } from './quote-route-path'
@@ -211,7 +212,7 @@ export function QuotePanel() {
         </div>
 
         <button type="submit" className="btn-primary quote-submit" disabled={loading}>
-          {loading ? 'Quoting…' : 'Quote routes'}
+          {loading ? <ButtonLoadingLabel>Quoting…</ButtonLoadingLabel> : 'Quote routes'}
         </button>
       </form>
 
