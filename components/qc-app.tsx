@@ -9,6 +9,7 @@ import { GasEstimatePanel } from './gas-estimate-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
 import { ToolNavGroupIcon } from './tool-nav-group-icon'
+import { ToolNavIcon } from './tool-nav-icon'
 import { TxPnlPanel } from './tx-pnl-panel'
 import { replaceQueryParams } from '@/lib/url-query'
 
@@ -142,6 +143,7 @@ export function QcApp() {
                   aria-current={tool === item.id ? 'page' : undefined}
                   onClick={() => selectTool(item.id)}
                 >
+                  <ToolNavIcon toolId={item.id} />
                   {item.label}
                 </button>
               ))}
