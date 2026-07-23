@@ -541,6 +541,18 @@ input:focus {
   font-size: 0.8rem;
 }
 
+.range-open-price {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.range-open-price a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .range-chart-svg-wrap {
   width: 100%;
   overflow: hidden;

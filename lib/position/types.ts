@@ -67,3 +67,19 @@ export type PositionResult = {
   raw: PositionRaw
   human: PositionHuman
 }
+
+export type PositionOpenPrice = {
+  found: boolean
+  txHash: string | null
+  blockNumber: string | null
+  openedAtIso: string | null
+  openedAtLabel: string | null
+  tick: number | null
+  sqrtPriceX96: string | null
+  priceToken1PerToken0: number | null
+  priceToken0PerToken1: number | null
+  source: 'swap_event' | 'slot0_parent' | null
+  note: string | null
+  error: string | null
+  links: { tx: string | null }
+}

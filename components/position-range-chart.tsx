@@ -11,6 +11,7 @@ import {
   type DensityPoint,
 } from '@/lib/position/range-chart-math'
 import type { PositionRaw } from '@/lib/position/types'
+import { PositionOpenPriceLine } from './position-open-price-line'
 import { PositionRangeLegend } from './position-range-legend'
 
 type Props = { raw: PositionRaw }
@@ -123,6 +124,7 @@ export function PositionRangeChart({ raw }: Props) {
           ticks [{raw.tickLower}, {raw.tickUpper}) · current {raw.currentTick}
           {inRange ? ' · in range' : raw.liquidity === '0' ? ' · closed' : ' · out of range'}
         </p>
+        <PositionOpenPriceLine raw={raw} />
       </div>
 
       <div className="range-chart-svg-wrap">
