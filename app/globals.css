@@ -1225,7 +1225,7 @@ input:focus {
   color: var(--closed);
 }
 
-.pnl-closed-banner strong {
+.pnl-closed-banner > strong:first-child {
   display: block;
   margin-bottom: 0.35rem;
 }
@@ -1233,6 +1233,12 @@ input:focus {
 .pnl-closed-banner p {
   margin: 0.35rem 0 0;
   line-height: 1.45;
+}
+
+.pnl-closed-banner p strong {
+  display: inline;
+  margin: 0;
+  font-weight: 750;
 }
 
 .pnl-totals {
