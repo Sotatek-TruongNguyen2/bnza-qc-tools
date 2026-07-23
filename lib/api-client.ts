@@ -1,13 +1,6 @@
 import { formatRpcError } from '@/lib/rpc'
 
-export async function apiGetJson<T>(url: string): Promise<T> {
-  let res: Response
-  try {
-    res = await fetch(url)
-  } catch (err) {
-    throw new Error(formatRpcError(err))
-  }
-
+async function parseJsonResponse<T>(res: Response): Promise<T> {
   let data: { error?: string } & T
   try {
     data = (await res.json()) as { error?: string } & T
@@ -24,4 +17,28 @@ export async function apiGetJson<T>(url: string): Promise<T> {
   }
 
   return data
+}
+
+export async function apiGetJson<T>(url: string): Promise<T> {
+  let res: Response
+  try {
+    res = await fetch(url)
+  } catch (err) {
+    throw new Error(formatRpcError(err))
+  }
+  return parseJsonResponse<T>(res)
+}
+
+export async function apiPostJson<T>(url: string, body: unknown): Promise<T> {
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  } catch (err) {
+    throw new Error(formatRpcError(err))
+  }
+  return parseJsonResponse<T>(res)
 }

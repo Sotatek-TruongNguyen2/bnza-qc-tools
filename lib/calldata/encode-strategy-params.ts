@@ -5,6 +5,7 @@ import {
   DEFAULT_DEADLINE_OFFSET_SECONDS,
   DEFAULT_PERFORMANCE_FEE_BPS,
   DEFAULT_REBALANCE_SLIPPAGE_BPS,
+  EXECUTE_STRATEGY_ABI,
   REBALANCE_STRATEGY_ADDRESS,
   REDEEM_STRATEGY_ADDRESS,
   ZERO_BYTES32,
@@ -51,21 +52,6 @@ export type ExecuteStrategyFields = {
   decoded: Record<string, string | boolean | number>
   warnings: string[]
 }
-
-const EXECUTE_STRATEGY_ABI = [
-  {
-    type: 'function',
-    name: 'executeStrategy',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'strategy', type: 'address' },
-      { name: 'user', type: 'address' },
-      { name: 'botId', type: 'bytes32' },
-      { name: 'params', type: 'bytes' },
-    ],
-    outputs: [{ name: 'result', type: 'bytes' }],
-  },
-] as const
 
 function makeDeadline(offsetSeconds = DEFAULT_DEADLINE_OFFSET_SECONDS): bigint {
   return BigInt(Math.floor(Date.now() / 1000) + offsetSeconds)

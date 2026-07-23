@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { CalldataBuilderResult } from './calldata-builder-result'
 import { CalldataSwapPathSelect } from './calldata-swap-path-select'
-import { apiGetJson } from '@/lib/api-client'
+import { apiGetJson, apiPostJson } from '@/lib/api-client'
 import type { OpenTxPrefill } from '@/lib/calldata/fetch-from-open-tx'
 import {
   buildCloseExecuteStrategy,
@@ -12,9 +12,11 @@ import {
   type ExecuteStrategyFields,
 } from '@/lib/calldata/encode-strategy-params'
 import {
+  DEFAULT_OPERATOR_ADDRESS,
   DEFAULT_PERFORMANCE_FEE_BPS,
   DEFAULT_REBALANCE_SLIPPAGE_BPS,
 } from '@/lib/calldata/constants'
+import type { SimulateExecuteStrategyResult } from '@/lib/calldata/simulate-execute-strategy'
 import { setCachedMintTx } from '@/lib/position/open-price-local-cache'
 
 export function CalldataBuilderPanel() {
@@ -43,6 +45,10 @@ export function CalldataBuilderPanel() {
 
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ExecuteStrategyFields | null>(null)
+  const [operator, setOperator] = useState<string>(DEFAULT_OPERATOR_ADDRESS)
+  const [simulation, setSimulation] = useState<SimulateExecuteStrategyResult | null>(null)
+  const [simulationLoading, setSimulationLoading] = useState(false)
+  const [simulationError, setSimulationError] = useState<string | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -95,10 +101,33 @@ export function CalldataBuilderPanel() {
     }
   }
 
+  async function runSimulation(fields: ExecuteStrategyFields) {
+    setSimulationLoading(true)
+    setSimulationError(null)
+    setSimulation(null)
+    try {
+      const data = await apiPostJson<SimulateExecuteStrategyResult>('/api/calldata/simulate', {
+        strategy: fields.strategy,
+        user: fields.user,
+        botIdBytes32: fields.botIdBytes32,
+        params: fields.params,
+        executeStrategyCalldata: fields.executeStrategyCalldata,
+        operator: operator.trim() || DEFAULT_OPERATOR_ADDRESS,
+      })
+      setSimulation(data)
+    } catch (err) {
+      setSimulationError(err instanceof Error ? err.message : 'Simulation failed')
+    } finally {
+      setSimulationLoading(false)
+    }
+  }
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setResult(null)
+    setSimulation(null)
+    setSimulationError(null)
 
     const url = new URL(window.location.href)
     url.searchParams.set('tool', 'calldata')
@@ -109,32 +138,29 @@ export function CalldataBuilderPanel() {
     window.history.replaceState({}, '', url)
 
     try {
-      if (action === 'close') {
-        setResult(
-          buildCloseExecuteStrategy({
-            user,
-            botId,
-            tokenId,
-            performanceFeeBps,
-            amountOutMinimum,
-            swapPath,
-            defaultSwapFee,
-            convertPrincipalToUsdc,
-          }),
-        )
-      } else {
-        setResult(
-          buildRebalanceExecuteStrategy({
-            user,
-            botId,
-            tokenId,
-            newTickLower,
-            newTickUpper,
-            slippageBps,
-            amountOutMinimum: rebalanceAmountOutMin,
-          }),
-        )
-      }
+      const built =
+        action === 'close'
+          ? buildCloseExecuteStrategy({
+              user,
+              botId,
+              tokenId,
+              performanceFeeBps,
+              amountOutMinimum,
+              swapPath,
+              defaultSwapFee,
+              convertPrincipalToUsdc,
+            })
+          : buildRebalanceExecuteStrategy({
+              user,
+              botId,
+              tokenId,
+              newTickLower,
+              newTickUpper,
+              slippageBps,
+              amountOutMinimum: rebalanceAmountOutMin,
+            })
+      setResult(built)
+      void runSimulation(built)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Build failed')
     }
@@ -146,7 +172,8 @@ export function CalldataBuilderPanel() {
         <div>
           <h2>Calldata builder</h2>
           <p className="muted">
-            Build vault <code>executeStrategy</code> args for Basescan paste. Does not send txs.
+            Build vault <code>executeStrategy</code> args for Basescan paste, then simulate with
+            eth_call. Does not send txs.
           </p>
         </div>
       </div>
@@ -234,6 +261,22 @@ export function CalldataBuilderPanel() {
             />
           </label>
 
+          <label className="field field-with-hint">
+            <span>Operator (simulation from)</span>
+            <input
+              value={operator}
+              onChange={(e) => setOperator(e.target.value)}
+              placeholder="0x… OPERATOR_ROLE"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <span className="field-hint">
+              msg.sender for eth_call / estimateGas. Default = Addresses tab deployer operator.
+            </span>
+          </label>
+        </div>
+
+        <div className="calldata-row">
           {action === 'close' ? (
             <label className="field field-with-hint">
               <span>Performance fee (bps)</span>
@@ -330,12 +373,20 @@ export function CalldataBuilderPanel() {
         )}
 
         <button type="submit" className="btn-primary calldata-submit">
-          Build Basescan params
+          Build + simulate
         </button>
       </form>
 
       {error && <p className="error">{error}</p>}
-      {result && <CalldataBuilderResult result={result} />}
+      {result && (
+        <CalldataBuilderResult
+          result={result}
+          simulation={simulation}
+          simulationLoading={simulationLoading}
+          simulationError={simulationError}
+          onResimulate={() => void runSimulation(result)}
+        />
+      )}
     </section>
   )
 }

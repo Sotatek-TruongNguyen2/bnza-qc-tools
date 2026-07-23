@@ -1929,6 +1929,31 @@ select.calldata-select {
   color: var(--warn);
 }
 
+.calldata-sim {
+  margin: 1rem 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #d4dff0;
+  background: linear-gradient(135deg, #f5f8ff, #fafcff);
+}
+
+.calldata-sim-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.calldata-sim-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.calldata-sim-kv {
+  margin-top: 0.65rem;
+}
+
 .calldata-field {
   margin: 0.75rem 0;
   padding: 0.75rem 0.85rem;

@@ -1,0 +1,136 @@
+import { getAddress, isAddress, type Hex } from 'viem'
+import type { BasePublicClient } from '@/lib/rpc'
+import { formatRpcError } from '@/lib/rpc'
+import {
+  CALLDATA_VAULT_ADDRESS,
+  DEFAULT_OPERATOR_ADDRESS,
+  EXECUTE_STRATEGY_ABI,
+  OPERATOR_ROLE,
+  VAULT_OPERATOR_VIEW_ABI,
+} from './constants'
+
+export type SimulateExecuteStrategyInput = {
+  strategy: string
+  user: string
+  botIdBytes32: string
+  params: string
+  executeStrategyCalldata: string
+  /** msg.sender for the simulated call — must hold OPERATOR_ROLE. */
+  operator?: string
+}
+
+export type SimulateExecuteStrategyResult = {
+  ok: boolean
+  vault: string
+  operator: string
+  operatorHasRole: boolean | null
+  gasEstimate: string | null
+  gasEstimateBuffered: string | null
+  /** eth_call / simulateContract success or revert message. */
+  message: string
+  warnings: string[]
+}
+
+const GAS_BUFFER = 1.2
+
+function requireAddress(label: string, value: string): `0x${string}` {
+  const v = value.trim()
+  if (!isAddress(v)) throw new Error(`${label} must be a valid 0x address`)
+  return getAddress(v)
+}
+
+function requireBytes32(label: string, value: string): Hex {
+  const v = value.trim()
+  if (!/^0x[a-fA-F0-9]{64}$/.test(v)) throw new Error(`${label} must be bytes32`)
+  return v as Hex
+}
+
+function requireHexBytes(label: string, value: string): Hex {
+  const v = value.trim()
+  if (!/^0x([a-fA-F0-9]{2})*$/.test(v)) throw new Error(`${label} must be hex bytes`)
+  return v as Hex
+}
+
+/**
+ * eth_call simulate + eth_estimateGas for vault.executeStrategy as the operator.
+ * Does not send a transaction.
+ */
+export async function simulateExecuteStrategy(
+  client: BasePublicClient,
+  input: SimulateExecuteStrategyInput,
+): Promise<SimulateExecuteStrategyResult> {
+  const warnings: string[] = []
+  const vault = CALLDATA_VAULT_ADDRESS
+  const strategy = requireAddress('strategy', input.strategy)
+  const user = requireAddress('user', input.user)
+  const botId = requireBytes32('botId', input.botIdBytes32)
+  const params = requireHexBytes('params', input.params)
+  const calldata = requireHexBytes('executeStrategyCalldata', input.executeStrategyCalldata)
+  const operator = requireAddress(
+    'operator',
+    input.operator?.trim() || DEFAULT_OPERATOR_ADDRESS,
+  )
+
+  let operatorHasRole: boolean | null = null
+  try {
+    operatorHasRole = await client.readContract({
+      address: vault,
+      abi: VAULT_OPERATOR_VIEW_ABI,
+      functionName: 'hasRole',
+      args: [OPERATOR_ROLE, operator],
+    })
+    if (!operatorHasRole) {
+      warnings.push(
+        `Operator ${operator} does not currently hold OPERATOR_ROLE on the vault — simulation may revert with AccessControl.`,
+      )
+    }
+  } catch (err) {
+    warnings.push(formatRpcError(err, 'Could not verify OPERATOR_ROLE'))
+  }
+
+  try {
+    await client.simulateContract({
+      address: vault,
+      abi: EXECUTE_STRATEGY_ABI,
+      functionName: 'executeStrategy',
+      args: [strategy, user, botId, params],
+      account: operator,
+    })
+  } catch (err) {
+    return {
+      ok: false,
+      vault,
+      operator,
+      operatorHasRole,
+      gasEstimate: null,
+      gasEstimateBuffered: null,
+      message: formatRpcError(err, 'Simulation reverted'),
+      warnings,
+    }
+  }
+
+  let gasEstimate: string | null = null
+  let gasEstimateBuffered: string | null = null
+  try {
+    const gas = await client.estimateGas({
+      to: vault,
+      data: calldata,
+      account: operator,
+    })
+    gasEstimate = gas.toString()
+    gasEstimateBuffered = BigInt(Math.ceil(Number(gas) * GAS_BUFFER)).toString()
+  } catch (err) {
+    warnings.push(formatRpcError(err, 'eth_call ok but estimateGas failed'))
+  }
+
+  return {
+    ok: true,
+    vault,
+    operator,
+    operatorHasRole,
+    gasEstimate,
+    gasEstimateBuffered,
+    message: 'eth_call succeeded — executeStrategy would not revert at current state (as this operator).',
+    warnings,
+  }
+}

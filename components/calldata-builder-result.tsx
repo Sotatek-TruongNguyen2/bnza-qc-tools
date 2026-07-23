@@ -2,10 +2,15 @@
 
 import { CopyTextButton } from './copy-text-button'
 import type { ExecuteStrategyFields } from '@/lib/calldata/encode-strategy-params'
+import type { SimulateExecuteStrategyResult } from '@/lib/calldata/simulate-execute-strategy'
 import { BASESCAN_VAULT_WRITE } from '@/lib/calldata/constants'
 
 type Props = {
   result: ExecuteStrategyFields
+  simulation: SimulateExecuteStrategyResult | null
+  simulationLoading: boolean
+  simulationError: string | null
+  onResimulate: () => void
 }
 
 function FieldRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -23,7 +28,13 @@ function FieldRow({ label, value, hint }: { label: string; value: string; hint?:
   )
 }
 
-export function CalldataBuilderResult({ result }: Props) {
+export function CalldataBuilderResult({
+  result,
+  simulation,
+  simulationLoading,
+  simulationError,
+  onResimulate,
+}: Props) {
   return (
     <div className="result calldata-result">
       <div className="result-header">
@@ -49,7 +60,7 @@ export function CalldataBuilderResult({ result }: Props) {
         <li>
           Find <code>executeStrategy</code> and paste the four fields below (order matters).
         </li>
-        <li>Write / confirm the tx. This tool only builds params — it does not send.</li>
+        <li>Write / confirm the tx. This tool only builds + simulates — it does not send.</li>
       </ol>
 
       {result.warnings.length > 0 && (
@@ -59,6 +70,68 @@ export function CalldataBuilderResult({ result }: Props) {
           ))}
         </ul>
       )}
+
+      <div className="calldata-sim">
+        <div className="calldata-sim-head">
+          <h3>Simulation</h3>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={simulationLoading}
+            onClick={onResimulate}
+          >
+            {simulationLoading ? 'Simulating…' : 'Re-simulate'}
+          </button>
+        </div>
+        {simulationLoading && !simulation && (
+          <p className="muted">Running eth_call + eth_estimateGas as operator…</p>
+        )}
+        {simulationError && <p className="error">{simulationError}</p>}
+        {simulation && (
+          <>
+            <p>
+              <span className={simulation.ok ? 'badge-ok' : 'badge-warn'}>
+                {simulation.ok ? 'Would succeed' : 'Would revert'}
+              </span>{' '}
+              <span className="muted">{simulation.message}</span>
+            </p>
+            <dl className="kv calldata-sim-kv">
+              <div>
+                <dt>Operator (from)</dt>
+                <dd className="mono">{simulation.operator}</dd>
+              </div>
+              <div>
+                <dt>OPERATOR_ROLE</dt>
+                <dd>
+                  {simulation.operatorHasRole == null
+                    ? '—'
+                    : simulation.operatorHasRole
+                      ? 'yes'
+                      : 'no'}
+                </dd>
+              </div>
+              <div>
+                <dt>Gas estimate</dt>
+                <dd className="mono">
+                  {simulation.gasEstimate
+                    ? `${Number(simulation.gasEstimate).toLocaleString('en-US')}`
+                    : '—'}
+                  {simulation.gasEstimateBuffered
+                    ? ` → ${Number(simulation.gasEstimateBuffered).toLocaleString('en-US')} (+20%)`
+                    : ''}
+                </dd>
+              </div>
+            </dl>
+            {simulation.warnings.length > 0 && (
+              <ul className="calldata-warnings">
+                {simulation.warnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
 
       <FieldRow label="strategy (address)" value={result.strategy} hint="arg 1" />
       <FieldRow label="user (address)" value={result.user} hint="arg 2 · investor EOA" />
