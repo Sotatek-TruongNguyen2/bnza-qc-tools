@@ -155,10 +155,6 @@ export function RecentOpensStats() {
         <>
           <div className="recent-opens-stats">
             <div className="ro-stat">
-              <span className="ro-stat-label">Events</span>
-              <span className="ro-stat-value">{stats.openCount}</span>
-            </div>
-            <div className="ro-stat">
               <span className="ro-stat-label">Still open</span>
               <span className="ro-stat-value">{stats.stillOpenCount}</span>
             </div>
