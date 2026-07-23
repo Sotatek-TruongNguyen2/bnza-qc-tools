@@ -1,3 +1,6 @@
+/** Live EXBOT status from getPositionDeployment.active. */
+export type RecentOpenStatus = 'open' | 'closed' | 'unknown'
+
 export type RecentOpenRow = {
   tokenId: string
   positionId: string
@@ -14,10 +17,16 @@ export type RecentOpenRow = {
   txHash: string
   basescanTx: string
   basescanOwner: string
+  /** Current on-chain status (not “opened in window”). */
+  status: RecentOpenStatus
 }
 
 export type RecentOpensStats = {
+  /** PositionOpened events in the lookback window. */
   openCount: number
+  stillOpenCount: number
+  closedCount: number
+  unknownCount: number
   uniqueUsers: number
   uniqueBots: number
   totalUsdc: string

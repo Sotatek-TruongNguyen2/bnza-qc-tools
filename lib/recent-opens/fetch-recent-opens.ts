@@ -3,6 +3,7 @@ import type { BasePublicClient } from '@/lib/rpc'
 import { formatRpcError } from '@/lib/rpc'
 import { basescanLink } from '@/lib/position/format'
 import {
+  POSITION_MANAGER_ABI,
   POSITION_MANAGER_ADDRESS,
   POSITION_OPENED_EVENT,
   RECENT_OPENS_DEFAULT_LOOKBACK_BLOCKS,
@@ -11,8 +12,9 @@ import {
   RECENT_OPENS_MAX_LOOKBACK_BLOCKS,
   RECENT_OPENS_MIN_LOOKBACK_BLOCKS,
   RECENT_OPENS_RELOAD_MS,
+  RECENT_OPENS_STATUS_MULTICALL_CHUNK,
 } from './constants'
-import type { RecentOpenRow, RecentOpensResult } from './types'
+import type { RecentOpenRow, RecentOpenStatus, RecentOpensResult } from './types'
 
 function formatUsdc(raw: bigint): string {
   return `${Number(formatUnits(raw, 6)).toLocaleString('en-US', {
@@ -78,6 +80,47 @@ async function getPositionOpenedLogs(
   return logs
 }
 
+async function resolveOpenStatuses(
+  client: BasePublicClient,
+  opens: Array<{ owner: `0x${string}`; botId: Hex; positionId: bigint }>,
+  warnings: string[],
+): Promise<RecentOpenStatus[]> {
+  const statuses: RecentOpenStatus[] = Array.from({ length: opens.length }, () => 'unknown')
+  const chunk = RECENT_OPENS_STATUS_MULTICALL_CHUNK
+
+  for (let i = 0; i < opens.length; i += chunk) {
+    const slice = opens.slice(i, i + chunk)
+    try {
+      const results = await client.multicall({
+        allowFailure: true,
+        contracts: slice.map((row) => ({
+          address: POSITION_MANAGER_ADDRESS,
+          abi: POSITION_MANAGER_ABI,
+          functionName: 'getPositionDeployment' as const,
+          args: [row.owner, row.botId, row.positionId] as const,
+        })),
+      })
+      for (let j = 0; j < results.length; j++) {
+        const r = results[j]!
+        if (r.status === 'success') {
+          statuses[i + j] = r.result.active ? 'open' : 'closed'
+        } else {
+          statuses[i + j] = 'unknown'
+        }
+      }
+    } catch (err) {
+      warnings.push(
+        formatRpcError(
+          err,
+          `getPositionDeployment multicall failed for rows ${i.toString()}–${(i + slice.length - 1).toString()}`,
+        ),
+      )
+    }
+  }
+
+  return statuses
+}
+
 export async function fetchRecentOpens(
   client: BasePublicClient,
   lookbackBlocks = RECENT_OPENS_DEFAULT_LOOKBACK_BLOCKS,
@@ -89,7 +132,13 @@ export async function fetchRecentOpens(
 
   const logs = await getPositionOpenedLogs(client, fromBlock, toBlock, warnings)
 
-  const opens: RecentOpenRow[] = []
+  type Draft = Omit<RecentOpenRow, 'status'> & {
+    owner: `0x${string}`
+    botId: Hex
+    positionIdBig: bigint
+  }
+
+  const drafts: Draft[] = []
   for (const log of logs) {
     const args = log.args
     if (
@@ -110,9 +159,10 @@ export async function fetchRecentOpens(
     }
     const owner = getAddress(args.owner)
     const totalUsdc = args.totalUsdc
-    opens.push({
+    drafts.push({
       tokenId: args.tokenId.toString(),
       positionId: args.positionId.toString(),
+      positionIdBig: args.positionId,
       owner,
       botId: args.botId as Hex,
       pool: getAddress(args.pool),
@@ -129,15 +179,29 @@ export async function fetchRecentOpens(
     })
   }
 
-  opens.sort((a, b) => {
+  drafts.sort((a, b) => {
     const bn = BigInt(b.blockNumber) - BigInt(a.blockNumber)
     if (bn !== 0n) return bn > 0n ? 1 : -1
     return b.tokenId.localeCompare(a.tokenId, undefined, { numeric: true })
   })
 
+  const statuses = await resolveOpenStatuses(
+    client,
+    drafts.map((d) => ({ owner: d.owner, botId: d.botId, positionId: d.positionIdBig })),
+    warnings,
+  )
+
+  const opens: RecentOpenRow[] = drafts.map((d, i) => {
+    const { positionIdBig: _, ...row } = d
+    return { ...row, status: statuses[i] ?? 'unknown' }
+  })
+
   let totalUsdc = 0n
   let uniswapUsdc = 0n
   let hyperliquidUsdc = 0n
+  let stillOpenCount = 0
+  let closedCount = 0
+  let unknownCount = 0
   const users = new Set<string>()
   const bots = new Set<string>()
   for (const row of opens) {
@@ -146,6 +210,9 @@ export async function fetchRecentOpens(
     hyperliquidUsdc += BigInt(row.hyperliquidUsdc)
     users.add(row.owner.toLowerCase())
     bots.add(row.botId.toLowerCase())
+    if (row.status === 'open') stillOpenCount += 1
+    else if (row.status === 'closed') closedCount += 1
+    else unknownCount += 1
   }
 
   return {
@@ -158,6 +225,9 @@ export async function fetchRecentOpens(
     reloadEveryMs: RECENT_OPENS_RELOAD_MS,
     stats: {
       openCount: opens.length,
+      stillOpenCount,
+      closedCount,
+      unknownCount,
       uniqueUsers: users.size,
       uniqueBots: bots.size,
       totalUsdc: totalUsdc.toString(),

@@ -1,6 +1,9 @@
-import { POSITION_MANAGER_ADDRESS } from '@/lib/bot/constants'
+import { POSITION_MANAGER_ABI, POSITION_MANAGER_ADDRESS } from '@/lib/bot/constants'
 
-export { POSITION_MANAGER_ADDRESS }
+export { POSITION_MANAGER_ABI, POSITION_MANAGER_ADDRESS }
+
+/** Batch size for getPositionDeployment multicalls. */
+export const RECENT_OPENS_STATUS_MULTICALL_CHUNK = 80
 
 /** Default lookback: 100_000 Base blocks (~2.3 days at ~2s/block). */
 export const RECENT_OPENS_DEFAULT_LOOKBACK_BLOCKS = 100_000n

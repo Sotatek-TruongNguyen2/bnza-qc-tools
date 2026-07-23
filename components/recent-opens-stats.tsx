@@ -120,7 +120,8 @@ export function RecentOpensStats() {
         <div>
           <h2 className="recent-opens-title">Recent opens</h2>
           <p className="muted recent-opens-sub">
-            <code>PositionOpened</code> on PositionManager · last{' '}
+            <code>PositionOpened</code> events · live open/closed via{' '}
+            <code>getPositionDeployment</code> · last{' '}
             {result
               ? `${Number(result.lookbackBlocks).toLocaleString('en-US')} blocks (${result.lookbackApproxLabel})`
               : `${Number(RECENT_OPENS_DEFAULT_LOOKBACK_BLOCKS).toLocaleString('en-US')} blocks`}
@@ -154,8 +155,16 @@ export function RecentOpensStats() {
         <>
           <div className="recent-opens-stats">
             <div className="ro-stat">
-              <span className="ro-stat-label">Opens</span>
+              <span className="ro-stat-label">Events</span>
               <span className="ro-stat-value">{stats.openCount}</span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">Still open</span>
+              <span className="ro-stat-value">{stats.stillOpenCount}</span>
+            </div>
+            <div className="ro-stat">
+              <span className="ro-stat-label">Closed</span>
+              <span className="ro-stat-value">{stats.closedCount}</span>
             </div>
             <div className="ro-stat">
               <span className="ro-stat-label">Total USDC</span>
@@ -200,6 +209,7 @@ export function RecentOpensStats() {
                 <thead>
                   <tr>
                     <th>Token</th>
+                    <th>Status</th>
                     <th>USDC</th>
                     <th>Owner</th>
                     <th>Block</th>
@@ -216,6 +226,23 @@ export function RecentOpensStats() {
                         >
                           #{row.tokenId}
                         </a>
+                      </td>
+                      <td>
+                        <span
+                          className={
+                            row.status === 'open'
+                              ? 'badge-ok'
+                              : row.status === 'closed'
+                                ? 'badge-warn'
+                                : 'muted'
+                          }
+                        >
+                          {row.status === 'open'
+                            ? 'Open'
+                            : row.status === 'closed'
+                              ? 'Closed'
+                              : 'Unknown'}
+                        </span>
                       </td>
                       <td className="mono">{row.totalUsdcHuman.replace(' USDC', '')}</td>
                       <td className="mono">
