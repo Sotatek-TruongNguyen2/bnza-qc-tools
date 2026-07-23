@@ -2,13 +2,13 @@ import { knownTokenSymbol } from '@/lib/base-known-tokens'
 
 const ICON_BY_SYMBOL: Record<string, string> = {
   USDC: '/tokens/usdc.svg',
-  USDBC: '/tokens/usdbc.svg',
+  USDBC: '/tokens/usdbc.png',
   USDT: '/tokens/usdt.svg',
   DAI: '/tokens/dai.svg',
   WETH: '/tokens/weth.svg',
   ETH: '/tokens/weth.svg',
   CBETH: '/tokens/cbeth.svg',
-  WSTETH: '/tokens/wsteth.svg',
+  WSTETH: '/tokens/wsteth.png',
   CBBTC: '/tokens/cbbtc.svg',
 }
 
