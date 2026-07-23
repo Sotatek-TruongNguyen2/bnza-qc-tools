@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { CopyIconButton } from './copy-icon-button'
 import { CopyJsonButton } from './copy-json-button'
 import { RefreshIconButton } from './refresh-icon-button'
 import { apiGetJson } from '@/lib/api-client'
@@ -9,16 +10,6 @@ import type {
   RedemptionPendingRequest,
   RedemptionQueueResult,
 } from '@/lib/redemption-queue/types'
-
-function shorten(addr: string, left = 6, right = 4): string {
-  if (addr.length < left + right + 2) return addr
-  return `${addr.slice(0, left + 2)}…${addr.slice(-right)}`
-}
-
-function shortenBytes32(hex: string): string {
-  if (hex.length < 18) return hex
-  return `${hex.slice(0, 10)}…${hex.slice(-8)}`
-}
 
 export function RedemptionQueuePanel() {
   const [loading, setLoading] = useState(true)
@@ -121,9 +112,12 @@ export function RedemptionQueuePanel() {
 
           <p className="muted rq-fetched">
             Fetched {formatLocalDateTime(result.fetchedAtIso)} ·{' '}
-            <a href={result.basescanQueue} target="_blank" rel="noreferrer" className="mono">
-              {shorten(result.queueAddress)}
-            </a>
+            <span className="rq-copyable">
+              <a href={result.basescanQueue} target="_blank" rel="noreferrer" className="mono">
+                {result.queueAddress}
+              </a>
+              <CopyIconButton value={result.queueAddress} label="Copy queue address" />
+            </span>
           </p>
 
           {!empty && (
@@ -174,51 +168,7 @@ export function RedemptionQueuePanel() {
               ) : (
                 <ul className="rq-list">
                   {filtered.map((row) => (
-                    <li key={row.requestId} className={row.isHead ? 'rq-card rq-card-head' : 'rq-card'}>
-                      <div className="rq-card-top">
-                        <div className="rq-card-id">
-                          {row.isHead ? (
-                            <span className="badge-warn">NEXT</span>
-                          ) : (
-                            <span className="badge-muted">#{row.queueIndex + 1} in line</span>
-                          )}
-                          <strong className="mono">Request #{row.requestId}</strong>
-                        </div>
-                        <span className="rq-wait" title={`${row.waitSeconds}s`}>
-                          waiting {row.waitLabel}
-                        </span>
-                      </div>
-                      <dl className="kv rq-card-kv">
-                        <div>
-                          <dt>User</dt>
-                          <dd className="mono">
-                            <a href={row.basescanUser} target="_blank" rel="noreferrer">
-                              {shorten(row.user)}
-                            </a>
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Position ID</dt>
-                          <dd className="mono">{row.positionId}</dd>
-                        </div>
-                        <div>
-                          <dt>Created</dt>
-                          <dd>{formatLocalDateTime(row.createdAtIso)}</dd>
-                        </div>
-                        <div>
-                          <dt>Bot ID</dt>
-                          <dd className="mono" title={row.botId}>
-                            {shortenBytes32(row.botId)}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>HL portion</dt>
-                          <dd className="mono" title={row.hlPortionId}>
-                            {shortenBytes32(row.hlPortionId)}
-                          </dd>
-                        </div>
-                      </dl>
-                    </li>
+                    <RequestCard key={row.requestId} row={row} />
                   ))}
                 </ul>
               )}
@@ -237,6 +187,73 @@ export function RedemptionQueuePanel() {
         </>
       )}
     </section>
+  )
+}
+
+function RequestCard({ row }: { row: RedemptionPendingRequest }) {
+  return (
+    <li className={row.isHead ? 'rq-card rq-card-head' : 'rq-card'}>
+      <div className="rq-card-top">
+        <div className="rq-card-id">
+          {row.isHead ? (
+            <span className="badge-warn">NEXT</span>
+          ) : (
+            <span className="badge-muted">#{row.queueIndex + 1} in line</span>
+          )}
+          <span className="rq-copyable">
+            <strong className="mono">Request #{row.requestId}</strong>
+            <CopyIconButton value={row.requestId} label="Copy request ID" />
+          </span>
+        </div>
+        <span className="rq-wait" title={`${row.waitSeconds}s`}>
+          waiting {row.waitLabel}
+        </span>
+      </div>
+      <dl className="kv rq-card-kv">
+        <div>
+          <dt>User</dt>
+          <dd>
+            <span className="rq-copyable">
+              <a href={row.basescanUser} target="_blank" rel="noreferrer" className="mono">
+                {row.user}
+              </a>
+              <CopyIconButton value={row.user} label="Copy user address" />
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt>Bot ID</dt>
+          <dd>
+            <span className="rq-copyable">
+              <span className="mono">{row.botId}</span>
+              <CopyIconButton value={row.botId} label="Copy bot ID" />
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt>Position ID</dt>
+          <dd>
+            <span className="rq-copyable">
+              <span className="mono">{row.positionId}</span>
+              <CopyIconButton value={row.positionId} label="Copy position ID" />
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt>HL portion</dt>
+          <dd>
+            <span className="rq-copyable">
+              <span className="mono">{row.hlPortionId}</span>
+              <CopyIconButton value={row.hlPortionId} label="Copy HL portion ID" />
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt>Created</dt>
+          <dd>{formatLocalDateTime(row.createdAtIso)}</dd>
+        </div>
+      </dl>
+    </li>
   )
 }
 
