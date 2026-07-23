@@ -172,8 +172,9 @@ export function PositionPanel() {
 
       {result && (
         <div className="result">
-          <div className="result-header">
-            <div>
+          <div className="result-header position-result-header">
+            <PositionNftCard tokenId={result.raw.tokenId} currentTick={result.raw.currentTick} />
+            <div className="position-result-heading">
               <h2 className="token-pair-heading">
                 <TokenSymbol symbol={result.raw.token0Symbol} address={result.raw.token0} size={22} />
                 <span className="muted">/</span>
@@ -201,17 +202,12 @@ export function PositionPanel() {
             </div>
           </dl>
 
-          <div className="position-visual-row">
-            <PositionNftCard tokenId={result.raw.tokenId} currentTick={result.raw.currentTick} />
-            <div className="position-range-block">
-              <h3>Price range</h3>
-              <PositionRangeChart
-                raw={result.raw}
-                openPrice={openPrice}
-                openPriceLoading={openPriceLoading}
-              />
-            </div>
-          </div>
+          <h3>Price range</h3>
+          <PositionRangeChart
+            raw={result.raw}
+            openPrice={openPrice}
+            openPriceLoading={openPriceLoading}
+          />
 
           <div className="section-heading-row">
             <h3>Original principal (at open)</h3>
