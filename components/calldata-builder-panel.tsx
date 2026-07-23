@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CalldataBuilderResult } from './calldata-builder-result'
+import { CalldataSwapPathSelect } from './calldata-swap-path-select'
 import { apiGetJson } from '@/lib/api-client'
 import type { OpenTxPrefill } from '@/lib/calldata/fetch-from-open-tx'
 import {
@@ -256,40 +257,23 @@ export function CalldataBuilderPanel() {
 
         {action === 'close' ? (
           <>
-            <div className="calldata-row">
-              <label className="field field-with-hint">
-                <span>Min USDC out (raw, 6 decimals)</span>
-                <input
-                  value={amountOutMinimum}
-                  onChange={(e) => setAmountOutMinimum(e.target.value)}
-                  inputMode="numeric"
-                />
-                <span className="field-hint">0 = no floor (risky). 1 USDC = 1000000.</span>
-              </label>
-
-              <label className="field field-with-hint">
-                <span>Default swap fee (if path empty)</span>
-                <input
-                  value={defaultSwapFee}
-                  onChange={(e) => setDefaultSwapFee(e.target.value)}
-                  inputMode="numeric"
-                  placeholder="500"
-                />
-                <span className="field-hint">500 = 0.05%, 3000 = 0.3%.</span>
-              </label>
-            </div>
-
             <label className="field field-with-hint">
-              <span>Swap path (hex, optional)</span>
+              <span>Min USDC out (raw, 6 decimals)</span>
               <input
-                value={swapPath}
-                onChange={(e) => setSwapPath(e.target.value)}
-                placeholder="Leave empty → default WETH→USDC"
-                autoComplete="off"
-                spellCheck={false}
+                value={amountOutMinimum}
+                onChange={(e) => setAmountOutMinimum(e.target.value)}
+                inputMode="numeric"
               />
-              <span className="field-hint">Empty fills WETH→USDC single-hop with the fee above.</span>
+              <span className="field-hint">0 = no floor (risky). 1 USDC = 1000000.</span>
             </label>
+
+            <CalldataSwapPathSelect
+              tokenId={tokenId}
+              value={swapPath}
+              onChange={setSwapPath}
+              defaultSwapFee={defaultSwapFee}
+              onDefaultSwapFeeChange={setDefaultSwapFee}
+            />
 
             <label className="calldata-check field-with-hint">
               <span className="calldata-check-main">

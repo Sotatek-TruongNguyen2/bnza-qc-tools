@@ -1633,6 +1633,26 @@ tr:last-child td {
   margin: 0.55rem 0 0;
 }
 
+.calldata-swap-path {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.calldata-route-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  background: #f4f7fb;
+  border: 1px solid #d7e0ec;
+}
+
+.calldata-route-path-hex {
+  font-size: 0.78rem;
+}
+
 .calldata-row {
   display: grid;
   grid-template-columns: 1fr;
