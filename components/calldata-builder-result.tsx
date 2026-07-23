@@ -13,6 +13,40 @@ type Props = {
   onResimulate: () => void
 }
 
+const iconProps = {
+  width: 14,
+  height: 14,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+  'aria-hidden': true as const,
+}
+
+/** Flask — dry-run / eth_call simulation. */
+function SimulationIcon() {
+  return (
+    <svg {...iconProps} className="calldata-sim-icon">
+      <path d="M9 3h6" />
+      <path d="M10 3v6.5L5.2 18.2A2 2 0 0 0 6.9 21h10.2a2 2 0 0 0 1.7-2.8L14 9.5V3" />
+      <path d="M8.5 14h7" />
+    </svg>
+  )
+}
+
+/** External link — Basescan vault Write. */
+function ExternalLinkIcon() {
+  return (
+    <svg {...iconProps} width={13} height={13} className="estimate-external-icon">
+      <path d="M14 5h5v5" />
+      <path d="M10 14L19 5" />
+      <path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6" />
+    </svg>
+  )
+}
+
 function FieldRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="calldata-field">
@@ -44,8 +78,14 @@ export function CalldataBuilderResult({
             {result.strategyLabel} → vault <code>executeStrategy</code>
           </p>
         </div>
-        <a className="btn-secondary" href={BASESCAN_VAULT_WRITE} target="_blank" rel="noreferrer">
+        <a
+          className="btn-secondary btn-with-icon"
+          href={BASESCAN_VAULT_WRITE}
+          target="_blank"
+          rel="noreferrer"
+        >
           Open vault Write
+          <ExternalLinkIcon />
         </a>
       </div>
 
@@ -73,7 +113,10 @@ export function CalldataBuilderResult({
 
       <div className="calldata-sim">
         <div className="calldata-sim-head">
-          <h3>Simulation</h3>
+          <h3 className="calldata-sim-title">
+            <SimulationIcon />
+            Simulation
+          </h3>
           <button
             type="button"
             className="btn-secondary"
