@@ -214,13 +214,13 @@ export function RedemptionQueuePanel() {
   )
 }
 
-function shorten(addr: string, left = 4, right = 4): string {
+function shorten(addr: string, left = 8, right = 6): string {
   if (addr.length < left + right + 2) return addr
   return `${addr.slice(0, left + 2)}…${addr.slice(-right)}`
 }
 
-/** Middle-trim bytes32 the same way as addresses: 0xabcd…wxyz */
-function shortenBytes32(hex: string, left = 4, right = 4): string {
+/** Middle-trim bytes32 — keep enough hex to fill card width. */
+function shortenBytes32(hex: string, left = 10, right = 8): string {
   if (!hex.startsWith('0x') || hex.length <= 2 + left + right + 1) return hex
   return `${hex.slice(0, 2 + left)}…${hex.slice(-right)}`
 }
