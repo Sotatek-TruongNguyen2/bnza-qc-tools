@@ -2,8 +2,12 @@
 
 Standalone Next.js app for QA/QC on **Base mainnet** (read-only):
 
-1. **Position lookup** — Uniswap V3 LP NFT by `tokenId` (+ estimated USDC after close)
-2. **Swap quote** — route comparison + slippage `amountOutMinimum`
+1. **Bot lookup** — EXBOT vault capital / positions by custody `user` + `botId`
+2. **Position lookup** — Uniswap V3 LP NFT by `tokenId` (range chart, close USDC estimate)
+3. **Swap quote** — route comparison + slippage `amountOutMinimum`
+4. **PnL** — open-tx capital split vs live / close-tx mark
+5. **Gas estimate** — `eth_estimateGas` replay for deposit / withdraw / strategies
+6. **Addresses** — Base mainnet EXBOT + Uniswap deployment map
 
 Logic mirrors the helper scripts formerly in `bonanzapool` / `contracts/bnza-exbot/scripts/`:
 
@@ -44,3 +48,6 @@ Shareable URLs:
 
 - `/?tool=position&tokenId=5036939`
 - `/?tool=quote&amount=100&tokenIn=USDC&tokenOut=WETH&slippage=0.5`
+- `/?tool=bot&user=0x…&botId=<uuid>`
+- `/?tool=gas`
+- `/?tool=tx-pnl&txHash=0x…`
