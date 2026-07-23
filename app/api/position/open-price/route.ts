@@ -13,11 +13,16 @@ export async function GET(request: Request) {
   const token0Decimals = Number(searchParams.get('token0Decimals') ?? '18')
   const token1Decimals = Number(searchParams.get('token1Decimals') ?? '6')
 
+  const knownMintTx = searchParams.get('mintTx')?.trim() ?? ''
+
   if (!/^\d+$/.test(tokenId)) {
     return NextResponse.json({ error: 'tokenId must be a positive integer' }, { status: 400 })
   }
   if (!isAddress(pool)) {
     return NextResponse.json({ error: 'pool must be a valid address' }, { status: 400 })
+  }
+  if (knownMintTx && !/^0x[a-fA-F0-9]{64}$/.test(knownMintTx)) {
+    return NextResponse.json({ error: 'mintTx must be a full 0x transaction hash' }, { status: 400 })
   }
 
   try {
@@ -27,6 +32,7 @@ export async function GET(request: Request) {
       poolAddress: pool as `0x${string}`,
       token0Decimals: Number.isFinite(token0Decimals) ? token0Decimals : 18,
       token1Decimals: Number.isFinite(token1Decimals) ? token1Decimals : 6,
+      knownMintTx: knownMintTx || null,
     })
     return NextResponse.json(result)
   } catch (err) {

@@ -15,6 +15,7 @@ import {
   DEFAULT_PERFORMANCE_FEE_BPS,
   DEFAULT_REBALANCE_SLIPPAGE_BPS,
 } from '@/lib/calldata/constants'
+import { setCachedMintTx } from '@/lib/position/mint-tx-local-cache'
 
 export function CalldataBuilderPanel() {
   const [action, setAction] = useState<CalldataAction>('close')
@@ -73,6 +74,7 @@ export function CalldataBuilderPanel() {
       setUser(data.user)
       setBotId(data.botIdBytes32)
       setTokenId(data.tokenId)
+      setCachedMintTx(data.tokenId, data.txHash)
       // Seed rebalance range from the open ticks (editable).
       setNewTickLower(String(data.tickLower))
       setNewTickUpper(String(data.tickUpper))

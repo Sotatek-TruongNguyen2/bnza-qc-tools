@@ -164,11 +164,18 @@ export async function fetchPositionOpenPrice(
     poolAddress: `0x${string}`
     token0Decimals: number
     token1Decimals: number
+    /** Skip Basescan/RPC mint scan when client already has the mint tx (localStorage). */
+    knownMintTx?: string | null
   },
 ): Promise<PositionOpenPrice> {
   try {
     const id = BigInt(args.tokenId)
-    let txHash = await findMintTxViaBasescan(id)
+    const known = args.knownMintTx?.trim() ?? ''
+    let txHash: Hex | null =
+      /^0x[a-fA-F0-9]{64}$/.test(known) ? (known as Hex) : null
+    const usedCachedMint = txHash != null
+
+    if (!txHash) txHash = await findMintTxViaBasescan(id)
     if (!txHash) txHash = await findMintTxViaRpc(client, id)
 
     if (!txHash) {
@@ -178,13 +185,35 @@ export async function fetchPositionOpenPrice(
       })
     }
 
-    const [receipt, txBlock] = await Promise.all([
-      client.getTransactionReceipt({ hash: txHash }),
-      client.getTransaction({ hash: txHash }).then(async (tx) => {
-        if (tx.blockNumber == null) return null
-        return client.getBlock({ blockNumber: tx.blockNumber })
-      }),
-    ])
+    let receipt
+    let txBlock
+    try {
+      ;[receipt, txBlock] = await Promise.all([
+        client.getTransactionReceipt({ hash: txHash }),
+        client.getTransaction({ hash: txHash }).then(async (tx) => {
+          if (tx.blockNumber == null) return null
+          return client.getBlock({ blockNumber: tx.blockNumber })
+        }),
+      ])
+    } catch (err) {
+      if (!usedCachedMint) throw err
+      // Stale localStorage mint tx — rescan.
+      txHash = (await findMintTxViaBasescan(id)) ?? (await findMintTxViaRpc(client, id))
+      if (!txHash) {
+        return emptyOpenPrice({
+          note:
+            'Cached mint tx was invalid and a fresh mint Transfer lookup also failed.',
+          error: formatRpcError(err, 'Cached mint tx lookup failed'),
+        })
+      }
+      ;[receipt, txBlock] = await Promise.all([
+        client.getTransactionReceipt({ hash: txHash }),
+        client.getTransaction({ hash: txHash }).then(async (tx) => {
+          if (tx.blockNumber == null) return null
+          return client.getBlock({ blockNumber: tx.blockNumber })
+        }),
+      ])
+    }
 
     const poolLower = args.poolAddress.toLowerCase()
     let sqrtPriceX96: bigint | null = null
