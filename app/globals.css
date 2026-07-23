@@ -2032,37 +2032,3 @@ select.calldata-select {
   opacity: 0.85;
 }
 
-.position-result-header {
-  align-items: flex-start;
-  gap: 0.85rem;
-}
-
-.position-result-heading {
-  flex: 1;
-  min-width: 0;
-}
-
-.position-nft-card {
-  flex-shrink: 0;
-  width: 96px;
-}
-
-.position-nft-card .muted {
-  margin: 0;
-  font-size: 0.7rem;
-}
-
-.position-nft-figure {
-  margin: 0;
-  max-width: 96px;
-}
-
-.position-nft-figure img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  background: #0b0f14;
-  box-shadow: 0 3px 10px rgb(0 0 0 / 14%);
-}
-

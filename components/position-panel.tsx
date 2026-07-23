@@ -5,7 +5,6 @@ import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
-import { PositionNftCard } from './position-nft-card'
 import { PositionRangeChart } from './position-range-chart'
 import { apiGetJson } from '@/lib/api-client'
 import { buildOriginalPrincipalHint } from '@/lib/position/build-original-principal-hint'
@@ -172,9 +171,8 @@ export function PositionPanel() {
 
       {result && (
         <div className="result">
-          <div className="result-header position-result-header">
-            <PositionNftCard tokenId={result.raw.tokenId} currentTick={result.raw.currentTick} />
-            <div className="position-result-heading">
+          <div className="result-header">
+            <div>
               <h2 className="token-pair-heading">
                 <TokenSymbol symbol={result.raw.token0Symbol} address={result.raw.token0} size={22} />
                 <span className="muted">/</span>
