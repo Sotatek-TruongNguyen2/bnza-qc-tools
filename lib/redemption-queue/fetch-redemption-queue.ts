@@ -80,20 +80,13 @@ export async function fetchRedemptionQueue(
       })),
     })
 
-    const closeById = await resolveCloseTxsForRequests(
-      client,
-      requestIds.map((id) => id.toString()),
-      warnings,
-    )
-
-    pending = requestIds.map((id, queueIndex) => {
+    const pendingDraft = requestIds.map((id, queueIndex) => {
       const req = reqResults[queueIndex]!
       const createdAtUnix = Number(req.createdAt)
       const waitSeconds = Math.max(0, nowSec - createdAtUnix)
       const createdAtIso = new Date(createdAtUnix * 1000).toISOString()
       const user = getAddress(req.user)
       const idStr = id.toString()
-      const close = closeById.get(idStr)
 
       return {
         requestId: idStr,
@@ -108,6 +101,22 @@ export async function fetchRedemptionQueue(
         waitSeconds,
         waitLabel: formatWait(waitSeconds),
         basescanUser: basescanLink(user),
+      }
+    })
+
+    const closeById = await resolveCloseTxsForRequests(
+      client,
+      pendingDraft.map((r) => ({
+        requestId: r.requestId,
+        createdAtUnix: r.createdAtUnix,
+      })),
+      warnings,
+    )
+
+    pending = pendingDraft.map((row) => {
+      const close = closeById.get(row.requestId)
+      return {
+        ...row,
         closeTxHash: close?.closeTxHash ?? null,
         basescanCloseTx: close?.basescanCloseTx ?? null,
         closeBlockNumber: close?.closeBlockNumber ?? null,
