@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   if (!isAddress(user)) {
     return NextResponse.json(
-      { error: 'user must be a valid 0x address (custody wallet)' },
+      { error: 'user must be a valid 0x address (investor EOA)' },
       { status: 400 },
     )
   }

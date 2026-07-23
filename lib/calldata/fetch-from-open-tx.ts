@@ -48,7 +48,7 @@ export function normalizeTxHash(input: string): Hex {
 }
 
 /**
- * Read a vault open-position tx and extract custody user, botId, tokenId
+ * Read a vault open-position tx and extract user (EOA), botId, tokenId
  * from PositionManager PositionOpened.
  */
 export async function fetchPrefillFromOpenTx(

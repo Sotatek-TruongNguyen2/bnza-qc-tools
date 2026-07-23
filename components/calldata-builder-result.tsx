@@ -61,7 +61,7 @@ export function CalldataBuilderResult({ result }: Props) {
       )}
 
       <FieldRow label="strategy (address)" value={result.strategy} hint="arg 1" />
-      <FieldRow label="user (address)" value={result.user} hint="arg 2 · custody wallet" />
+      <FieldRow label="user (address)" value={result.user} hint="arg 2 · investor EOA" />
       <FieldRow label="botId (bytes32)" value={result.botIdBytes32} hint="arg 3" />
       <FieldRow label="params (bytes)" value={result.params} hint="arg 4 · ABI-encoded" />
 

@@ -195,7 +195,7 @@ export function CalldataBuilderPanel() {
 
         <div className="calldata-row">
           <label className="field field-with-hint">
-            <span>User address (custody wallet)</span>
+            <span>User EOA wallet</span>
             <input
               value={user}
               onChange={(e) => setUser(e.target.value)}
@@ -203,7 +203,7 @@ export function CalldataBuilderPanel() {
               autoComplete="off"
               spellCheck={false}
             />
-            <span className="field-hint">Vault `user`, not investor EOA.</span>
+            <span className="field-hint">Vault `user` argument — the investor EOA.</span>
           </label>
 
           <label className="field field-with-hint">

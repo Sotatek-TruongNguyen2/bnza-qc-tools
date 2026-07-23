@@ -77,7 +77,7 @@ export function BotPanel() {
     <section className="panel">
       <form className="form-grid bot-form" onSubmit={onSubmit}>
         <label className="field field-with-hint">
-          <span>User address (custody wallet)</span>
+          <span>User EOA wallet</span>
           <input
             value={user}
             onChange={(e) => setUser(e.target.value)}
@@ -86,7 +86,7 @@ export function BotPanel() {
             spellCheck={false}
           />
           <span className="field-hint">
-            EXBOT vault `user` — the per-user custody wallet, not the investor EOA.
+            EXBOT vault `user` — the investor EOA (not a custody / agent wallet).
           </span>
         </label>
         <label className="field field-with-hint">
@@ -127,7 +127,7 @@ export function BotPanel() {
 
           <dl className="kv">
             <div>
-              <dt>User (custody)</dt>
+              <dt>User (EOA)</dt>
               <dd className="mono">
                 <a href={result.human.links.user} target="_blank" rel="noreferrer">
                   {result.human.user}

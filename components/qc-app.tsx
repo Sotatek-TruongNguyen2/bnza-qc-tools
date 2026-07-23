@@ -23,7 +23,7 @@ const TOOL_GROUPS: {
     id: 'lookup',
     label: 'Lookup',
     tools: [
-      { id: 'bot', label: 'Bot', title: 'Bot vault / custody lookup' },
+      { id: 'bot', label: 'Bot', title: 'Bot vault / user EOA lookup' },
       { id: 'position', label: 'Position', title: 'Uniswap LP position lookup' },
       { id: 'quote', label: 'Quote', title: 'Uniswap V3 swap quote' },
     ],
