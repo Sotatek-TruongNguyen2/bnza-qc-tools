@@ -8,6 +8,7 @@ import { CalldataBuilderPanel } from './calldata-builder-panel'
 import { GasEstimatePanel } from './gas-estimate-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
+import { ToolNavGroupIcon } from './tool-nav-group-icon'
 import { TxPnlPanel } from './tx-pnl-panel'
 import { replaceQueryParams } from '@/lib/url-query'
 
@@ -108,7 +109,10 @@ export function QcApp() {
       <nav className="tool-nav" aria-label="Tools">
         {TOOL_GROUPS.map((group) => (
           <div key={group.id} className="tool-nav-group" role="group" aria-label={group.label}>
-            <span className="tool-nav-label">{group.label}</span>
+            <span className="tool-nav-label">
+              <ToolNavGroupIcon groupId={group.id} />
+              {group.label}
+            </span>
             <div className="tool-nav-pills">
               {group.tools.map((item) => (
                 <button

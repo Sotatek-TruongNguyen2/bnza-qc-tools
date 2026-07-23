@@ -145,12 +145,20 @@ code {
 }
 
 .tool-nav-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
   padding-left: 0.15rem;
+}
+
+.tool-nav-label svg {
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .tool-nav-pills {
