@@ -5,6 +5,7 @@ import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
+import { PositionNftCard } from './position-nft-card'
 import { PositionRangeChart } from './position-range-chart'
 import { apiGetJson } from '@/lib/api-client'
 import { buildOriginalPrincipalHint } from '@/lib/position/build-original-principal-hint'
@@ -200,12 +201,17 @@ export function PositionPanel() {
             </div>
           </dl>
 
-          <h3>Price range</h3>
-          <PositionRangeChart
-            raw={result.raw}
-            openPrice={openPrice}
-            openPriceLoading={openPriceLoading}
-          />
+          <div className="position-visual-row">
+            <PositionNftCard tokenId={result.raw.tokenId} currentTick={result.raw.currentTick} />
+            <div className="position-range-block">
+              <h3>Price range</h3>
+              <PositionRangeChart
+                raw={result.raw}
+                openPrice={openPrice}
+                openPriceLoading={openPriceLoading}
+              />
+            </div>
+          </div>
 
           <div className="section-heading-row">
             <h3>Original principal (at open)</h3>

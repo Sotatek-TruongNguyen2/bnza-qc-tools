@@ -7,17 +7,31 @@ import { apiGetJson, apiPostJson } from '@/lib/api-client'
 import type { OpenTxPrefill } from '@/lib/calldata/fetch-from-open-tx'
 import {
   buildCloseExecuteStrategy,
+  buildCollectExecuteStrategy,
+  buildOpenExecuteStrategy,
   buildRebalanceExecuteStrategy,
   type CalldataAction,
   type ExecuteStrategyFields,
 } from '@/lib/calldata/encode-strategy-params'
 import {
+  DEFAULT_CCTP_DESTINATION_DOMAIN,
+  DEFAULT_MIN_EARNED_USDC,
+  DEFAULT_OPEN_BNZA_TOKEN,
+  DEFAULT_OPEN_LP_POOL_FEE,
+  DEFAULT_OPEN_PAIRED_TOKEN,
+  DEFAULT_OPERATION_FEE_BPS,
   DEFAULT_OPERATOR_ADDRESS,
   DEFAULT_PERFORMANCE_FEE_BPS,
   DEFAULT_REBALANCE_SLIPPAGE_BPS,
 } from '@/lib/calldata/constants'
 import type { SimulateExecuteStrategyResult } from '@/lib/calldata/simulate-execute-strategy'
 import { setCachedMintTx } from '@/lib/position/open-price-local-cache'
+
+const ACTIONS: CalldataAction[] = ['open', 'collect', 'close', 'rebalance']
+
+function isCalldataAction(v: string): v is CalldataAction {
+  return (ACTIONS as string[]).includes(v)
+}
 
 export function CalldataBuilderPanel() {
   const [action, setAction] = useState<CalldataAction>('close')
@@ -43,6 +57,32 @@ export function CalldataBuilderPanel() {
   const [slippageBps, setSlippageBps] = useState(String(DEFAULT_REBALANCE_SLIPPAGE_BPS))
   const [rebalanceAmountOutMin, setRebalanceAmountOutMin] = useState('0')
 
+  // Open
+  const [pairedToken, setPairedToken] = useState<string>(DEFAULT_OPEN_PAIRED_TOKEN)
+  const [bnzaToken, setBnzaToken] = useState<string>(DEFAULT_OPEN_BNZA_TOKEN)
+  const [lpPoolFee, setLpPoolFee] = useState(String(DEFAULT_OPEN_LP_POOL_FEE))
+  const [bnzaBuybackFee, setBnzaBuybackFee] = useState('0')
+  const [tickLower, setTickLower] = useState('')
+  const [tickUpper, setTickUpper] = useState('')
+  const [totalUsdc, setTotalUsdc] = useState('')
+  const [bnzaBuybackUsdc, setBnzaBuybackUsdc] = useState('0')
+  const [swapAmount, setSwapAmount] = useState('0')
+  const [openAmountOutMin, setOpenAmountOutMin] = useState('0')
+  const [hlPortionUsdc, setHlPortionUsdc] = useState('0')
+  const [agentWallet, setAgentWallet] = useState('')
+  const [bridgeHlPortionViaCctp, setBridgeHlPortionViaCctp] = useState(true)
+  const [cctpDestinationDomain, setCctpDestinationDomain] = useState(
+    String(DEFAULT_CCTP_DESTINATION_DOMAIN),
+  )
+
+  // Collect
+  const [collectUseDefaults, setCollectUseDefaults] = useState(true)
+  const [operationFeeBps, setOperationFeeBps] = useState(String(DEFAULT_OPERATION_FEE_BPS))
+  const [collectPerformanceFeeBps, setCollectPerformanceFeeBps] = useState(
+    String(DEFAULT_PERFORMANCE_FEE_BPS),
+  )
+  const [minEarnedUsdc, setMinEarnedUsdc] = useState(String(DEFAULT_MIN_EARNED_USDC))
+
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ExecuteStrategyFields | null>(null)
   const [operator, setOperator] = useState<string>(DEFAULT_OPERATOR_ADDRESS)
@@ -50,10 +90,12 @@ export function CalldataBuilderPanel() {
   const [simulationLoading, setSimulationLoading] = useState(false)
   const [simulationError, setSimulationError] = useState<string | null>(null)
 
+  const needsTokenId = action !== 'open'
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const a = params.get('action')
-    if (a === 'close' || a === 'rebalance') setAction(a)
+    if (a && isCalldataAction(a)) setAction(a)
     const u = params.get('user')
     const b = params.get('botId')
     const t = params.get('tokenId')
@@ -64,8 +106,18 @@ export function CalldataBuilderPanel() {
     if (tx) setOpenTx(tx)
     const tl = params.get('tickLower')
     const tu = params.get('tickUpper')
-    if (tl) setNewTickLower(tl)
-    if (tu) setNewTickUpper(tu)
+    if (tl) {
+      setNewTickLower(tl)
+      setTickLower(tl)
+    }
+    if (tu) {
+      setNewTickUpper(tu)
+      setTickUpper(tu)
+    }
+    const agent = params.get('agentWallet')
+    if (agent) setAgentWallet(agent)
+    const total = params.get('totalUsdc')
+    if (total) setTotalUsdc(total)
   }, [])
 
   async function loadFromOpenTx() {
@@ -81,9 +133,11 @@ export function CalldataBuilderPanel() {
       setBotId(data.botIdBytes32)
       setTokenId(data.tokenId)
       setCachedMintTx(data.tokenId, data.txHash)
-      // Seed rebalance range from the open ticks (editable).
+      // Seed rebalance / open range from the open ticks (editable).
       setNewTickLower(String(data.tickLower))
       setNewTickUpper(String(data.tickUpper))
+      setTickLower(String(data.tickLower))
+      setTickUpper(String(data.tickUpper))
       setPrefillNote(data.note)
       setResult(null)
 
@@ -138,27 +192,58 @@ export function CalldataBuilderPanel() {
     window.history.replaceState({}, '', url)
 
     try {
-      const built =
-        action === 'close'
-          ? buildCloseExecuteStrategy({
-              user,
-              botId,
-              tokenId,
-              performanceFeeBps,
-              amountOutMinimum,
-              swapPath,
-              defaultSwapFee,
-              convertPrincipalToUsdc,
-            })
-          : buildRebalanceExecuteStrategy({
-              user,
-              botId,
-              tokenId,
-              newTickLower,
-              newTickUpper,
-              slippageBps,
-              amountOutMinimum: rebalanceAmountOutMin,
-            })
+      let built: ExecuteStrategyFields
+      if (action === 'open') {
+        built = buildOpenExecuteStrategy({
+          user,
+          botId,
+          pairedToken,
+          bnzaToken,
+          lpPoolFee,
+          bnzaBuybackFee,
+          tickLower,
+          tickUpper,
+          totalUsdc,
+          bnzaBuybackUsdc,
+          swapAmount,
+          amountOutMinimum: openAmountOutMin,
+          hlPortionUsdc,
+          agentWallet,
+          bridgeHlPortionViaCctp,
+          cctpDestinationDomain,
+        })
+      } else if (action === 'collect') {
+        built = buildCollectExecuteStrategy({
+          user,
+          botId,
+          tokenId,
+          useDefaults: collectUseDefaults,
+          operationFeeBps,
+          performanceFeeBps: collectPerformanceFeeBps,
+          minEarnedUsdc,
+        })
+      } else if (action === 'close') {
+        built = buildCloseExecuteStrategy({
+          user,
+          botId,
+          tokenId,
+          performanceFeeBps,
+          amountOutMinimum,
+          swapPath,
+          defaultSwapFee,
+          convertPrincipalToUsdc,
+        })
+      } else {
+        built = buildRebalanceExecuteStrategy({
+          user,
+          botId,
+          tokenId,
+          newTickLower,
+          newTickUpper,
+          slippageBps,
+          amountOutMinimum: rebalanceAmountOutMin,
+        })
+      }
       setResult(built)
       void runSimulation(built)
     } catch (err) {
@@ -199,8 +284,8 @@ export function CalldataBuilderPanel() {
             </button>
           </div>
           <span className="field-hint">
-            Paste the vault <strong>open/mint</strong> tx. Fills user, bot ID (bytes32), and tokenId
-            from <code>PositionOpened</code>.
+            Paste the vault <strong>open/mint</strong> tx. Fills user, bot ID (bytes32), tokenId, and
+            ticks from <code>PositionOpened</code>. Useful for collect / close / rebalance.
           </span>
         </label>
         {prefillNote && <p className="hint calldata-prefill-ok">{prefillNote}</p>}
@@ -218,6 +303,8 @@ export function CalldataBuilderPanel() {
               setResult(null)
             }}
           >
+            <option value="open">Open position</option>
+            <option value="collect">Collect fees</option>
             <option value="close">Close position</option>
             <option value="rebalance">Rebalance position</option>
           </select>
@@ -250,16 +337,30 @@ export function CalldataBuilderPanel() {
         </div>
 
         <div className="calldata-row">
-          <label className="field">
-            <span>Position tokenId</span>
-            <input
-              value={tokenId}
-              onChange={(e) => setTokenId(e.target.value)}
-              placeholder="e.g. 42"
-              inputMode="numeric"
-              autoComplete="off"
-            />
-          </label>
+          {needsTokenId ? (
+            <label className="field">
+              <span>Position tokenId</span>
+              <input
+                value={tokenId}
+                onChange={(e) => setTokenId(e.target.value)}
+                placeholder="e.g. 42"
+                inputMode="numeric"
+                autoComplete="off"
+              />
+            </label>
+          ) : (
+            <label className="field field-with-hint">
+              <span>Agent wallet (CUSTODY)</span>
+              <input
+                value={agentWallet}
+                onChange={(e) => setAgentWallet(e.target.value)}
+                placeholder="0x… per-user CUSTODY"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <span className="field-hint">Required open param — HL agent / CUSTODY wallet.</span>
+            </label>
+          )}
 
           <label className="field field-with-hint">
             <span>Operator (simulation from)</span>
@@ -276,32 +377,217 @@ export function CalldataBuilderPanel() {
           </label>
         </div>
 
-        <div className="calldata-row">
-          {action === 'close' ? (
-            <label className="field field-with-hint">
-              <span>Performance fee (bps)</span>
-              <input
-                value={performanceFeeBps}
-                onChange={(e) => setPerformanceFeeBps(e.target.value)}
-                inputMode="numeric"
-              />
-              <span className="field-hint">3000 = 30% of positive PnL. Must match operator config.</span>
-            </label>
-          ) : (
-            <label className="field field-with-hint">
-              <span>Slippage tolerance (bps)</span>
-              <input
-                value={slippageBps}
-                onChange={(e) => setSlippageBps(e.target.value)}
-                inputMode="numeric"
-              />
-              <span className="field-hint">100 = 1% slippage on rebalance swap.</span>
-            </label>
-          )}
-        </div>
-
-        {action === 'close' ? (
+        {action === 'open' && (
           <>
+            <div className="calldata-row">
+              <label className="field field-with-hint">
+                <span>Paired token</span>
+                <input
+                  value={pairedToken}
+                  onChange={(e) => setPairedToken(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <span className="field-hint">Non-USDC pool leg (default WETH).</span>
+              </label>
+              <label className="field field-with-hint">
+                <span>BNZA token</span>
+                <input
+                  value={bnzaToken}
+                  onChange={(e) => setBnzaToken(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <span className="field-hint">Buyback token address.</span>
+              </label>
+            </div>
+
+            <div className="calldata-row">
+              <label className="field field-with-hint">
+                <span>LP pool fee</span>
+                <input
+                  value={lpPoolFee}
+                  onChange={(e) => setLpPoolFee(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">500 = 0.05% Uniswap fee tier.</span>
+              </label>
+              <label className="field field-with-hint">
+                <span>BNZA buyback fee</span>
+                <input
+                  value={bnzaBuybackFee}
+                  onChange={(e) => setBnzaBuybackFee(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">Uniswap fee for buyback hop; 0 OK if buyback USDC is 0.</span>
+              </label>
+            </div>
+
+            <div className="calldata-row">
+              <label className="field">
+                <span>Tick lower</span>
+                <input
+                  value={tickLower}
+                  onChange={(e) => setTickLower(e.target.value)}
+                  placeholder="e.g. -200100"
+                  inputMode="numeric"
+                />
+              </label>
+              <label className="field">
+                <span>Tick upper</span>
+                <input
+                  value={tickUpper}
+                  onChange={(e) => setTickUpper(e.target.value)}
+                  placeholder="e.g. -199500"
+                  inputMode="numeric"
+                />
+              </label>
+            </div>
+
+            <div className="calldata-row">
+              <label className="field field-with-hint">
+                <span>Total USDC (raw, 6 decimals)</span>
+                <input
+                  value={totalUsdc}
+                  onChange={(e) => setTotalUsdc(e.target.value)}
+                  placeholder="e.g. 100000000 (= 100 USDC)"
+                  inputMode="numeric"
+                />
+                <span className="field-hint">Must be ≤ idle vault balance for this user/bot.</span>
+              </label>
+              <label className="field field-with-hint">
+                <span>HL portion USDC (raw)</span>
+                <input
+                  value={hlPortionUsdc}
+                  onChange={(e) => setHlPortionUsdc(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">0 = LP-only open.</span>
+              </label>
+            </div>
+
+            <div className="calldata-row">
+              <label className="field field-with-hint">
+                <span>BNZA buyback USDC (raw)</span>
+                <input
+                  value={bnzaBuybackUsdc}
+                  onChange={(e) => setBnzaBuybackUsdc(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">0 skips buyback leg.</span>
+              </label>
+              <label className="field field-with-hint">
+                <span>Open swap amount (raw USDC)</span>
+                <input
+                  value={swapAmount}
+                  onChange={(e) => setSwapAmount(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">USDC → paired before mint; 0 = full USDC → pool.</span>
+              </label>
+            </div>
+
+            <label className="field field-with-hint">
+              <span>Min amount out (raw)</span>
+              <input
+                value={openAmountOutMin}
+                onChange={(e) => setOpenAmountOutMin(e.target.value)}
+                inputMode="numeric"
+              />
+              <span className="field-hint">Floor for open-side swap; 0 OK when swapAmount is 0.</span>
+            </label>
+
+            <label className="calldata-check field-with-hint">
+              <span className="calldata-check-main">
+                <input
+                  type="checkbox"
+                  checked={bridgeHlPortionViaCctp}
+                  onChange={(e) => setBridgeHlPortionViaCctp(e.target.checked)}
+                />
+                <span>Bridge HL portion via CCTP</span>
+              </span>
+              <span className="field-hint">Live client default is on (domain 3 = Arbitrum).</span>
+            </label>
+
+            {bridgeHlPortionViaCctp && (
+              <label className="field field-with-hint">
+                <span>CCTP destination domain</span>
+                <input
+                  value={cctpDestinationDomain}
+                  onChange={(e) => setCctpDestinationDomain(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">3 = Arbitrum.</span>
+              </label>
+            )}
+          </>
+        )}
+
+        {action === 'collect' && (
+          <>
+            <label className="calldata-check field-with-hint">
+              <span className="calldata-check-main">
+                <input
+                  type="checkbox"
+                  checked={collectUseDefaults}
+                  onChange={(e) => setCollectUseDefaults(e.target.checked)}
+                />
+                <span>Use SC CollectFeeParams defaults</span>
+              </span>
+              <span className="field-hint">
+                Checked → <code>abi.encode(tokenId)</code> only (op 50 / PF 3000 / min $10). Uncheck
+                to encode full tuple.
+              </span>
+            </label>
+
+            {!collectUseDefaults && (
+              <div className="calldata-row">
+                <label className="field field-with-hint">
+                  <span>Operation fee (bps)</span>
+                  <input
+                    value={operationFeeBps}
+                    onChange={(e) => setOperationFeeBps(e.target.value)}
+                    inputMode="numeric"
+                  />
+                  <span className="field-hint">50 = 0.5%.</span>
+                </label>
+                <label className="field field-with-hint">
+                  <span>Performance fee (bps)</span>
+                  <input
+                    value={collectPerformanceFeeBps}
+                    onChange={(e) => setCollectPerformanceFeeBps(e.target.value)}
+                    inputMode="numeric"
+                  />
+                  <span className="field-hint">3000 = 30% of earned.</span>
+                </label>
+                <label className="field field-with-hint">
+                  <span>Min earned USDC (raw)</span>
+                  <input
+                    value={minEarnedUsdc}
+                    onChange={(e) => setMinEarnedUsdc(e.target.value)}
+                    inputMode="numeric"
+                  />
+                  <span className="field-hint">10000000 = $10 dust floor.</span>
+                </label>
+              </div>
+            )}
+          </>
+        )}
+
+        {action === 'close' && (
+          <>
+            <div className="calldata-row">
+              <label className="field field-with-hint">
+                <span>Performance fee (bps)</span>
+                <input
+                  value={performanceFeeBps}
+                  onChange={(e) => setPerformanceFeeBps(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">3000 = 30% of positive PnL. Must match operator config.</span>
+              </label>
+            </div>
+
             <label className="field field-with-hint">
               <span>Min USDC out (raw, 6 decimals)</span>
               <input
@@ -336,8 +622,22 @@ export function CalldataBuilderPanel() {
               </span>
             </label>
           </>
-        ) : (
+        )}
+
+        {action === 'rebalance' && (
           <>
+            <div className="calldata-row">
+              <label className="field field-with-hint">
+                <span>Slippage tolerance (bps)</span>
+                <input
+                  value={slippageBps}
+                  onChange={(e) => setSlippageBps(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span className="field-hint">100 = 1% slippage on rebalance swap.</span>
+              </label>
+            </div>
+
             <div className="calldata-row">
               <label className="field field-with-hint">
                 <span>New tick lower</span>

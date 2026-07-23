@@ -2031,3 +2031,53 @@ select.calldata-select {
   flex-shrink: 0;
   opacity: 0.85;
 }
+
+.position-visual-row {
+  display: grid;
+  gap: 1.25rem;
+  margin: 1.25rem 0 0.5rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .position-visual-row {
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  }
+}
+
+.position-nft-card {
+  min-width: 0;
+}
+
+.position-nft-card-head h3 {
+  margin: 0 0 0.25rem;
+}
+
+.position-nft-card-head .muted {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+}
+
+.position-nft-figure {
+  margin: 0;
+  max-width: 320px;
+}
+
+.position-nft-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  background: #0b0f14;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+}
+
+.position-nft-figure figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.position-range-block h3 {
+  margin-top: 0;
+}
+
