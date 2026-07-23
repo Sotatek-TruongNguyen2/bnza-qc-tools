@@ -78,6 +78,10 @@ export type PositionOpenPrice = {
   sqrtPriceX96: string | null
   priceToken1PerToken0: number | null
   priceToken0PerToken1: number | null
+  /** Raw token amounts deposited at first mint (IncreaseLiquidity). */
+  principalAmount0: string | null
+  principalAmount1: string | null
+  liquidity: string | null
   source: 'swap_event' | 'slot0_parent' | null
   note: string | null
   error: string | null

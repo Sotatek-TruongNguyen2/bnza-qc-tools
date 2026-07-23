@@ -10,11 +10,15 @@ import {
   getDisplayQuote,
   type DensityPoint,
 } from '@/lib/position/range-chart-math'
-import type { PositionRaw } from '@/lib/position/types'
+import type { PositionOpenPrice, PositionRaw } from '@/lib/position/types'
 import { PositionOpenPriceLine } from './position-open-price-line'
 import { PositionRangeLegend } from './position-range-legend'
 
-type Props = { raw: PositionRaw }
+type Props = {
+  raw: PositionRaw
+  openPrice: PositionOpenPrice | null
+  openPriceLoading: boolean
+}
 
 const W = 640
 const H = 200
@@ -23,7 +27,7 @@ const PAD_R = 8
 const PAD_T = 16
 const PAD_B = 28
 
-export function PositionRangeChart({ raw }: Props) {
+export function PositionRangeChart({ raw, openPrice, openPriceLoading }: Props) {
   const [density, setDensity] = useState<DensityPoint[]>([])
 
   const quote = useMemo(() => getDisplayQuote(raw), [raw])
@@ -124,7 +128,7 @@ export function PositionRangeChart({ raw }: Props) {
           ticks [{raw.tickLower}, {raw.tickUpper}) · current {raw.currentTick}
           {inRange ? ' · in range' : raw.liquidity === '0' ? ' · closed' : ' · out of range'}
         </p>
-        <PositionOpenPriceLine raw={raw} />
+        <PositionOpenPriceLine raw={raw} openPrice={openPrice} loading={openPriceLoading} />
       </div>
 
       <div className="range-chart-svg-wrap">

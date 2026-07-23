@@ -24,6 +24,10 @@ const SWAP_EVENT = parseAbiItem(
   'event Swap(address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick)',
 )
 
+const INCREASE_LIQUIDITY_EVENT = parseAbiItem(
+  'event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)',
+)
+
 const POOL_SLOT0_ABI = [
   {
     type: 'function',
@@ -58,6 +62,9 @@ function emptyOpenPrice(partial: Partial<PositionOpenPrice> = {}): PositionOpenP
     sqrtPriceX96: null,
     priceToken1PerToken0: null,
     priceToken0PerToken1: null,
+    principalAmount0: null,
+    principalAmount1: null,
+    liquidity: null,
     source: null,
     note: null,
     error: null,
@@ -184,21 +191,40 @@ export async function fetchPositionOpenPrice(
     let sqrtPriceX96: bigint | null = null
     let tick: number | null = null
     let source: 'swap_event' | 'slot0_parent' | null = null
+    let principalAmount0: bigint | null = null
+    let principalAmount1: bigint | null = null
+    let mintedLiquidity: bigint | null = null
 
     // Prefer last Swap on this pool in the mint tx (post-swap spot used for LP).
     for (const log of receipt.logs) {
-      if (log.address.toLowerCase() !== poolLower) continue
+      if (log.address.toLowerCase() === poolLower) {
+        try {
+          const decoded = decodeEventLog({
+            abi: [SWAP_EVENT],
+            data: log.data,
+            topics: log.topics,
+          })
+          sqrtPriceX96 = decoded.args.sqrtPriceX96 as bigint
+          tick = Number(decoded.args.tick)
+          source = 'swap_event'
+        } catch {
+          // not a Swap
+        }
+      }
+
       try {
         const decoded = decodeEventLog({
-          abi: [SWAP_EVENT],
+          abi: [INCREASE_LIQUIDITY_EVENT],
           data: log.data,
           topics: log.topics,
         })
-        sqrtPriceX96 = decoded.args.sqrtPriceX96 as bigint
-        tick = Number(decoded.args.tick)
-        source = 'swap_event'
+        if (decoded.args.tokenId === id) {
+          principalAmount0 = decoded.args.amount0 as bigint
+          principalAmount1 = decoded.args.amount1 as bigint
+          mintedLiquidity = decoded.args.liquidity as bigint
+        }
       } catch {
-        // not a Swap
+        // not IncreaseLiquidity
       }
     }
 
@@ -237,6 +263,9 @@ export async function fetchPositionOpenPrice(
       sqrtPriceX96: sqrtPriceX96.toString(),
       priceToken1PerToken0,
       priceToken0PerToken1,
+      principalAmount0: principalAmount0?.toString() ?? null,
+      principalAmount1: principalAmount1?.toString() ?? null,
+      liquidity: mintedLiquidity?.toString() ?? null,
       source,
       note:
         source === 'swap_event'

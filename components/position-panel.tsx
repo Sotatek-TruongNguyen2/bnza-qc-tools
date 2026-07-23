@@ -7,8 +7,10 @@ import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
 import { PositionRangeChart } from './position-range-chart'
 import { apiGetJson } from '@/lib/api-client'
+import { buildOriginalPrincipalHint } from '@/lib/position/build-original-principal-hint'
 import { buildPrincipalAmountsHint } from '@/lib/position/build-principal-amounts-hint'
-import type { PositionResult } from '@/lib/position/types'
+import { formatRawAmount } from '@/lib/position/format-raw-amount'
+import type { PositionOpenPrice, PositionResult } from '@/lib/position/types'
 import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
 
 function statusClass(status: string): string {
@@ -22,12 +24,19 @@ export function PositionPanel() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<PositionResult | null>(null)
+  const [openPrice, setOpenPrice] = useState<PositionOpenPrice | null>(null)
+  const [openPriceLoading, setOpenPriceLoading] = useState(false)
   const [openHintId, setOpenHintId] = useState<string | null>(null)
   const autoFetchedIdRef = useRef<string | null>(null)
 
   const principalHint = useMemo(
     () => (result ? buildPrincipalAmountsHint(result.raw) : null),
     [result],
+  )
+
+  const originalPrincipalHint = useMemo(
+    () => (result && openPrice ? buildOriginalPrincipalHint(result.raw, openPrice) : null),
+    [result, openPrice],
   )
 
   useEffect(() => {
@@ -40,10 +49,61 @@ export function PositionPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    if (!result) {
+      setOpenPrice(null)
+      setOpenPriceLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setOpenPriceLoading(true)
+    setOpenPrice(null)
+    void (async () => {
+      try {
+        const qs =
+          `/api/position/open-price?tokenId=${encodeURIComponent(result.raw.tokenId)}` +
+          `&pool=${encodeURIComponent(result.raw.poolAddress)}` +
+          `&token0Decimals=${result.raw.token0Decimals}` +
+          `&token1Decimals=${result.raw.token1Decimals}`
+        const data = await apiGetJson<PositionOpenPrice>(qs)
+        if (!cancelled) setOpenPrice(data)
+      } catch (err) {
+        if (!cancelled) {
+          setOpenPrice({
+            found: false,
+            txHash: null,
+            blockNumber: null,
+            openedAtIso: null,
+            openedAtLabel: null,
+            tick: null,
+            sqrtPriceX96: null,
+            priceToken1PerToken0: null,
+            priceToken0PerToken1: null,
+            principalAmount0: null,
+            principalAmount1: null,
+            liquidity: null,
+            source: null,
+            note: null,
+            error: err instanceof Error ? err.message : 'Failed to load open price',
+            links: { tx: null },
+          })
+        }
+      } finally {
+        if (!cancelled) setOpenPriceLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [result])
+
   async function runQuery(id: string, opts?: { syncUrl?: boolean }) {
     setLoading(true)
     setError(null)
     setResult(null)
+    setOpenPrice(null)
     setOpenHintId(null)
 
     if (opts?.syncUrl !== false) {
@@ -128,10 +188,72 @@ export function PositionPanel() {
           </dl>
 
           <h3>Price range</h3>
-          <PositionRangeChart raw={result.raw} />
+          <PositionRangeChart
+            raw={result.raw}
+            openPrice={openPrice}
+            openPriceLoading={openPriceLoading}
+          />
 
           <div className="section-heading-row">
-            <h3>Principal</h3>
+            <h3>Original principal (at open)</h3>
+            {originalPrincipalHint && (
+              <CalculationHint
+                hintId="original-principal"
+                isOpen={openHintId === 'original-principal'}
+                onToggle={(id) => setOpenHintId((cur) => (cur === id ? null : id))}
+                onClose={() => setOpenHintId(null)}
+                section={originalPrincipalHint}
+              />
+            )}
+          </div>
+          <p className="hint section-hint">
+            Token amounts deposited when this NFT was first minted. Click <strong>?</strong> for
+            source.
+          </p>
+          {openPriceLoading && <p className="muted">Resolving mint amounts…</p>}
+          {!openPriceLoading &&
+            openPrice?.found &&
+            openPrice.principalAmount0 != null &&
+            openPrice.principalAmount1 != null && (
+              <ul className="plain-list mono">
+                <li>
+                  <TokenAmountLine
+                    prefix="Token0"
+                    symbol={result.raw.token0Symbol}
+                    address={result.raw.token0}
+                    amount={formatRawAmount(
+                      BigInt(openPrice.principalAmount0),
+                      result.raw.token0Decimals,
+                      result.raw.token0Symbol,
+                    )}
+                  />
+                </li>
+                <li>
+                  <TokenAmountLine
+                    prefix="Token1"
+                    symbol={result.raw.token1Symbol}
+                    address={result.raw.token1}
+                    amount={formatRawAmount(
+                      BigInt(openPrice.principalAmount1),
+                      result.raw.token1Decimals,
+                      result.raw.token1Symbol,
+                    )}
+                  />
+                </li>
+              </ul>
+            )}
+          {!openPriceLoading &&
+            (!openPrice?.found ||
+              openPrice.principalAmount0 == null ||
+              openPrice.principalAmount1 == null) && (
+              <p className="muted">
+                Original principal unavailable
+                {openPrice?.error ? ` (${openPrice.error})` : openPrice?.note ? ` (${openPrice.note})` : ''}
+              </p>
+            )}
+
+          <div className="section-heading-row">
+            <h3>Principal (live)</h3>
             {principalHint && (
               <CalculationHint
                 hintId="principal-amounts"
@@ -143,8 +265,8 @@ export function PositionPanel() {
             )}
           </div>
           <p className="hint section-hint">
-            Token amounts locked in the LP NFT (not fees). Click <strong>?</strong> to see how they
-            are calculated.
+            Token amounts locked in the LP NFT now (not fees). Click <strong>?</strong> to see how
+            they are calculated.
           </p>
           <ul className="plain-list mono">
             <li>
