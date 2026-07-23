@@ -14,8 +14,12 @@ export type RecentOpenRow = {
   hyperliquidUsdc: string
   totalUsdcHuman: string
   blockNumber: string
+  /** PositionOpened tx. */
   txHash: string
   basescanTx: string
+  /** PositionLiquidated / redeem tx when closed and found in lookback. */
+  closeTxHash: string | null
+  basescanCloseTx: string | null
   basescanOwner: string
   /** Current on-chain status (not “opened in window”). */
   status: RecentOpenStatus

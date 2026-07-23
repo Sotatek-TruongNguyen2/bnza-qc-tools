@@ -16,6 +16,7 @@ import {
 } from './constants'
 import type { RecentOpenRow, RecentOpenStatus, RecentOpensResult } from './types'
 import { fetchRecentOpensPnlTotals } from './fetch-recent-opens-pnl'
+import { resolveCloseTxHashesByTokenId } from './resolve-close-tx-hashes'
 
 function formatUsdc(raw: bigint): string {
   return `${Number(formatUnits(raw, 6)).toLocaleString('en-US', {
@@ -137,7 +138,7 @@ export async function fetchRecentOpens(
 
   const logs = await getPositionOpenedLogs(client, fromBlock, toBlock, warnings)
 
-  type Draft = Omit<RecentOpenRow, 'status'> & {
+  type Draft = Omit<RecentOpenRow, 'status' | 'closeTxHash' | 'basescanCloseTx'> & {
     owner: `0x${string}`
     botId: Hex
     positionIdBig: bigint
@@ -197,12 +198,29 @@ export async function fetchRecentOpens(
   )
 
   const liveTokenIdByKey = new Map<string, string>()
-  const opens: RecentOpenRow[] = drafts.map((d, i) => {
-    const { positionIdBig: _, ...row } = d
-    const resolved = statusRows[i] ?? { status: 'unknown' as const, liveTokenId: null }
-    const key = `${row.txHash}-${row.tokenId}`
-    if (resolved.liveTokenId) liveTokenIdByKey.set(key, resolved.liveTokenId)
-    return { ...row, status: resolved.status }
+  const opensDraft: Array<Omit<RecentOpenRow, 'closeTxHash' | 'basescanCloseTx'>> = drafts.map(
+    (d, i) => {
+      const { positionIdBig: _, ...row } = d
+      const resolved = statusRows[i] ?? { status: 'unknown' as const, liveTokenId: null }
+      const key = `${row.txHash}-${row.tokenId}`
+      if (resolved.liveTokenId) liveTokenIdByKey.set(key, resolved.liveTokenId)
+      return { ...row, status: resolved.status }
+    },
+  )
+
+  const needsCloseTx = opensDraft.some((r) => r.status === 'closed')
+  const closeTxByToken = needsCloseTx
+    ? await resolveCloseTxHashesByTokenId(client, fromBlock, toBlock, warnings)
+    : new Map<string, Hex>()
+
+  const opens: RecentOpenRow[] = opensDraft.map((row) => {
+    const closeTxHash =
+      row.status === 'closed' ? (closeTxByToken.get(row.tokenId) ?? null) : null
+    return {
+      ...row,
+      closeTxHash,
+      basescanCloseTx: closeTxHash ? `https://basescan.org/tx/${closeTxHash}` : null,
+    }
   })
 
   let totalUsdc = 0n

@@ -227,7 +227,8 @@ export function RecentOpensStats() {
                     <th>USDC</th>
                     <th>Owner</th>
                     <th>Block</th>
-                    <th>Tx</th>
+                    <th>Open tx</th>
+                    <th>Close tx</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -269,6 +270,15 @@ export function RecentOpensStats() {
                         <a href={row.basescanTx} target="_blank" rel="noreferrer">
                           {shorten(row.txHash, 4, 4)}
                         </a>
+                      </td>
+                      <td className="mono">
+                        {row.closeTxHash && row.basescanCloseTx ? (
+                          <a href={row.basescanCloseTx} target="_blank" rel="noreferrer">
+                            {shorten(row.closeTxHash, 4, 4)}
+                          </a>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}
