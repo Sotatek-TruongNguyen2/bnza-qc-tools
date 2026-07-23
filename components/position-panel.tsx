@@ -6,7 +6,6 @@ import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
 import { PositionRangeChart } from './position-range-chart'
-import { PositionUniswapPnl } from './position-uniswap-pnl'
 import { apiGetJson } from '@/lib/api-client'
 import { buildOriginalPrincipalHint } from '@/lib/position/build-original-principal-hint'
 import { buildPrincipalAmountsHint } from '@/lib/position/build-principal-amounts-hint'
@@ -310,8 +309,6 @@ export function PositionPanel() {
           </ul>
 
           <PositionCloseEstimate raw={result.raw} />
-
-          <PositionUniswapPnl tokenId={result.raw.tokenId} />
 
           <h3>Basescan</h3>
           <ul className="plain-list">
