@@ -48,13 +48,10 @@ export function buildViewWindow(args: {
   tickLower: number
   tickUpper: number
   currentTick: number
-  zoom: number
 }): { viewMinTick: number; viewMaxTick: number } {
-  const { tickLower, tickUpper, currentTick, zoom } = args
+  const { tickLower, tickUpper, currentTick } = args
   const span = Math.max(tickUpper - tickLower, 1)
-  // zoom 1 = default padding; higher zoom = tighter (more zoomed in)
-  const padFactor = 0.9 / Math.max(zoom, 0.5)
-  const pad = Math.max(Math.round(span * padFactor), 20)
+  const pad = Math.max(Math.round(span * 0.9), 20)
   const midLow = Math.min(tickLower, currentTick)
   const midHigh = Math.max(tickUpper, currentTick)
   return {

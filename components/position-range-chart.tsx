@@ -23,7 +23,6 @@ const PAD_T = 16
 const PAD_B = 28
 
 export function PositionRangeChart({ raw }: Props) {
-  const [zoom, setZoom] = useState(1)
   const [density, setDensity] = useState<DensityPoint[]>([])
 
   const quote = useMemo(() => getDisplayQuote(raw), [raw])
@@ -36,9 +35,8 @@ export function PositionRangeChart({ raw }: Props) {
         tickLower: raw.tickLower,
         tickUpper: raw.tickUpper,
         currentTick: raw.currentTick,
-        zoom,
       }),
-    [raw.tickLower, raw.tickUpper, raw.currentTick, zoom],
+    [raw.tickLower, raw.tickUpper, raw.currentTick],
   )
 
   const minPrice = Math.min(priceAtTick(raw.tickLower), priceAtTick(raw.tickUpper))
@@ -117,36 +115,14 @@ export function PositionRangeChart({ raw }: Props) {
   return (
     <div className="range-chart">
       <div className="range-chart-header">
-        <div>
-          <p className="range-chart-current">
-            Current price: <strong>{currentHeader}</strong>
-            {inverseHint && <span className="muted"> {inverseHint}</span>}
-          </p>
-          <p className="muted range-chart-ticks mono">
-            ticks [{raw.tickLower}, {raw.tickUpper}) · current {raw.currentTick}
-            {inRange ? ' · in range' : raw.liquidity === '0' ? ' · closed' : ' · out of range'}
-          </p>
-        </div>
-        <div className="range-chart-zoom" aria-label="Zoom">
-          <button
-            type="button"
-            className="range-zoom-btn"
-            onClick={() => setZoom((z) => Math.min(z + 0.35, 3))}
-            title="Zoom in"
-            aria-label="Zoom in"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            className="range-zoom-btn"
-            onClick={() => setZoom((z) => Math.max(z - 0.35, 0.5))}
-            title="Zoom out"
-            aria-label="Zoom out"
-          >
-            −
-          </button>
-        </div>
+        <p className="range-chart-current">
+          Current price: <strong>{currentHeader}</strong>
+          {inverseHint && <span className="muted"> {inverseHint}</span>}
+        </p>
+        <p className="muted range-chart-ticks mono">
+          ticks [{raw.tickLower}, {raw.tickUpper}) · current {raw.currentTick}
+          {inRange ? ' · in range' : raw.liquidity === '0' ? ' · closed' : ' · out of range'}
+        </p>
       </div>
 
       <div className="range-chart-svg-wrap">

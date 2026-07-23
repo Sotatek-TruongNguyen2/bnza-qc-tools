@@ -104,14 +104,20 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
     { label: 'Range branch', value: branchLabel },
   ]
 
-  if (rangeBranch === 'below' || rangeBranch === 'in-range') {
-    const sqrtA = rangeBranch === 'below' ? sqrtLower : sqrtCurrent
-    const sqrtB = sqrtUpper
+  if (rangeBranch === 'below') {
     steps.push({
       label: `${raw.token0Symbol} (amount0)`,
       value:
-        `L × (√B − √A) / (√B × √A)\n` +
-        `= L × (${sqrtB} − ${sqrtA}) / (${sqrtB} × ${sqrtA})\n` +
+        `L × (√Pu − √Pl) / (√Pu × √Pl)\n` +
+        `= L × (${sqrtUpper} − ${sqrtLower}) / (${sqrtUpper} × ${sqrtLower})\n` +
+        `→ ${token0}`,
+    })
+  } else if (rangeBranch === 'in-range') {
+    steps.push({
+      label: `${raw.token0Symbol} (amount0)`,
+      value:
+        `L × (√Pu − √Pc) / (√Pu × √Pc)\n` +
+        `= L × (${sqrtUpper} − ${sqrtCurrent}) / (${sqrtUpper} × ${sqrtCurrent})\n` +
         `→ ${token0}`,
     })
   } else {
@@ -121,14 +127,20 @@ export function buildPrincipalAmountsHint(raw: PositionRaw): CloseEstimateCalcSe
     })
   }
 
-  if (rangeBranch === 'above' || rangeBranch === 'in-range') {
-    const sqrtA = sqrtLower
-    const sqrtB = rangeBranch === 'above' ? sqrtUpper : sqrtCurrent
+  if (rangeBranch === 'above') {
     steps.push({
       label: `${raw.token1Symbol} (amount1)`,
       value:
-        `L × (√B − √A) / 2^96\n` +
-        `= L × (${sqrtB} − ${sqrtA}) / 2^96\n` +
+        `L × (√Pu − √Pl) / 2^96\n` +
+        `= L × (${sqrtUpper} − ${sqrtLower}) / 2^96\n` +
+        `→ ${token1}`,
+    })
+  } else if (rangeBranch === 'in-range') {
+    steps.push({
+      label: `${raw.token1Symbol} (amount1)`,
+      value:
+        `L × (√Pc − √Pl) / 2^96\n` +
+        `= L × (${sqrtCurrent} − ${sqrtLower}) / 2^96\n` +
         `→ ${token1}`,
     })
   } else {
