@@ -5,6 +5,7 @@ import { CalculationHint } from './calculation-hint'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenAmountLine, TokenSymbol } from './token-icon'
 import { PositionCloseEstimate } from './position-close-estimate'
+import { PositionRangeChart } from './position-range-chart'
 import { apiGetJson } from '@/lib/api-client'
 import { buildPrincipalAmountsHint } from '@/lib/position/build-principal-amounts-hint'
 import type { PositionResult } from '@/lib/position/types'
@@ -124,19 +125,10 @@ export function PositionPanel() {
                 </a>
               </dd>
             </div>
-            <div className="tick-range-highlight">
-              <dt>Tick range</dt>
-              <dd className="mono">{result.human.tickRange}</dd>
-            </div>
           </dl>
 
-          <h3>Prices</h3>
-          <ul className="plain-list mono">
-            <li>{result.human.prices.atLowerTick}</li>
-            <li>{result.human.prices.atUpperTick}</li>
-            <li>{result.human.prices.atCurrentTick}</li>
-            <li>{result.human.prices.inverseAtCurrentTick}</li>
-          </ul>
+          <h3>Price range</h3>
+          <PositionRangeChart raw={result.raw} />
 
           <div className="section-heading-row">
             <h3>Principal</h3>

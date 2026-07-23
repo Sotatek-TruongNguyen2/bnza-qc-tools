@@ -518,6 +518,172 @@ input:focus {
   font-weight: 700;
 }
 
+.range-chart {
+  margin: 0.35rem 0 1.25rem;
+  padding: 0.85rem 1rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.range-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.range-chart-current {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.range-chart-ticks {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+}
+
+.range-chart-zoom {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.range-zoom-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.range-zoom-btn:hover {
+  border-color: #7aa2ff;
+  color: #2f5fcc;
+}
+
+.range-chart-svg-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.range-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.range-density {
+  fill: #f5a3c7;
+  fill-opacity: 0.55;
+}
+
+.range-band {
+  fill: #c9dbff;
+  fill-opacity: 0.55;
+}
+
+.range-handle-line {
+  stroke: #4b7cf0;
+  stroke-width: 3;
+}
+
+.range-handle-cap {
+  fill: #4b7cf0;
+}
+
+.range-handle-grip {
+  stroke: #fff;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.range-current-line {
+  stroke: #8b93a7;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.range-current-line.in {
+  stroke: #5c6578;
+  stroke-dasharray: none;
+}
+
+.range-axis {
+  stroke: #d7dbe7;
+  stroke-width: 1;
+}
+
+.range-axis-label {
+  fill: var(--muted);
+  font-size: 11px;
+  font-family: var(--mono);
+}
+
+.range-price-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.range-price-card {
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--line);
+  background: #fafbff;
+}
+
+.range-price-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.range-price-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.range-price-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.range-price-value {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.range-price-unit {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 720px) {
+  .range-price-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
 .plain-list {
   margin: 0;
   padding-left: 1.1rem;
