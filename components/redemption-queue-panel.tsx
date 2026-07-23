@@ -210,7 +210,6 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           ) : (
             <span className="badge-muted">#{row.queueIndex + 1} in line</span>
           )}
-          <strong className="mono">id {row.requestId}</strong>
         </div>
         <span className="rq-wait" title={`${row.waitSeconds}s`}>
           {row.waitLabel}
