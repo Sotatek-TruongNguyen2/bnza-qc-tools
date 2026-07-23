@@ -2476,16 +2476,20 @@ select.calldata-select {
   left: 0;
   bottom: calc(100% + 0.25rem);
   z-index: 40;
-  max-width: min(22rem, 75vw);
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(20rem, 70vw);
   padding: 0.4rem 0.55rem;
   border-radius: 0.45rem;
   border: 1px solid #c5d3c9;
   background: #1b2a22;
   color: #f4faf6;
+  font-family: var(--mono, ui-monospace, monospace);
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.35;
-  white-space: pre-wrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   word-break: break-all;
   box-shadow: 0 8px 20px rgba(20, 40, 30, 0.22);
   pointer-events: none;
@@ -2493,7 +2497,7 @@ select.calldata-select {
 
 .rq-trim.has-tooltip:hover .rq-trim-tooltip,
 .rq-trim.has-tooltip:focus-within .rq-trim-tooltip {
-  display: block;
+  display: inline-block;
 }
 
 .copy-icon-btn {

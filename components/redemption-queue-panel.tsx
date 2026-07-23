@@ -224,7 +224,7 @@ function TrimmedId({
   return (
     <span className="rq-trim has-tooltip" tabIndex={0}>
       {text}
-      <span className="rq-trim-tooltip mono" role="tooltip">
+      <span className="rq-trim-tooltip" role="tooltip">
         {full}
       </span>
     </span>
