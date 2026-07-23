@@ -2595,21 +2595,35 @@ select.calldata-select {
 }
 
 .rq-copyable {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.3rem;
+  width: 100%;
   max-width: 100%;
+  min-width: 0;
+}
+
+.rq-copyable > .mono,
+.rq-copyable > .rq-trim {
+  flex: 1 1 0;
   min-width: 0;
 }
 
 .rq-copyable .mono,
 .rq-copyable a.mono {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rq-copyable .copy-icon-btn {
+  flex-shrink: 0;
 }
 
 .rq-trim.has-tooltip {
   position: relative;
-  display: inline-flex;
+  display: block;
   min-width: 0;
   cursor: help;
 }
