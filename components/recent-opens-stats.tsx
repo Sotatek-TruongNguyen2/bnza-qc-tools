@@ -5,6 +5,7 @@ import { apiGetJson } from '@/lib/api-client'
 import { formatLocalDateTime } from '@/lib/format-datetime'
 import {
   RECENT_OPENS_DEFAULT_LOOKBACK_BLOCKS,
+  RECENT_OPENS_DISMISSED_STORAGE_KEY,
   RECENT_OPENS_RELOAD_MS,
 } from '@/lib/recent-opens/constants'
 import type { RecentOpensResult } from '@/lib/recent-opens/types'
@@ -14,14 +15,40 @@ function shorten(addr: string, left = 4, right = 4): string {
   return `${addr.slice(0, left + 2)}…${addr.slice(-right)}`
 }
 
+function readDismissed(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(RECENT_OPENS_DISMISSED_STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeDismissed(dismissed: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (dismissed) window.localStorage.setItem(RECENT_OPENS_DISMISSED_STORAGE_KEY, '1')
+    else window.localStorage.removeItem(RECENT_OPENS_DISMISSED_STORAGE_KEY)
+  } catch {
+    // ignore quota
+  }
+}
+
 const LIST_LIMIT = 8
 
 export function RecentOpensStats() {
-  const [loading, setLoading] = useState(true)
+  const [dismissed, setDismissed] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<RecentOpensResult | null>(null)
   const [nextReloadAt, setNextReloadAt] = useState<number | null>(null)
   const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    setDismissed(readDismissed())
+    setHydrated(true)
+  }, [])
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -40,15 +67,42 @@ export function RecentOpensStats() {
   }, [])
 
   useEffect(() => {
+    if (!hydrated || dismissed) return
     void reload()
     const interval = window.setInterval(() => void reload(), RECENT_OPENS_RELOAD_MS)
     return () => window.clearInterval(interval)
-  }, [reload])
+  }, [hydrated, dismissed, reload])
 
   useEffect(() => {
+    if (dismissed) return
     const tick = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(tick)
-  }, [])
+  }, [dismissed])
+
+  function closeSection() {
+    setDismissed(true)
+    writeDismissed(true)
+    setResult(null)
+    setError(null)
+    setNextReloadAt(null)
+  }
+
+  function openSection() {
+    setDismissed(false)
+    writeDismissed(false)
+  }
+
+  if (!hydrated) return null
+
+  if (dismissed) {
+    return (
+      <div className="recent-opens-collapsed">
+        <button type="button" className="recent-opens-show" onClick={openSection}>
+          Show recent opens
+        </button>
+      </div>
+    )
+  }
 
   const secsLeft =
     nextReloadAt == null ? null : Math.max(0, Math.ceil((nextReloadAt - now) / 1000))
@@ -70,7 +124,7 @@ export function RecentOpensStats() {
             {result
               ? `${Number(result.lookbackBlocks).toLocaleString('en-US')} blocks (${result.lookbackApproxLabel})`
               : `${Number(RECENT_OPENS_DEFAULT_LOOKBACK_BLOCKS).toLocaleString('en-US')} blocks`}
-            · auto-refresh every 5 min
+            · auto-refresh every 10 min
           </p>
         </div>
         <div className="recent-opens-actions">
@@ -79,6 +133,15 @@ export function RecentOpensStats() {
           </span>
           <button type="button" className="btn-secondary" disabled={loading} onClick={() => void reload()}>
             {loading ? 'Loading…' : 'Refresh'}
+          </button>
+          <button
+            type="button"
+            className="recent-opens-close"
+            onClick={closeSection}
+            aria-label="Hide recent opens"
+            title="Hide this section"
+          >
+            ✕
           </button>
         </div>
       </div>

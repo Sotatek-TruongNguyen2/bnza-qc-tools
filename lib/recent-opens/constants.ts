@@ -15,7 +15,9 @@ export const RECENT_OPENS_LOG_CHUNK_BLOCKS = 9_999n
 export const RECENT_OPENS_LOGS_CONCURRENCY = 4
 
 /** Client auto-refresh interval. */
-export const RECENT_OPENS_RELOAD_MS = 5 * 60 * 1000
+export const RECENT_OPENS_RELOAD_MS = 10 * 60 * 1000
+
+export const RECENT_OPENS_DISMISSED_STORAGE_KEY = 'bnza-qc:recent-opens-dismissed:v1'
 
 export const POSITION_OPENED_EVENT =
   'event PositionOpened(address indexed owner, bytes32 indexed botId, uint256 indexed positionId, uint256 tokenId, address pool, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 totalUsdc, uint256 uniswapUsdc, uint256 hyperliquidUsdc)' as const
