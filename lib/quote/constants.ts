@@ -14,16 +14,16 @@ export const KNOWN_TOKENS = BASE_KNOWN_TOKENS
 export const KNOWN_TOKEN_META = BASE_KNOWN_TOKEN_META
 
 /** Common Base liquid hubs used as 2-hop intermediates (not only WETH/USDC). */
-export const BASE_DAI_ADDRESS = '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb' as const
-export const BASE_USDT_ADDRESS = '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2' as const
-export const BASE_USDBC_ADDRESS = '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA' as const
-export const BASE_CBETH_ADDRESS = '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22' as const
-export const BASE_WSTETH_ADDRESS = '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452' as const
-export const BASE_CBBTC_ADDRESS = '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' as const
+export const BASE_DAI_ADDRESS = '0x50c5725949a6f0c72e6c4a641f24049a917db0cb' as const
+export const BASE_USDT_ADDRESS = '0xfde4c96c8593536e31f229ea8f37b2ada2699bb2' as const
+export const BASE_USDBC_ADDRESS = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca' as const
+export const BASE_CBETH_ADDRESS = '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22' as const
+export const BASE_WSTETH_ADDRESS = '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452' as const
+export const BASE_CBBTC_ADDRESS = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf' as const
 
 export const INTERMEDIATE_TOKENS = [
-  BASE_WETH_ADDRESS,
-  BASE_USDC_ADDRESS,
+  BASE_WETH_ADDRESS.toLowerCase(),
+  BASE_USDC_ADDRESS.toLowerCase(),
   BASE_DAI_ADDRESS,
   BASE_USDT_ADDRESS,
   BASE_USDBC_ADDRESS,
