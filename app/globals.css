@@ -1747,3 +1747,12 @@ select.calldata-select {
   overflow: auto;
   max-height: 16rem;
 }
+
+.position-uni-pnl {
+  margin-top: 1.35rem;
+}
+
+.position-uni-pnl-caveats {
+  margin-top: 0.65rem;
+  font-size: 0.82rem;
+}
