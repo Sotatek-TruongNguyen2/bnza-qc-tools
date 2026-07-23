@@ -1768,3 +1768,15 @@ select.calldata-select {
   font-size: 0.85rem;
   font-weight: 500;
 }
+
+.estimate-pnl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.estimate-external-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}

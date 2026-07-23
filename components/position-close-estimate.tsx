@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { CalculationHint } from './calculation-hint'
 import { TokenIcon } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
@@ -14,6 +13,8 @@ import type { PositionRaw } from '@/lib/position/types'
 
 type Props = {
   raw: PositionRaw
+  /** EXBOT / mint open tx — prefills PnL tab when opening full analysis. */
+  openTxHash?: string | null
 }
 
 function parsePct(value: string, fallback: number): number {
@@ -28,7 +29,28 @@ function pnlPctClass(pct: string | null): string {
   return 'muted'
 }
 
-export function PositionCloseEstimate({ raw }: Props) {
+function ExternalLinkIcon() {
+  return (
+    <svg
+      width={12}
+      height={12}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.25}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="estimate-external-icon"
+    >
+      <path d="M14 5h5v5" />
+      <path d="M10 14L19 5" />
+      <path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6" />
+    </svg>
+  )
+}
+
+export function PositionCloseEstimate({ raw, openTxHash }: Props) {
   const [operationFeePct, setOperationFeePct] = useState('0.5')
   const [performanceFeePct, setPerformanceFeePct] = useState('30')
   const [swapSlippagePct, setSwapSlippagePct] = useState('1')
@@ -216,7 +238,24 @@ export function PositionCloseEstimate({ raw }: Props) {
             <span className="muted estimate-uni-pnl-hint">
               {' '}
               · mark vs EXBOT entry ·{' '}
-              <Link href="/?tool=tx-pnl">Open full PnL tab</Link>
+              <a
+                className="estimate-pnl-link"
+                href={
+                  openTxHash && /^0x[a-fA-F0-9]{64}$/.test(openTxHash)
+                    ? `/?tool=tx-pnl&txHash=${encodeURIComponent(openTxHash)}`
+                    : '/?tool=tx-pnl'
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                title={
+                  openTxHash
+                    ? 'Open PnL tab in a new window with this position’s open tx filled'
+                    : 'Open PnL tab in a new window'
+                }
+              >
+                Open full PnL tab
+                <ExternalLinkIcon />
+              </a>
             </span>
           </dd>
         </div>

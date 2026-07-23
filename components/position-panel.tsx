@@ -308,7 +308,7 @@ export function PositionPanel() {
             <li className="muted">{result.human.uncollectedFees.note}</li>
           </ul>
 
-          <PositionCloseEstimate raw={result.raw} />
+          <PositionCloseEstimate raw={result.raw} openTxHash={openPrice?.txHash ?? null} />
 
           <h3>Basescan</h3>
           <ul className="plain-list">
