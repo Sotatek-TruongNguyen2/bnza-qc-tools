@@ -11,10 +11,6 @@ export type RedemptionPendingRequest = {
   waitSeconds: number
   waitLabel: string
   basescanUser: string
-  /** Redeem/close executeStrategy tx that called createRequest (RequestCreated). */
-  closeTxHash: string | null
-  basescanCloseTx: string | null
-  closeBlockNumber: string | null
 }
 
 export type RedemptionQueueStats = {
@@ -24,14 +20,6 @@ export type RedemptionQueueStats = {
   oldestWaitLabel: string | null
   avgWaitSeconds: number | null
   avgWaitLabel: string | null
-  /** Distinct close txs that enqueued the current pending set. */
-  uniqueCloseTxCount: number
-}
-
-export type RedemptionCloseTxSummary = {
-  closeTxHash: string
-  basescanCloseTx: string
-  requestIds: string[]
 }
 
 export type RedemptionQueueResult = {
@@ -40,7 +28,4 @@ export type RedemptionQueueResult = {
   fetchedAtIso: string
   stats: RedemptionQueueStats
   pending: RedemptionPendingRequest[]
-  /** Unique close txs for current pending requests (newest-ish order by request id). */
-  closeTxs: RedemptionCloseTxSummary[]
-  warnings: string[]
 }
