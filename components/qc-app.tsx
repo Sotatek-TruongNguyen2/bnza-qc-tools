@@ -64,18 +64,37 @@ function toolFromParam(value: string | null): Tool {
 export function QcApp() {
   const searchParams = useSearchParams()
   const [tool, setTool] = useState<Tool>(() => toolFromParam(searchParams.get('tool')))
+  /** Keep visited tabs mounted (hidden) so switching back does not remount + re-hit RPC. */
+  const [mounted, setMounted] = useState<Set<Tool>>(() => new Set([toolFromParam(searchParams.get('tool'))]))
 
   // Sync if the URL is changed by the browser (back/forward) or a full load.
   useEffect(() => {
-    setTool(toolFromParam(searchParams.get('tool')))
+    const next = toolFromParam(searchParams.get('tool'))
+    setTool(next)
+    setMounted((prev) => {
+      if (prev.has(next)) return prev
+      const copy = new Set(prev)
+      copy.add(next)
+      return copy
+    })
   }, [searchParams])
 
   function selectTool(next: Tool) {
     if (next === tool) return
     setTool(next)
+    setMounted((prev) => {
+      if (prev.has(next)) return prev
+      const copy = new Set(prev)
+      copy.add(next)
+      return copy
+    })
     replaceQueryParams((params) => {
       params.set('tool', next)
     })
+  }
+
+  function panelClass(id: Tool): string {
+    return tool === id ? 'tab-panel' : 'tab-panel tab-panel-hidden'
   }
 
   return (
@@ -132,14 +151,42 @@ export function QcApp() {
       </nav>
 
       <div className="tab-panels">
-        {/* Mount only the active tool — avoids hidden panels rewriting the URL / refetching. */}
-        {tool === 'bot' && <BotPanel />}
-        {tool === 'position' && <PositionPanel />}
-        {tool === 'quote' && <QuotePanel />}
-        {tool === 'tx-pnl' && <TxPnlPanel />}
-        {tool === 'gas' && <GasEstimatePanel />}
-        {tool === 'calldata' && <CalldataBuilderPanel />}
-        {tool === 'addresses' && <AddressesPanel />}
+        {/* Lazy-mount on first visit, then keep alive hidden — no remount refetch on tab switch. */}
+        {mounted.has('bot') && (
+          <div className={panelClass('bot')} hidden={tool !== 'bot'}>
+            <BotPanel />
+          </div>
+        )}
+        {mounted.has('position') && (
+          <div className={panelClass('position')} hidden={tool !== 'position'}>
+            <PositionPanel />
+          </div>
+        )}
+        {mounted.has('quote') && (
+          <div className={panelClass('quote')} hidden={tool !== 'quote'}>
+            <QuotePanel />
+          </div>
+        )}
+        {mounted.has('tx-pnl') && (
+          <div className={panelClass('tx-pnl')} hidden={tool !== 'tx-pnl'}>
+            <TxPnlPanel />
+          </div>
+        )}
+        {mounted.has('gas') && (
+          <div className={panelClass('gas')} hidden={tool !== 'gas'}>
+            <GasEstimatePanel />
+          </div>
+        )}
+        {mounted.has('calldata') && (
+          <div className={panelClass('calldata')} hidden={tool !== 'calldata'}>
+            <CalldataBuilderPanel />
+          </div>
+        )}
+        {mounted.has('addresses') && (
+          <div className={panelClass('addresses')} hidden={tool !== 'addresses'}>
+            <AddressesPanel />
+          </div>
+        )}
       </div>
 
       <footer className="footer">

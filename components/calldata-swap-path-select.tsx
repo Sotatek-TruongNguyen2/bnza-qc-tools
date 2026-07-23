@@ -123,10 +123,7 @@ export function CalldataSwapPathSelect({
     }
   }, [tokenId, value])
 
-  useEffect(() => {
-    void loadRoutes()
-  }, [tokenId]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  // No auto-fetch on mount / tokenId / tab focus — only Refresh or first open of the menu.
   useEffect(() => {
     if (!open) return
     function onDocClick(e: MouseEvent) {
@@ -142,6 +139,14 @@ export function CalldataSwapPathSelect({
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
+
+  async function openMenu() {
+    const willOpen = !open
+    setOpen(willOpen)
+    if (willOpen && routes.length === 0 && !loading) {
+      await loadRoutes()
+    }
+  }
 
   const selected = useMemo(
     () => routes.find((r) => r.path.toLowerCase() === value.toLowerCase()) ?? null,
@@ -190,7 +195,7 @@ export function CalldataSwapPathSelect({
               disabled={loading}
               aria-haspopup="listbox"
               aria-expanded={open}
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => void openMenu()}
             >
               <span className="calldata-route-trigger-main">
                 {mode === 'route' && selected ? (

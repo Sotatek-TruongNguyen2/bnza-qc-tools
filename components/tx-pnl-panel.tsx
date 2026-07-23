@@ -90,8 +90,10 @@ export function TxPnlPanel() {
     setOpenHintId((current) => (current === hintId ? null : hintId))
   }
 
-  // Prefill + auto-run from `/?tool=tx-pnl&txHash=…` (e.g. Position “Open full PnL tab”).
+  // Prefill + auto-run from `/?tool=tx-pnl&txHash=…` once (not on every tab switch).
   useEffect(() => {
+    if (searchParams.get('tool') !== 'tx-pnl') return
+
     const hash =
       readTxHashParam(searchParams.get('txHash')) ??
       readTxHashParam(new URLSearchParams(window.location.search).get('txHash'))
