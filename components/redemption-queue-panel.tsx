@@ -200,10 +200,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           ) : (
             <span className="badge-muted">#{row.queueIndex + 1} in line</span>
           )}
-          <span className="rq-copyable">
-            <strong className="mono">requestId {row.requestId}</strong>
-            <CopyIconButton value={row.requestId} label="Copy request ID" />
-          </span>
+          <strong className="mono">requestId {row.requestId}</strong>
         </div>
         <span className="rq-wait" title={`${row.waitSeconds}s`}>
           waiting {row.waitLabel}
@@ -215,16 +212,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dd>
             <span className="rq-copyable">
               <span className="mono">{row.requestId}</span>
-              <CopyIconButton value={row.requestId} label="Copy request ID (decimal)" />
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt>Request ID (topic hex)</dt>
-          <dd>
-            <span className="rq-copyable">
-              <span className="mono">{row.requestIdHex}</span>
-              <CopyIconButton value={row.requestIdHex} label="Copy request ID topic hex" />
+              <CopyIconButton value={row.requestId} label="Copy request ID" />
             </span>
           </dd>
         </div>
@@ -254,15 +242,6 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
             <span className="rq-copyable">
               <span className="mono">{row.positionId}</span>
               <CopyIconButton value={row.positionId} label="Copy position ID" />
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt>HL portion</dt>
-          <dd>
-            <span className="rq-copyable">
-              <span className="mono">{row.hlPortionId}</span>
-              <CopyIconButton value={row.hlPortionId} label="Copy HL portion ID" />
             </span>
           </dd>
         </div>
