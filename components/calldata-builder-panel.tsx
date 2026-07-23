@@ -15,7 +15,7 @@ import {
   DEFAULT_PERFORMANCE_FEE_BPS,
   DEFAULT_REBALANCE_SLIPPAGE_BPS,
 } from '@/lib/calldata/constants'
-import { setCachedMintTx } from '@/lib/position/mint-tx-local-cache'
+import { setCachedMintTx } from '@/lib/position/open-price-local-cache'
 
 export function CalldataBuilderPanel() {
   const [action, setAction] = useState<CalldataAction>('close')

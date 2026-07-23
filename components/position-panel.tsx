@@ -10,7 +10,7 @@ import { apiGetJson } from '@/lib/api-client'
 import { buildOriginalPrincipalHint } from '@/lib/position/build-original-principal-hint'
 import { buildPrincipalAmountsHint } from '@/lib/position/build-principal-amounts-hint'
 import { formatRawAmount } from '@/lib/position/format-raw-amount'
-import { getCachedMintTx, setCachedMintTx } from '@/lib/position/mint-tx-local-cache'
+import { getCachedMintTx, getCachedOpenPrice, setCachedOpenPrice } from '@/lib/position/open-price-local-cache'
 import type { PositionOpenPrice, PositionResult } from '@/lib/position/types'
 import { readQueryParam, replaceQueryParams } from '@/lib/url-query'
 
@@ -62,6 +62,15 @@ export function PositionPanel() {
     setOpenPrice(null)
     void (async () => {
       try {
+        const cached = getCachedOpenPrice(result.raw.tokenId, result.raw.poolAddress)
+        if (cached) {
+          if (!cancelled) {
+            setOpenPrice(cached)
+            setOpenPriceLoading(false)
+          }
+          return
+        }
+
         const cachedMint = getCachedMintTx(result.raw.tokenId)
         const qs =
           `/api/position/open-price?tokenId=${encodeURIComponent(result.raw.tokenId)}` +
@@ -70,7 +79,7 @@ export function PositionPanel() {
           `&token1Decimals=${result.raw.token1Decimals}` +
           (cachedMint ? `&mintTx=${encodeURIComponent(cachedMint)}` : '')
         const data = await apiGetJson<PositionOpenPrice>(qs)
-        if (data.txHash) setCachedMintTx(result.raw.tokenId, data.txHash)
+        if (data.found) setCachedOpenPrice(result.raw.tokenId, result.raw.poolAddress, data)
         if (!cancelled) setOpenPrice(data)
       } catch (err) {
         if (!cancelled) {
