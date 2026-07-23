@@ -1,5 +1,5 @@
 import { parseAbi } from 'viem'
-import { BASE_KNOWN_TOKEN_META, BASE_KNOWN_TOKENS } from '@/lib/base-known-tokens'
+import { BASE_KNOWN_TOKEN_META, BASE_KNOWN_TOKENS, BASE_USDC_ADDRESS, BASE_WETH_ADDRESS } from '@/lib/base-known-tokens'
 
 export const CHAIN_ID = 8453
 export const DEFAULT_SLIPPAGE_BPS = 50
@@ -13,7 +13,34 @@ export const FEE_TIERS = [100, 500, 3000, 10_000] as const
 export const KNOWN_TOKENS = BASE_KNOWN_TOKENS
 export const KNOWN_TOKEN_META = BASE_KNOWN_TOKEN_META
 
-export const INTERMEDIATE_TOKENS = [KNOWN_TOKENS.WETH, KNOWN_TOKENS.USDC] as const
+/** Common Base liquid hubs used as 2-hop intermediates (not only WETH/USDC). */
+export const BASE_DAI_ADDRESS = '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb' as const
+export const BASE_USDT_ADDRESS = '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2' as const
+export const BASE_USDBC_ADDRESS = '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA' as const
+export const BASE_CBETH_ADDRESS = '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22' as const
+export const BASE_WSTETH_ADDRESS = '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452' as const
+export const BASE_CBBTC_ADDRESS = '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' as const
+
+export const INTERMEDIATE_TOKENS = [
+  BASE_WETH_ADDRESS,
+  BASE_USDC_ADDRESS,
+  BASE_DAI_ADDRESS,
+  BASE_USDT_ADDRESS,
+  BASE_USDBC_ADDRESS,
+  BASE_CBETH_ADDRESS,
+  BASE_WSTETH_ADDRESS,
+  BASE_CBBTC_ADDRESS,
+] as const
+
+export const INTERMEDIATE_TOKEN_META: Record<string, { symbol: string; decimals: number }> = {
+  ...BASE_KNOWN_TOKEN_META,
+  [BASE_DAI_ADDRESS.toLowerCase()]: { symbol: 'DAI', decimals: 18 },
+  [BASE_USDT_ADDRESS.toLowerCase()]: { symbol: 'USDT', decimals: 6 },
+  [BASE_USDBC_ADDRESS.toLowerCase()]: { symbol: 'USDbC', decimals: 6 },
+  [BASE_CBETH_ADDRESS.toLowerCase()]: { symbol: 'cbETH', decimals: 18 },
+  [BASE_WSTETH_ADDRESS.toLowerCase()]: { symbol: 'wstETH', decimals: 18 },
+  [BASE_CBBTC_ADDRESS.toLowerCase()]: { symbol: 'cbBTC', decimals: 8 },
+}
 
 export const FACTORY_ABI = parseAbi([
   'function getPool(address tokenA, address tokenB, uint24 fee) view returns (address pool)',

@@ -8,6 +8,7 @@ import {
   FACTORY_ABI,
   FACTORY_ADDRESS,
   FEE_TIERS,
+  INTERMEDIATE_TOKEN_META,
   INTERMEDIATE_TOKENS,
   KNOWN_TOKEN_META,
   KNOWN_TOKENS,
@@ -54,7 +55,8 @@ async function resolveToken(client: BasePublicClient, input: string): Promise<To
     throw new Error(`Unknown token "${input}". Use USDC/WETH or a 0x address.`)
   }
 
-  const cached = KNOWN_TOKEN_META[address.toLowerCase()]
+  const cached =
+    KNOWN_TOKEN_META[address.toLowerCase()] ?? INTERMEDIATE_TOKEN_META[address.toLowerCase()]
   if (cached) {
     return { address, ...cached }
   }
@@ -100,17 +102,27 @@ function buildPath(hops: RouteHop[]): `0x${string}` {
   return encodePacked(types, values)
 }
 
-function routeDescription(
-  hops: RouteHop[],
-  tokenMeta: Map<string, TokenInfo>,
-): string {
+function routeDescription(hops: RouteHop[], tokenMeta: Map<string, TokenInfo>): string {
   return hops
     .map((hop) => {
-      const inSymbol = tokenMeta.get(hop.tokenIn.toLowerCase())?.symbol ?? hop.tokenIn
-      const outSymbol = tokenMeta.get(hop.tokenOut.toLowerCase())?.symbol ?? hop.tokenOut
-      return `${inSymbol}->${outSymbol} @ ${feeLabel(hop.fee)}`
+      const inSymbol = tokenMeta.get(hop.tokenIn.toLowerCase())?.symbol ?? hop.tokenIn.slice(0, 8)
+      const outSymbol =
+        tokenMeta.get(hop.tokenOut.toLowerCase())?.symbol ?? hop.tokenOut.slice(0, 8)
+      return `${inSymbol}→${outSymbol} @ ${feeLabel(hop.fee)}`
     })
-    .join(' | ')
+    .join(' · ')
+}
+
+function dedupeRoutes(routes: DiscoveredRoute[]): DiscoveredRoute[] {
+  const seen = new Set<string>()
+  const out: DiscoveredRoute[] = []
+  for (const route of routes) {
+    const key = route.path.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(route)
+  }
+  return out
 }
 
 async function discoverRoutes(
@@ -118,31 +130,41 @@ async function discoverRoutes(
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
 ): Promise<DiscoveredRoute[]> {
-  const routes: DiscoveredRoute[] = []
-
   if (tokenIn.address.toLowerCase() === tokenOut.address.toLowerCase()) {
     return [
       {
         kind: 'identity',
         hops: [],
         path: '0x',
-        description: `${tokenIn.symbol} -> ${tokenOut.symbol} (same token)`,
+        description: `${tokenIn.symbol} → ${tokenOut.symbol} (same token)`,
       },
     ]
   }
 
-  for (const fee of FEE_TIERS) {
-    const exists = await poolExists(client, tokenIn.address, tokenOut.address, fee)
-    if (!exists) continue
+  const routes: DiscoveredRoute[] = []
 
+  // Direct pools — all fee tiers in parallel.
+  const directChecks = await Promise.all(
+    FEE_TIERS.map(async (fee) => ({
+      fee,
+      exists: await poolExists(client, tokenIn.address, tokenOut.address, fee),
+    })),
+  )
+  for (const { fee, exists } of directChecks) {
+    if (!exists) continue
+    const hops: RouteHop[] = [
+      { tokenIn: tokenIn.address, tokenOut: tokenOut.address, fee },
+    ]
     routes.push({
       kind: 'direct',
-      hops: [{ tokenIn: tokenIn.address, tokenOut: tokenOut.address, fee }],
-      path: buildPath([{ tokenIn: tokenIn.address, tokenOut: tokenOut.address, fee }]),
-      description: `Direct ${tokenIn.symbol}->${tokenOut.symbol} @ ${feeLabel(fee)}`,
+      hops,
+      path: buildPath(hops),
+      description: `Direct ${tokenIn.symbol}→${tokenOut.symbol} @ ${feeLabel(fee)}`,
     })
   }
 
+  // 2-hop via liquid Base hubs (WETH, USDC, DAI, USDT, cbETH, …).
+  // Critical for USDC↔WETH: those two are endpoints, so other hubs must be intermediates.
   const intermediates = INTERMEDIATE_TOKENS.map(getAddress).filter((addr) => {
     const lower = addr.toLowerCase()
     return (
@@ -150,31 +172,45 @@ async function discoverRoutes(
     )
   })
 
+  const multiHopCandidates: Array<{
+    intermediate: `0x${string}`
+    fee1: number
+    fee2: number
+  }> = []
   for (const intermediate of intermediates) {
     for (const fee1 of FEE_TIERS) {
-      const hop1Exists = await poolExists(client, tokenIn.address, intermediate, fee1)
-      if (!hop1Exists) continue
-
       for (const fee2 of FEE_TIERS) {
-        const hop2Exists = await poolExists(client, intermediate, tokenOut.address, fee2)
-        if (!hop2Exists) continue
-
-        const hops: RouteHop[] = [
-          { tokenIn: tokenIn.address, tokenOut: intermediate, fee: fee1 },
-          { tokenIn: intermediate, tokenOut: tokenOut.address, fee: fee2 },
-        ]
-
-        routes.push({
-          kind: 'multi-hop',
-          hops,
-          path: buildPath(hops),
-          description: `Via ${hops.map((h) => h.tokenOut).join(' ')}`,
-        })
+        multiHopCandidates.push({ intermediate, fee1, fee2 })
       }
     }
   }
 
-  return routes
+  const multiHopResults = await Promise.all(
+    multiHopCandidates.map(async ({ intermediate, fee1, fee2 }) => {
+      const [hop1Exists, hop2Exists] = await Promise.all([
+        poolExists(client, tokenIn.address, intermediate, fee1),
+        poolExists(client, intermediate, tokenOut.address, fee2),
+      ])
+      if (!hop1Exists || !hop2Exists) return null
+
+      const hops: RouteHop[] = [
+        { tokenIn: tokenIn.address, tokenOut: intermediate, fee: fee1 },
+        { tokenIn: intermediate, tokenOut: tokenOut.address, fee: fee2 },
+      ]
+      return {
+        kind: 'multi-hop' as const,
+        hops,
+        path: buildPath(hops),
+        description: `2-hop via intermediate`,
+      }
+    }),
+  )
+
+  for (const route of multiHopResults) {
+    if (route) routes.push(route)
+  }
+
+  return dedupeRoutes(routes)
 }
 
 async function quoteRoute(
@@ -210,18 +246,33 @@ async function quoteRoute(
     }
   }
 
-  const result = await client.readContract({
-    address: QUOTER_ADDRESS,
-    abi: QUOTER_ABI,
-    functionName: 'quoteExactInput',
-    args: [route.path, amountInRaw],
-  })
-
-  const ticksList = result[2] as readonly number[]
-  return {
-    amountOut: result[0],
-    gasEstimate: result[3],
-    ticksCrossed: ticksList.reduce((sum, n) => sum + Number(n), 0),
+  // Multi-hop: QuoterV2 quoteExactInput is non-view (returns via eth_call).
+  try {
+    const result = await client.readContract({
+      address: QUOTER_ADDRESS,
+      abi: QUOTER_ABI,
+      functionName: 'quoteExactInput',
+      args: [route.path, amountInRaw],
+    })
+    const ticksList = result[2] as readonly number[]
+    return {
+      amountOut: result[0],
+      gasEstimate: result[3],
+      ticksCrossed: ticksList.reduce((sum, n) => sum + Number(n), 0),
+    }
+  } catch {
+    const { result } = await client.simulateContract({
+      address: QUOTER_ADDRESS,
+      abi: QUOTER_ABI,
+      functionName: 'quoteExactInput',
+      args: [route.path, amountInRaw],
+    })
+    const ticksList = result[2] as readonly number[]
+    return {
+      amountOut: result[0],
+      gasEstimate: result[3],
+      ticksCrossed: ticksList.reduce((sum, n) => sum + Number(n), 0),
+    }
   }
 }
 
@@ -232,14 +283,12 @@ async function quoteAllRoutes(
   tokenMeta: Map<string, TokenInfo>,
   slippageBps: number,
 ): Promise<QuotedRoute[]> {
-  const quoted: QuotedRoute[] = []
-
-  for (const route of routes) {
-    try {
+  const settled = await Promise.allSettled(
+    routes.map(async (route) => {
       const quote = await quoteRoute(client, route, amountInRaw)
-      if (quote.amountOut <= 0n) continue
+      if (quote.amountOut <= 0n) return null
 
-      quoted.push({
+      return {
         ...route,
         description:
           route.kind === 'multi-hop'
@@ -249,10 +298,13 @@ async function quoteAllRoutes(
         amountOutMinimum: applySlippage(quote.amountOut, slippageBps).toString(),
         gasEstimate: quote.gasEstimate.toString(),
         ticksCrossed: quote.ticksCrossed,
-      })
-    } catch {
-      // Route exists on factory but quoter reverted
-    }
+      } satisfies QuotedRoute
+    }),
+  )
+
+  const quoted: QuotedRoute[] = []
+  for (const item of settled) {
+    if (item.status === 'fulfilled' && item.value) quoted.push(item.value)
   }
 
   quoted.sort((a, b) => {
@@ -290,7 +342,7 @@ export async function fetchQuotes(
   for (const addr of INTERMEDIATE_TOKENS) {
     const address = getAddress(addr)
     const lower = address.toLowerCase()
-    const cached = KNOWN_TOKEN_META[lower]
+    const cached = INTERMEDIATE_TOKEN_META[lower]
     tokenMeta.set(
       lower,
       cached ? { address, ...cached } : await resolveToken(client, address),
@@ -313,6 +365,11 @@ export async function fetchQuotes(
     params.slippageBps,
   )
 
+  const directFound = normalizedRoutes.filter((r) => r.kind === 'direct').length
+  const multiHopFound = normalizedRoutes.filter((r) => r.kind === 'multi-hop').length
+  const directQuoted = quoted.filter((r) => r.kind === 'direct').length
+  const multiHopQuoted = quoted.filter((r) => r.kind === 'multi-hop').length
+
   return {
     chainId: CHAIN_ID,
     network: 'Base mainnet',
@@ -325,11 +382,19 @@ export async function fetchQuotes(
     quoterAddress: QUOTER_ADDRESS,
     factoryAddress: FACTORY_ADDRESS,
     routesFound: normalizedRoutes.length,
+    routeStats: {
+      directFound,
+      multiHopFound,
+      directQuoted,
+      multiHopQuoted,
+      intermediates: INTERMEDIATE_TOKENS.length,
+    },
     quotes: quoted.map((route, index) => ({
       rank: index + 1,
       kind: route.kind,
       description: route.description,
       hops: route.hops,
+      hopCount: route.hops.length || 1,
       path: route.path,
       amountOut: route.amountOut,
       amountOutHuman: formatTokenAmount(

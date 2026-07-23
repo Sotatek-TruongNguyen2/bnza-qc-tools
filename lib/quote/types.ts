@@ -36,11 +36,19 @@ export type QuoteResult = {
   quoterAddress: string
   factoryAddress: string
   routesFound: number
+  routeStats: {
+    directFound: number
+    multiHopFound: number
+    directQuoted: number
+    multiHopQuoted: number
+    intermediates: number
+  }
   quotes: Array<{
     rank: number
     kind: QuotedRoute['kind']
     description: string
     hops: RouteHop[]
+    hopCount: number
     path: string
     amountOut: string
     amountOutHuman: string

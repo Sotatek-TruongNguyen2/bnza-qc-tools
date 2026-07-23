@@ -214,8 +214,9 @@ export function QuotePanel() {
       </form>
 
       <p className="hint">
-        Symbols: USDC, WETH, ETH — or any Base ERC-20 <span className="mono">0x</span> address.
-        Default slippage 0.5%.
+        Quotes Uniswap V3 on Base via QuoterV2: <strong>direct</strong> pools plus{' '}
+        <strong>2-hop</strong> routes through liquid hubs (WETH, USDC, DAI, USDT, USDbC, cbETH,
+        wstETH, cbBTC). Best = highest amount out.
       </p>
 
       {error && <p className="error">{error}</p>}
@@ -232,6 +233,9 @@ export function QuotePanel() {
               <p className="muted">
                 Input {result.amountInHuman} · Slippage {result.slippagePercent.toFixed(2)}% (
                 {result.slippageBps} bps) · {result.quotes.length}/{result.routesFound} quoted
+                {result.routeStats
+                  ? ` · direct ${result.routeStats.directQuoted}/${result.routeStats.directFound} · multi-hop ${result.routeStats.multiHopQuoted}/${result.routeStats.multiHopFound}`
+                  : ''}
               </p>
             </div>
             <CopyJsonButton value={result} />
@@ -239,7 +243,12 @@ export function QuotePanel() {
 
           {best ? (
             <div className="best-card">
-              <h3>Best route</h3>
+              <h3>
+                Best route{' '}
+                <span className="muted">
+                  ({best.kind === 'multi-hop' ? `${best.hopCount ?? best.hops.length}-hop` : best.kind})
+                </span>
+              </h3>
               <p className="mono">{best.description}</p>
               <dl className="kv">
                 <div>
@@ -268,6 +277,7 @@ export function QuotePanel() {
                   <thead>
                     <tr>
                       <th>#</th>
+                      <th>Kind</th>
                       <th>Route</th>
                       <th>Out</th>
                       <th>Min out</th>
@@ -288,6 +298,9 @@ export function QuotePanel() {
                       return (
                         <tr key={`${q.rank}-${q.path}`}>
                           <td className="mono">{q.rank}</td>
+                          <td className="mono">
+                            {q.kind === 'multi-hop' ? `${q.hopCount ?? q.hops.length}-hop` : q.kind}
+                          </td>
                           <td>{q.description}</td>
                           <td className="mono">{q.amountOutHuman}</td>
                           <td className="mono">{q.amountOutMinimumHuman}</td>
