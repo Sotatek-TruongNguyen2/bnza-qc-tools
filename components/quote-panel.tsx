@@ -216,7 +216,8 @@ export function QuotePanel() {
       <p className="hint">
         Quotes Uniswap V3 on Base via QuoterV2: <strong>direct</strong> pools plus{' '}
         <strong>2-hop</strong> routes through liquid hubs (WETH, USDC, DAI, USDT, USDbC, cbETH,
-        wstETH, cbBTC). Best = highest amount out.
+        wstETH, cbBTC). Pool discovery uses Multicall3; quotes are concurrency-limited. Best =
+        highest amount out.
       </p>
 
       {error && <p className="error">{error}</p>}

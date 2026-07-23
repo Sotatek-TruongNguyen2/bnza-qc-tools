@@ -74,19 +74,46 @@ async function resolveToken(client: BasePublicClient, input: string): Promise<To
   return { address, symbol, decimals: Number(decimals) }
 }
 
-async function poolExists(
+function poolKey(tokenA: string, tokenB: string, fee: number): string {
+  const a = tokenA.toLowerCase()
+  const b = tokenB.toLowerCase()
+  return a < b ? `${a}|${b}|${fee}` : `${b}|${a}|${fee}`
+}
+
+/** One Multicall3 round-trip for many factory.getPool checks. */
+async function fetchPoolsExist(
   client: BasePublicClient,
-  tokenA: `0x${string}`,
-  tokenB: `0x${string}`,
-  fee: number,
-): Promise<boolean> {
-  const pool = await client.readContract({
-    address: FACTORY_ADDRESS,
-    abi: FACTORY_ABI,
-    functionName: 'getPool',
-    args: [tokenA, tokenB, fee],
+  queries: Array<{ tokenA: `0x${string}`; tokenB: `0x${string}`; fee: number }>,
+): Promise<Map<string, boolean>> {
+  const unique = new Map<string, { tokenA: `0x${string}`; tokenB: `0x${string}`; fee: number }>()
+  for (const q of queries) {
+    const key = poolKey(q.tokenA, q.tokenB, q.fee)
+    if (!unique.has(key)) unique.set(key, q)
+  }
+
+  const list = [...unique.entries()]
+  const results = await client.multicall({
+    contracts: list.map(([, q]) => ({
+      address: FACTORY_ADDRESS,
+      abi: FACTORY_ABI,
+      functionName: 'getPool' as const,
+      args: [q.tokenA, q.tokenB, q.fee] as const,
+    })),
+    allowFailure: true,
   })
-  return pool !== '0x0000000000000000000000000000000000000000'
+
+  const out = new Map<string, boolean>()
+  for (let i = 0; i < list.length; i += 1) {
+    const [key] = list[i]!
+    const item = results[i]!
+    if (item.status !== 'success') {
+      out.set(key, false)
+      continue
+    }
+    const pool = item.result as `0x${string}`
+    out.set(key, pool !== '0x0000000000000000000000000000000000000000')
+  }
+  return out
 }
 
 function buildPath(hops: RouteHop[]): `0x${string}` {
@@ -146,17 +173,33 @@ async function discoverRoutes(
     ]
   }
 
+  const intermediates = INTERMEDIATE_TOKENS.map(asAddress).filter((addr) => {
+    const lower = addr.toLowerCase()
+    return (
+      lower !== tokenIn.address.toLowerCase() && lower !== tokenOut.address.toLowerCase()
+    )
+  })
+
+  // Unique getPool queries — batched in one Multicall3 RPC (was ~200 separate calls).
+  const poolQueries: Array<{ tokenA: `0x${string}`; tokenB: `0x${string}`; fee: number }> = []
+  for (const fee of FEE_TIERS) {
+    poolQueries.push({ tokenA: tokenIn.address, tokenB: tokenOut.address, fee })
+  }
+  for (const intermediate of intermediates) {
+    for (const fee of FEE_TIERS) {
+      poolQueries.push({ tokenA: tokenIn.address, tokenB: intermediate, fee })
+      poolQueries.push({ tokenA: intermediate, tokenB: tokenOut.address, fee })
+    }
+  }
+
+  const exists = await fetchPoolsExist(client, poolQueries)
+  const hasPool = (a: `0x${string}`, b: `0x${string}`, fee: number) =>
+    exists.get(poolKey(a, b, fee)) === true
+
   const routes: DiscoveredRoute[] = []
 
-  // Direct pools — all fee tiers in parallel.
-  const directChecks = await Promise.all(
-    FEE_TIERS.map(async (fee) => ({
-      fee,
-      exists: await poolExists(client, tokenIn.address, tokenOut.address, fee),
-    })),
-  )
-  for (const { fee, exists } of directChecks) {
-    if (!exists) continue
+  for (const fee of FEE_TIERS) {
+    if (!hasPool(tokenIn.address, tokenOut.address, fee)) continue
     const hops: RouteHop[] = [
       { tokenIn: tokenIn.address, tokenOut: tokenOut.address, fee },
     ]
@@ -168,51 +211,23 @@ async function discoverRoutes(
     })
   }
 
-  // 2-hop via liquid Base hubs (WETH, USDC, DAI, USDT, cbETH, …).
-  // Critical for USDC↔WETH: those two are endpoints, so other hubs must be intermediates.
-  const intermediates = INTERMEDIATE_TOKENS.map(asAddress).filter((addr) => {
-    const lower = addr.toLowerCase()
-    return (
-      lower !== tokenIn.address.toLowerCase() && lower !== tokenOut.address.toLowerCase()
-    )
-  })
-
-  const multiHopCandidates: Array<{
-    intermediate: `0x${string}`
-    fee1: number
-    fee2: number
-  }> = []
   for (const intermediate of intermediates) {
     for (const fee1 of FEE_TIERS) {
+      if (!hasPool(tokenIn.address, intermediate, fee1)) continue
       for (const fee2 of FEE_TIERS) {
-        multiHopCandidates.push({ intermediate, fee1, fee2 })
+        if (!hasPool(intermediate, tokenOut.address, fee2)) continue
+        const hops: RouteHop[] = [
+          { tokenIn: tokenIn.address, tokenOut: intermediate, fee: fee1 },
+          { tokenIn: intermediate, tokenOut: tokenOut.address, fee: fee2 },
+        ]
+        routes.push({
+          kind: 'multi-hop',
+          hops,
+          path: buildPath(hops),
+          description: `2-hop via intermediate`,
+        })
       }
     }
-  }
-
-  const multiHopResults = await Promise.all(
-    multiHopCandidates.map(async ({ intermediate, fee1, fee2 }) => {
-      const [hop1Exists, hop2Exists] = await Promise.all([
-        poolExists(client, tokenIn.address, intermediate, fee1),
-        poolExists(client, intermediate, tokenOut.address, fee2),
-      ])
-      if (!hop1Exists || !hop2Exists) return null
-
-      const hops: RouteHop[] = [
-        { tokenIn: tokenIn.address, tokenOut: intermediate, fee: fee1 },
-        { tokenIn: intermediate, tokenOut: tokenOut.address, fee: fee2 },
-      ]
-      return {
-        kind: 'multi-hop' as const,
-        hops,
-        path: buildPath(hops),
-        description: `2-hop via intermediate`,
-      }
-    }),
-  )
-
-  for (const route of multiHopResults) {
-    if (route) routes.push(route)
   }
 
   return dedupeRoutes(routes)
@@ -281,6 +296,34 @@ async function quoteRoute(
   }
 }
 
+/** QuoterV2 is non-view (revert-style returns) — cannot Multicall reliably. Cap concurrency. */
+const QUOTE_CONCURRENCY = 6
+
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length)
+  let next = 0
+
+  async function worker() {
+    while (next < items.length) {
+      const i = next
+      next += 1
+      try {
+        results[i] = { status: 'fulfilled', value: await fn(items[i]!) }
+      } catch (reason) {
+        results[i] = { status: 'rejected', reason }
+      }
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
+  await Promise.all(workers)
+  return results
+}
+
 async function quoteAllRoutes(
   client: BasePublicClient,
   routes: DiscoveredRoute[],
@@ -288,24 +331,22 @@ async function quoteAllRoutes(
   tokenMeta: Map<string, TokenInfo>,
   slippageBps: number,
 ): Promise<QuotedRoute[]> {
-  const settled = await Promise.allSettled(
-    routes.map(async (route) => {
-      const quote = await quoteRoute(client, route, amountInRaw)
-      if (quote.amountOut <= 0n) return null
+  const settled = await mapPool(routes, QUOTE_CONCURRENCY, async (route) => {
+    const quote = await quoteRoute(client, route, amountInRaw)
+    if (quote.amountOut <= 0n) return null
 
-      return {
-        ...route,
-        description:
-          route.kind === 'multi-hop'
-            ? routeDescription(route.hops, tokenMeta)
-            : route.description,
-        amountOut: quote.amountOut.toString(),
-        amountOutMinimum: applySlippage(quote.amountOut, slippageBps).toString(),
-        gasEstimate: quote.gasEstimate.toString(),
-        ticksCrossed: quote.ticksCrossed,
-      } satisfies QuotedRoute
-    }),
-  )
+    return {
+      ...route,
+      description:
+        route.kind === 'multi-hop'
+          ? routeDescription(route.hops, tokenMeta)
+          : route.description,
+      amountOut: quote.amountOut.toString(),
+      amountOutMinimum: applySlippage(quote.amountOut, slippageBps).toString(),
+      gasEstimate: quote.gasEstimate.toString(),
+      ticksCrossed: quote.ticksCrossed,
+    } satisfies QuotedRoute
+  })
 
   const quoted: QuotedRoute[] = []
   for (const item of settled) {
