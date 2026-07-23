@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { CopyJsonButton } from './copy-json-button'
 import { TokenIcon, TokenSymbol } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
+import { formatLocalDateTime } from '@/lib/format-datetime'
 import type { BotResult } from '@/lib/bot/types'
 
 function statusClass(state: string): string {
@@ -227,7 +228,10 @@ export function BotPanel() {
                       </li>
                       <li>Tick range: {p.tickRange}</li>
                       <li>Liquidity: {p.liquidity}</li>
-                      <li>Opened: {p.openedAt}</li>
+                      <li>
+                        Opened:{' '}
+                        {p.openedAtIso ? formatLocalDateTime(p.openedAtIso) : p.openedAt}
+                      </li>
                     </ul>
                     <p>
                       <Link href={p.positionLink} target="_blank" rel="noopener noreferrer">
