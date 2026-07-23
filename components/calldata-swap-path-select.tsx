@@ -18,7 +18,6 @@ const PROBE_AMOUNT = '0.1'
 type RouteOption = {
   path: string
   rank: number
-  kindLabel: string
   hops: RouteHop[]
   description: string
 }
@@ -101,7 +100,6 @@ export function CalldataSwapPathSelect({
         .map((q) => ({
           path: q.path,
           rank: q.rank,
-          kindLabel: q.kind === 'multi-hop' ? `${q.hopCount}-hop` : 'direct',
           hops: q.hops,
           description: q.description,
         }))
@@ -207,7 +205,6 @@ export function CalldataSwapPathSelect({
                       tokenOut={fallbackOut}
                       description={selected.description}
                     />
-                    <span className="muted">{selected.kindLabel}</span>
                   </>
                 ) : mode === 'custom' ? (
                   <span>Custom hex path</span>
@@ -283,7 +280,6 @@ export function CalldataSwapPathSelect({
                       tokenOut={fallbackOut}
                       description={r.description}
                     />
-                    <span className="muted">{r.kindLabel}</span>
                   </button>
                 </li>
               ))}
