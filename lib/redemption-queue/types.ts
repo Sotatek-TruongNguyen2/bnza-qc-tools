@@ -1,5 +1,8 @@
 export type RedemptionPendingRequest = {
+  /** On-chain requestId from getRequest / RequestCreated (not queue index). */
   requestId: string
+  /** Topic-style uint256 hex (64 nibbles) as shown on Basescan. */
+  requestIdHex: string
   queueIndex: number
   isHead: boolean
   user: string

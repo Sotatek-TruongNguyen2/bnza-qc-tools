@@ -24,6 +24,11 @@ function formatWait(seconds: number): string {
   return h > 0 ? `${days}d ${h}h` : `${days}d`
 }
 
+/** Basescan topic form for indexed uint256 requestId. */
+function requestIdTopicHex(id: bigint): string {
+  return `0x${id.toString(16).padStart(64, '0')}`
+}
+
 /**
  * Pending FIFO via Multicall3 only (no eth_getLogs).
  * Contract views: pendingQueueLength, nextPendingRequestId,
@@ -78,13 +83,16 @@ export async function fetchRedemptionQueue(
 
     pending = requestIds.map((id, queueIndex) => {
       const req = reqResults[queueIndex]!
+      // Prefer struct.requestId (same field as RequestCreated.index_topic_1).
+      const requestIdBig = req.requestId !== 0n ? req.requestId : id
       const createdAtUnix = Number(req.createdAt)
       const waitSeconds = Math.max(0, nowSec - createdAtUnix)
       const createdAtIso = new Date(createdAtUnix * 1000).toISOString()
       const user = getAddress(req.user)
 
       return {
-        requestId: id.toString(),
+        requestId: requestIdBig.toString(),
+        requestIdHex: requestIdTopicHex(requestIdBig),
         queueIndex,
         isHead: queueIndex === 0,
         user,

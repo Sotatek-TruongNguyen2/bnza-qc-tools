@@ -201,7 +201,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
             <span className="badge-muted">#{row.queueIndex + 1} in line</span>
           )}
           <span className="rq-copyable">
-            <strong className="mono">Request #{row.requestId}</strong>
+            <strong className="mono">requestId {row.requestId}</strong>
             <CopyIconButton value={row.requestId} label="Copy request ID" />
           </span>
         </div>
@@ -215,7 +215,16 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dd>
             <span className="rq-copyable">
               <span className="mono">{row.requestId}</span>
-              <CopyIconButton value={row.requestId} label="Copy request ID" />
+              <CopyIconButton value={row.requestId} label="Copy request ID (decimal)" />
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt>Request ID (topic hex)</dt>
+          <dd>
+            <span className="rq-copyable">
+              <span className="mono">{row.requestIdHex}</span>
+              <CopyIconButton value={row.requestIdHex} label="Copy request ID topic hex" />
             </span>
           </dd>
         </div>
@@ -271,10 +280,10 @@ function QueueChip({ row }: { row: RedemptionPendingRequest }) {
     <div
       role="listitem"
       className={row.isHead ? 'rq-chip rq-chip-head' : 'rq-chip'}
-      title={`#${row.requestId} · ${row.user} · ${row.waitLabel}`}
+      title={`requestId ${row.requestId} · ${row.user} · ${row.waitLabel}`}
     >
       <span className="rq-chip-pos">{row.isHead ? 'HEAD' : row.queueIndex + 1}</span>
-      <span className="rq-chip-id mono">#{row.requestId}</span>
+      <span className="rq-chip-id mono">id {row.requestId}</span>
       <span className="rq-chip-wait">{row.waitLabel}</span>
     </div>
   )
