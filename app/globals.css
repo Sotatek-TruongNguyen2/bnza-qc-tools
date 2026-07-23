@@ -1571,48 +1571,61 @@ td {
   vertical-align: top;
 }
 
-/* Full cell is the hover target (incl. padding) for compact Out / Min out. */
+/* Full cell is the hover target (incl. padding) for Out / Min out tooltips. */
 .table-wrap td:has(> .compact-token-amount) {
   padding: 0;
 }
 
 .table-wrap td > .compact-token-amount {
   display: block;
+  position: relative;
   width: 100%;
   box-sizing: border-box;
   padding: 0.7rem 0.8rem;
 }
 
-.compact-token-amount.is-truncated {
+.compact-token-amount.has-tooltip {
   cursor: help;
 }
 
-.compact-token-amount.is-truncated .compact-token-amount-full {
+.compact-token-amount-tooltip {
   display: none;
+  position: absolute;
+  left: 0.8rem;
+  bottom: calc(100% - 0.15rem);
+  z-index: 40;
+  max-width: min(28rem, 80vw);
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid #c5d3c9;
+  background: #1b2a22;
+  color: #f4faf6;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(20, 40, 30, 0.22);
+  pointer-events: none;
 }
 
-.compact-token-amount.is-truncated:hover .compact-token-amount-short,
-.compact-token-amount.is-truncated:focus-within .compact-token-amount-short {
-  display: none;
+.compact-token-amount.has-tooltip:hover .compact-token-amount-tooltip,
+.compact-token-amount.has-tooltip:focus-within .compact-token-amount-tooltip {
+  display: block;
 }
 
-.compact-token-amount.is-truncated:hover .compact-token-amount-full,
-.compact-token-amount.is-truncated:focus-within .compact-token-amount-full {
-  display: inline;
-}
-
-.kv dd:has(> .compact-token-amount.is-truncated) {
+.kv dd:has(> .compact-token-amount.has-tooltip) {
   margin: -0.15rem -0.35rem;
 }
 
-.kv dd > .compact-token-amount.is-truncated {
-  display: block;
+.kv dd > .compact-token-amount.has-tooltip {
+  display: inline-block;
+  position: relative;
   padding: 0.15rem 0.35rem;
   border-radius: 0.35rem;
 }
 
-.kv dd > .compact-token-amount.is-truncated:hover {
-  background: #eef3f0;
+.kv dd > .compact-token-amount.has-tooltip .compact-token-amount-tooltip {
+  left: 0.35rem;
 }
 
 th {
