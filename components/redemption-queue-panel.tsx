@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ButtonLoadingLabel } from './button-loading-label'
 import { CopyJsonButton } from './copy-json-button'
+import { RefreshIconButton } from './refresh-icon-button'
 import { apiGetJson } from '@/lib/api-client'
 import { formatLocalDateTime } from '@/lib/format-datetime'
 import type {
@@ -77,15 +77,12 @@ export function RedemptionQueuePanel() {
         </div>
         <div className="result-actions">
           {result && <CopyJsonButton value={result} label="Copy JSON" />}
-          <button type="button" className="btn-primary" onClick={() => void reload()} disabled={loading}>
-            {loading ? (
-              <ButtonLoadingLabel>Loading…</ButtonLoadingLabel>
-            ) : result ? (
-              'Refresh'
-            ) : (
-              'Load queue'
-            )}
-          </button>
+          <RefreshIconButton
+            loading={loading}
+            onClick={() => void reload()}
+            label={result ? 'Refresh' : 'Load queue'}
+            loadingLabel={result ? 'Refreshing…' : 'Loading…'}
+          />
         </div>
       </div>
 

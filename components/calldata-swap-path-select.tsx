@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { QuoteRoutePath } from './quote-route-path'
+import { RefreshIconButton } from './refresh-icon-button'
 import { TokenIcon } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
 import { BASE_USDC_ADDRESS, BASE_WETH_ADDRESS } from '@/lib/base-known-tokens'
@@ -238,14 +239,12 @@ export function CalldataSwapPathSelect({
                 ▾
               </span>
             </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              disabled={loading}
+            <RefreshIconButton
+              loading={loading}
               onClick={() => void loadRoutes()}
-            >
-              {loading ? 'Loading…' : 'Refresh'}
-            </button>
+              label="Refresh routes"
+              loadingLabel="Loading routes…"
+            />
           </div>
 
           {open && (

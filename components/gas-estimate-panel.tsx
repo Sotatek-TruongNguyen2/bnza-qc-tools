@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ButtonLoadingLabel } from './button-loading-label'
 import { CopyJsonButton } from './copy-json-button'
+import { RefreshIconButton } from './refresh-icon-button'
 import { apiGetJson } from '@/lib/api-client'
 import type { GasEstimateResult, GasOpEstimate } from '@/lib/gas/types'
 import { basescanLink } from '@/lib/position/format'
@@ -48,20 +48,17 @@ export function GasEstimatePanel() {
           <h2>Gas estimates</h2>
           <p className="muted">
             <code>eth_estimateGas</code> replay of recent vault calls · +
-            {result ? Math.round((result.gasBuffer - 1) * 100) : 20}% buffer · manual Reload only.
+            {result ? Math.round((result.gasBuffer - 1) * 100) : 20}% buffer · manual refresh only.
           </p>
         </div>
         <div className="result-actions">
           {result && <CopyJsonButton value={result} label="Copy JSON" />}
-          <button type="button" className="btn-primary" onClick={() => void reload()} disabled={loading}>
-            {loading ? (
-              <ButtonLoadingLabel>Estimating…</ButtonLoadingLabel>
-            ) : result ? (
-              'Reload'
-            ) : (
-              'Load estimates'
-            )}
-          </button>
+          <RefreshIconButton
+            loading={loading}
+            onClick={() => void reload()}
+            label={result ? 'Reload' : 'Load estimates'}
+            loadingLabel="Estimating…"
+          />
         </div>
       </div>
 
@@ -75,7 +72,7 @@ export function GasEstimatePanel() {
       {error && <p className="error">{error}</p>}
 
       {!result && !loading && !error && (
-        <p className="muted">Click Load estimates to run eth_estimateGas on recent vault calls.</p>
+        <p className="muted">Click the refresh icon to run eth_estimateGas on recent vault calls.</p>
       )}
 
       {loading && !result && (
