@@ -8,6 +8,7 @@ import { CalldataBuilderPanel } from './calldata-builder-panel'
 import { GasEstimatePanel } from './gas-estimate-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
+import { RecentOpensStats } from './recent-opens-stats'
 import { RedemptionQueuePanel } from './redemption-queue-panel'
 import { ToolNavGroupIcon } from './tool-nav-group-icon'
 import { ToolNavIcon } from './tool-nav-icon'
@@ -139,6 +140,8 @@ export function QcApp() {
           queue, and Basescan calldata. No private keys stored here.
         </p>
       </header>
+
+      <RecentOpensStats />
 
       <nav className="tool-nav" aria-label="Tools">
         {TOOL_GROUPS.map((group) => (

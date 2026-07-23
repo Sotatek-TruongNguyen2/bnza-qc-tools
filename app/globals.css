@@ -2407,3 +2407,117 @@ select.calldata-select {
 .rq-empty .muted {
   margin: 0;
 }
+
+/* Recent opens (global stats, not a tab) */
+.recent-opens {
+  margin: 0 0 1.15rem;
+  padding: 1rem 1.1rem 1.05rem;
+  border-radius: 0.95rem;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 94%, var(--line));
+}
+
+.recent-opens-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.recent-opens-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.recent-opens-sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+}
+
+.recent-opens-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.recent-opens-countdown {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-opens-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.55rem;
+}
+
+.ro-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.ro-stat-label {
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ro-stat-value {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.ro-stat-value-sm {
+  font-size: 0.95rem;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-weight: 650;
+}
+
+.recent-opens-meta {
+  margin: 0.65rem 0 0.55rem;
+  font-size: 0.78rem;
+}
+
+.recent-opens-table-wrap {
+  overflow-x: auto;
+}
+
+.recent-opens-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.recent-opens-table th,
+.recent-opens-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.recent-opens-table th {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.recent-opens-more {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+}
