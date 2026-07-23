@@ -8,6 +8,11 @@ import {
   OPERATOR_ROLE,
   VAULT_OPERATOR_VIEW_ABI,
 } from './constants'
+import {
+  decodeSimulationRevert,
+  type DecodedSimulationRevert,
+} from './decode-simulation-revert'
+import { SIMULATION_ERROR_ABI } from './simulation-error-abi'
 
 export type SimulateExecuteStrategyInput = {
   strategy: string
@@ -28,6 +33,8 @@ export type SimulateExecuteStrategyResult = {
   gasEstimateBuffered: string | null
   /** eth_call / simulateContract success or revert message. */
   message: string
+  /** Decoded custom error when the simulation reverted. */
+  revert: DecodedSimulationRevert | null
   warnings: string[]
 }
 
@@ -88,15 +95,19 @@ export async function simulateExecuteStrategy(
     warnings.push(formatRpcError(err, 'Could not verify OPERATOR_ROLE'))
   }
 
+  // Merge executeStrategy + known custom errors so viem can decode reverts.
+  const simulateAbi = [...EXECUTE_STRATEGY_ABI, ...SIMULATION_ERROR_ABI]
+
   try {
     await client.simulateContract({
       address: vault,
-      abi: EXECUTE_STRATEGY_ABI,
+      abi: simulateAbi,
       functionName: 'executeStrategy',
       args: [strategy, user, botId, params],
       account: operator,
     })
   } catch (err) {
+    const decoded = decodeSimulationRevert(err)
     return {
       ok: false,
       vault,
@@ -104,7 +115,8 @@ export async function simulateExecuteStrategy(
       operatorHasRole,
       gasEstimate: null,
       gasEstimateBuffered: null,
-      message: formatRpcError(err, 'Simulation reverted'),
+      message: decoded?.human ?? formatRpcError(err, 'Simulation reverted'),
+      revert: decoded,
       warnings,
     }
   }
@@ -130,7 +142,9 @@ export async function simulateExecuteStrategy(
     operatorHasRole,
     gasEstimate,
     gasEstimateBuffered,
-    message: 'eth_call succeeded — executeStrategy would not revert at current state (as this operator).',
+    message:
+      'eth_call succeeded — executeStrategy would not revert at current state (as this operator).',
+    revert: null,
     warnings,
   }
 }

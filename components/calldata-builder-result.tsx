@@ -92,9 +92,21 @@ export function CalldataBuilderResult({
             <p>
               <span className={simulation.ok ? 'badge-ok' : 'badge-warn'}>
                 {simulation.ok ? 'Would succeed' : 'Would revert'}
-              </span>{' '}
-              <span className="muted">{simulation.message}</span>
+              </span>
+              {!simulation.revert && (
+                <>
+                  {' '}
+                  <span className="muted">{simulation.message}</span>
+                </>
+              )}
             </p>
+            {simulation.revert && (
+              <div className="calldata-sim-revert">
+                <p className="calldata-sim-revert-name mono">{simulation.revert.errorName}</p>
+                <p className="calldata-sim-revert-sig mono muted">{simulation.revert.signature}</p>
+                <p className="calldata-sim-revert-human">{simulation.revert.human}</p>
+              </div>
+            )}
             <dl className="kv calldata-sim-kv">
               <div>
                 <dt>Operator (from)</dt>
