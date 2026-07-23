@@ -1,8 +1,11 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { formatLocalDateTime } from '@/lib/format-datetime'
+import { buildOpenPriceHint } from '@/lib/position/build-open-price-hint'
 import { formatChartPrice, getDisplayQuote } from '@/lib/position/range-chart-math'
 import type { PositionOpenPrice, PositionRaw } from '@/lib/position/types'
+import { CalculationHint } from './calculation-hint'
 
 type Props = {
   raw: PositionRaw
@@ -11,6 +14,12 @@ type Props = {
 }
 
 export function PositionOpenPriceLine({ raw, openPrice, loading }: Props) {
+  const [hintOpen, setHintOpen] = useState(false)
+  const openPriceHint = useMemo(
+    () => (openPrice ? buildOpenPriceHint(raw, openPrice) : null),
+    [raw, openPrice],
+  )
+
   if (loading) {
     return <p className="muted range-open-price">Opened at: resolving mint tx…</p>
   }
@@ -39,21 +48,32 @@ export function PositionOpenPriceLine({ raw, openPrice, loading }: Props) {
     : openPrice.openedAtLabel || null
 
   return (
-    <p className="range-open-price">
-      Opened at: <strong>{priceLine}</strong>
-      <span className="muted">
-        {' '}
-        · tick {openPrice.tick}
-        {openedWhen ? ` · ${openedWhen}` : ''}
-        {openPrice.links.tx && (
-          <>
-            {' · '}
-            <a href={openPrice.links.tx} target="_blank" rel="noreferrer">
-              mint tx
-            </a>
-          </>
-        )}
-      </span>
-    </p>
+    <div className="range-open-price-row">
+      <p className="range-open-price">
+        Opened at: <strong>{priceLine}</strong>
+        <span className="muted">
+          {' '}
+          · tick {openPrice.tick}
+          {openedWhen ? ` · ${openedWhen}` : ''}
+          {openPrice.links.tx && (
+            <>
+              {' · '}
+              <a href={openPrice.links.tx} target="_blank" rel="noreferrer">
+                mint tx
+              </a>
+            </>
+          )}
+        </span>
+      </p>
+      {openPriceHint && (
+        <CalculationHint
+          hintId="open-price"
+          isOpen={hintOpen}
+          onToggle={() => setHintOpen((v) => !v)}
+          onClose={() => setHintOpen(false)}
+          section={openPriceHint}
+        />
+      )}
+    </div>
   )
 }

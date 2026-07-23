@@ -530,6 +530,24 @@ input:focus {
   margin-bottom: 0.5rem;
 }
 
+.range-open-price-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.range-open-price-row .calc-hint {
+  margin-top: 0.05rem;
+  flex-shrink: 0;
+}
+
+.range-open-price-row .range-open-price {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
 .range-chart-current-row {
   display: flex;
   align-items: flex-start;
