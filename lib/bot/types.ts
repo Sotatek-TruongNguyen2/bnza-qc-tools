@@ -62,6 +62,7 @@ export type BotResult = {
       tickRange: string
       liquidity: string
       openedAt: string
+      openedAtIso: string | null
       positionLink: string
     }[]
     links: {

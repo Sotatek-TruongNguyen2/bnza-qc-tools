@@ -220,6 +220,7 @@ export async function fetchBot(
         tickRange: `[${p.tickLower}, ${p.tickUpper})`,
         liquidity: p.liquidity,
         openedAt: p.openedAt,
+        openedAtIso: p.openedAtIso,
         positionLink: `/?tool=position&tokenId=${p.tokenId}`,
       })),
       links: {
