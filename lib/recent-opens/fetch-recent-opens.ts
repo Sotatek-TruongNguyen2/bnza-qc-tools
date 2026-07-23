@@ -208,9 +208,7 @@ export async function fetchRecentOpens(
   let totalUsdc = 0n
   let uniswapUsdc = 0n
   let hyperliquidUsdc = 0n
-  let closedTotalUsdc = 0n
   let closedUniswapUsdc = 0n
-  let closedHyperliquidUsdc = 0n
   let stillOpenCount = 0
   let closedCount = 0
   let unknownCount = 0
@@ -220,18 +218,17 @@ export async function fetchRecentOpens(
     const rowTotal = BigInt(row.totalUsdc)
     const rowUni = BigInt(row.uniswapUsdc)
     const rowHl = BigInt(row.hyperliquidUsdc)
+    // Window totals (all PositionOpened events) — same as original strip.
+    totalUsdc += rowTotal
+    uniswapUsdc += rowUni
+    hyperliquidUsdc += rowHl
     users.add(row.owner.toLowerCase())
     bots.add(row.botId.toLowerCase())
     if (row.status === 'open') {
       stillOpenCount += 1
-      totalUsdc += rowTotal
-      uniswapUsdc += rowUni
-      hyperliquidUsdc += rowHl
     } else if (row.status === 'closed') {
       closedCount += 1
-      closedTotalUsdc += rowTotal
       closedUniswapUsdc += rowUni
-      closedHyperliquidUsdc += rowHl
     } else {
       unknownCount += 1
     }
@@ -267,21 +264,12 @@ export async function fetchRecentOpens(
       uniswapUsdcHuman: formatUsdc(uniswapUsdc),
       hyperliquidUsdc: hyperliquidUsdc.toString(),
       hyperliquidUsdcHuman: formatUsdc(hyperliquidUsdc),
-      closedTotalUsdc: closedTotalUsdc.toString(),
-      closedTotalUsdcHuman: formatUsdc(closedTotalUsdc),
       closedUniswapUsdc: closedUniswapUsdc.toString(),
       closedUniswapUsdcHuman: formatUsdc(closedUniswapUsdc),
-      closedHyperliquidUsdc: closedHyperliquidUsdc.toString(),
-      closedHyperliquidUsdcHuman: formatUsdc(closedHyperliquidUsdc),
       uniswapPnlUsdc: pnl.uniswapPnlUsdc,
       uniswapPnlUsdcHuman: pnl.uniswapPnlUsdcHuman,
-      hlPnlUsdc: pnl.hlPnlUsdc,
-      hlPnlUsdcHuman: pnl.hlPnlUsdcHuman,
-      totalPnlUsdc: pnl.totalPnlUsdc,
-      totalPnlUsdcHuman: pnl.totalPnlUsdcHuman,
       uniswapPnlSampled: pnl.uniswapPnlSampled,
       uniswapPnlSkipped: pnl.uniswapPnlSkipped,
-      hlPnlNote: pnl.hlPnlNote,
     },
     opens,
     warnings,

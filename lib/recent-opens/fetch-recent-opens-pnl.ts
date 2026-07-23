@@ -27,15 +27,9 @@ import type { RecentOpenRow } from './types'
 export type RecentOpensPnlTotals = {
   uniswapPnlUsdc: string
   uniswapPnlUsdcHuman: string
-  hlPnlUsdc: string
-  hlPnlUsdcHuman: string
-  totalPnlUsdc: string
-  totalPnlUsdcHuman: string
   /** Rows included in Uniswap PnL (open live + closed realized). */
   uniswapPnlSampled: number
   uniswapPnlSkipped: number
-  /** HL has no per-position live mark — assumed flat (0). */
-  hlPnlNote: string
 }
 
 function formatSignedUsdc(raw: bigint): string {
@@ -434,7 +428,7 @@ async function sumOpenUniswapPnl(
 }
 
 /**
- * Aggregate Uniswap PnL (live open + realized closed) + HL assumed flat.
+ * Aggregate Uniswap PnL (live open + realized closed).
  */
 export async function fetchRecentOpensPnlTotals(
   client: BasePublicClient,
@@ -459,19 +453,11 @@ export async function fetchRecentOpensPnlTotals(
   ])
 
   const uniswapPnl = openPnl.pnl + closedPnl.pnl
-  // No per-position HL equity on-chain — treat HL mark = entry (0 PnL).
-  const hlPnl = 0n
-  const totalPnl = uniswapPnl + hlPnl
 
   return {
     uniswapPnlUsdc: uniswapPnl.toString(),
     uniswapPnlUsdcHuman: formatSignedUsdc(uniswapPnl),
-    hlPnlUsdc: hlPnl.toString(),
-    hlPnlUsdcHuman: formatSignedUsdc(hlPnl),
-    totalPnlUsdc: totalPnl.toString(),
-    totalPnlUsdcHuman: formatSignedUsdc(totalPnl),
     uniswapPnlSampled: openPnl.sampled + closedPnl.sampled,
     uniswapPnlSkipped: openPnl.skipped + closedPnl.skipped,
-    hlPnlNote: 'HL marked flat (entry) — no per-position live equity on-chain.',
   }
 }
