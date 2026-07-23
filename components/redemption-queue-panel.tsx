@@ -129,39 +129,63 @@ export function RedemptionQueuePanel() {
                 ))}
               </div>
 
-              <div className="rq-filters">
-                <label className="field">
-                  <span>Filter user</span>
-                  <input
-                    value={userFilter}
-                    onChange={(e) => setUserFilter(e.target.value)}
-                    placeholder="0x…"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </label>
-                <label className="field">
-                  <span>Filter requestId</span>
-                  <input
-                    value={idFilter}
-                    onChange={(e) => setIdFilter(e.target.value)}
-                    placeholder="e.g. 12"
-                    inputMode="numeric"
-                    autoComplete="off"
-                  />
-                </label>
-              </div>
+              <div className="rq-toolbar">
+                <h3 className="rq-section-title">
+                  Pending requests
+                  <span className="muted">
+                    {' '}
+                    · {filtered.length}
+                    {filtered.length !== result.pending.length
+                      ? ` of ${result.pending.length}`
+                      : ''}
+                  </span>
+                </h3>
 
-              <h3 className="rq-section-title">
-                Pending requests
-                <span className="muted">
-                  {' '}
-                  · {filtered.length}
-                  {filtered.length !== result.pending.length
-                    ? ` of ${result.pending.length}`
-                    : ''}
-                </span>
-              </h3>
+                <div className="rq-filter-bar" role="search" aria-label="Filter pending requests">
+                  <label className="rq-filter-field">
+                    <span className="rq-filter-icon" aria-hidden>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="6.5" />
+                        <path d="M20 20l-3.2-3.2" />
+                      </svg>
+                    </span>
+                    <span className="sr-only">Filter by user</span>
+                    <input
+                      value={userFilter}
+                      onChange={(e) => setUserFilter(e.target.value)}
+                      placeholder="User address"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </label>
+                  <span className="rq-filter-divider" aria-hidden />
+                  <label className="rq-filter-field rq-filter-field-id">
+                    <span className="rq-filter-icon rq-filter-hash" aria-hidden>
+                      #
+                    </span>
+                    <span className="sr-only">Filter by request ID</span>
+                    <input
+                      value={idFilter}
+                      onChange={(e) => setIdFilter(e.target.value)}
+                      placeholder="Request ID"
+                      inputMode="numeric"
+                      autoComplete="off"
+                    />
+                  </label>
+                  {userFilter || idFilter ? (
+                    <button
+                      type="button"
+                      className="rq-filter-clear"
+                      onClick={() => {
+                        setUserFilter('')
+                        setIdFilter('')
+                      }}
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+              </div>
 
               {filtered.length === 0 ? (
                 <p className="muted">No requests match the filter.</p>

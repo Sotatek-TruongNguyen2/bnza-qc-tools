@@ -2373,11 +2373,119 @@ select.calldata-select {
   color: var(--muted);
 }
 
-.rq-filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
+.rq-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin: 1.1rem 0 0.75rem;
+}
+
+.rq-toolbar .rq-section-title {
+  margin: 0;
+}
+
+.rq-filter-bar {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  min-width: min(100%, 22rem);
+  max-width: 100%;
+  padding: 0.2rem 0.25rem 0.2rem 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 88%, #e8eee9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.rq-filter-bar:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.rq-filter-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1 1 8rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0.35rem;
+}
+
+.rq-filter-field-id {
+  flex: 0 1 6.5rem;
+}
+
+.rq-filter-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.rq-filter-hash {
+  width: 0.9rem;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.rq-filter-field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0.45rem 0.15rem;
+  background: transparent;
+  font-size: 0.88rem;
+  box-shadow: none;
+}
+
+.rq-filter-field input::placeholder {
+  color: color-mix(in srgb, var(--muted) 80%, transparent);
+  font-weight: 500;
+}
+
+.rq-filter-field input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.rq-filter-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.35rem 0.15rem;
+  background: color-mix(in srgb, var(--line) 85%, transparent);
+  flex-shrink: 0;
+}
+
+.rq-filter-clear {
+  flex-shrink: 0;
+  margin: 0 0.15rem 0 0.2rem;
+  padding: 0.35rem 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.rq-filter-clear:hover {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
 }
 
 .rq-list {
