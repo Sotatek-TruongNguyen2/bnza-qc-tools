@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { CalldataBuilderResult } from './calldata-builder-result'
+import { apiGetJson } from '@/lib/api-client'
+import type { OpenTxPrefill } from '@/lib/calldata/fetch-from-open-tx'
 import {
   buildCloseExecuteStrategy,
   buildRebalanceExecuteStrategy,
@@ -15,6 +17,11 @@ import {
 
 export function CalldataBuilderPanel() {
   const [action, setAction] = useState<CalldataAction>('close')
+  const [openTx, setOpenTx] = useState('')
+  const [prefillLoading, setPrefillLoading] = useState(false)
+  const [prefillNote, setPrefillNote] = useState<string | null>(null)
+  const [prefillError, setPrefillError] = useState<string | null>(null)
+
   const [user, setUser] = useState('')
   const [botId, setBotId] = useState('')
   const [tokenId, setTokenId] = useState('')
@@ -42,14 +49,48 @@ export function CalldataBuilderPanel() {
     const u = params.get('user')
     const b = params.get('botId')
     const t = params.get('tokenId')
+    const tx = params.get('openTx')
     if (u) setUser(u)
     if (b) setBotId(b)
     if (t) setTokenId(t)
+    if (tx) setOpenTx(tx)
     const tl = params.get('tickLower')
     const tu = params.get('tickUpper')
     if (tl) setNewTickLower(tl)
     if (tu) setNewTickUpper(tu)
   }, [])
+
+  async function loadFromOpenTx() {
+    setPrefillLoading(true)
+    setPrefillError(null)
+    setPrefillNote(null)
+    setError(null)
+    try {
+      const data = await apiGetJson<OpenTxPrefill>(
+        `/api/calldata/from-open-tx?tx=${encodeURIComponent(openTx.trim())}`,
+      )
+      setUser(data.user)
+      setBotId(data.botIdBytes32)
+      setTokenId(data.tokenId)
+      // Seed rebalance range from the open ticks (editable).
+      setNewTickLower(String(data.tickLower))
+      setNewTickUpper(String(data.tickUpper))
+      setPrefillNote(data.note)
+      setResult(null)
+
+      const url = new URL(window.location.href)
+      url.searchParams.set('tool', 'calldata')
+      url.searchParams.set('openTx', data.txHash)
+      url.searchParams.set('user', data.user)
+      url.searchParams.set('botId', data.botIdBytes32)
+      url.searchParams.set('tokenId', data.tokenId)
+      window.history.replaceState({}, '', url)
+    } catch (err) {
+      setPrefillError(err instanceof Error ? err.message : 'Prefill failed')
+    } finally {
+      setPrefillLoading(false)
+    }
+  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -107,6 +148,35 @@ export function CalldataBuilderPanel() {
         </div>
       </div>
 
+      <div className="calldata-prefill">
+        <label className="field field-with-hint">
+          <span>Open position tx (optional autofill)</span>
+          <div className="calldata-prefill-row">
+            <input
+              value={openTx}
+              onChange={(e) => setOpenTx(e.target.value)}
+              placeholder="0x… or https://basescan.org/tx/0x…"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={prefillLoading || !openTx.trim()}
+              onClick={() => void loadFromOpenTx()}
+            >
+              {prefillLoading ? 'Loading…' : 'Autofill'}
+            </button>
+          </div>
+          <span className="field-hint">
+            Paste the vault <strong>open/mint</strong> tx. Fills user, bot ID (bytes32), and tokenId
+            from <code>PositionOpened</code>.
+          </span>
+        </label>
+        {prefillNote && <p className="hint calldata-prefill-ok">{prefillNote}</p>}
+        {prefillError && <p className="error">{prefillError}</p>}
+      </div>
+
       <form className="calldata-form" onSubmit={onSubmit}>
         <label className="field">
           <span>Action</span>
@@ -136,7 +206,7 @@ export function CalldataBuilderPanel() {
             <span className="field-hint">Vault `user`, not investor EOA.</span>
           </label>
 
-          <label className="field">
+          <label className="field field-with-hint">
             <span>Bot ID</span>
             <input
               value={botId}
@@ -145,6 +215,7 @@ export function CalldataBuilderPanel() {
               autoComplete="off"
               spellCheck={false}
             />
+            <span className="field-hint">Autofill uses on-chain bytes32 — that is fine to paste.</span>
           </label>
         </div>
 
@@ -161,22 +232,24 @@ export function CalldataBuilderPanel() {
           </label>
 
           {action === 'close' ? (
-            <label className="field">
-              <span>performanceFeeBps</span>
+            <label className="field field-with-hint">
+              <span>Performance fee (bps)</span>
               <input
                 value={performanceFeeBps}
                 onChange={(e) => setPerformanceFeeBps(e.target.value)}
                 inputMode="numeric"
               />
+              <span className="field-hint">3000 = 30% of positive PnL. Must match operator config.</span>
             </label>
           ) : (
-            <label className="field">
-              <span>slippageBps</span>
+            <label className="field field-with-hint">
+              <span>Slippage tolerance (bps)</span>
               <input
                 value={slippageBps}
                 onChange={(e) => setSlippageBps(e.target.value)}
                 inputMode="numeric"
               />
+              <span className="field-hint">100 = 1% slippage on rebalance swap.</span>
             </label>
           )}
         </div>
@@ -185,13 +258,13 @@ export function CalldataBuilderPanel() {
           <>
             <div className="calldata-row">
               <label className="field field-with-hint">
-                <span>amountOutMinimum (USDC raw)</span>
+                <span>Min USDC out (raw, 6 decimals)</span>
                 <input
                   value={amountOutMinimum}
                   onChange={(e) => setAmountOutMinimum(e.target.value)}
                   inputMode="numeric"
                 />
-                <span className="field-hint">0 = no floor. 1 USDC = 1000000.</span>
+                <span className="field-hint">0 = no floor (risky). 1 USDC = 1000000.</span>
               </label>
 
               <label className="field field-with-hint">
@@ -207,7 +280,7 @@ export function CalldataBuilderPanel() {
             </div>
 
             <label className="field field-with-hint">
-              <span>swapPath (hex, optional)</span>
+              <span>Swap path (hex, optional)</span>
               <input
                 value={swapPath}
                 onChange={(e) => setSwapPath(e.target.value)}
@@ -218,29 +291,37 @@ export function CalldataBuilderPanel() {
               <span className="field-hint">Empty fills WETH→USDC single-hop with the fee above.</span>
             </label>
 
-            <label className="calldata-check">
-              <input
-                type="checkbox"
-                checked={convertPrincipalToUsdc}
-                onChange={(e) => setConvertPrincipalToUsdc(e.target.checked)}
-              />
-              <span>convertPrincipalToUsdc (recommended)</span>
+            <label className="calldata-check field-with-hint">
+              <span className="calldata-check-main">
+                <input
+                  type="checkbox"
+                  checked={convertPrincipalToUsdc}
+                  onChange={(e) => setConvertPrincipalToUsdc(e.target.checked)}
+                />
+                <span>Convert principal to USDC on close</span>
+              </span>
+              <span className="field-hint">
+                When checked, non-USDC principal (e.g. WETH) is swapped to USDC and credited via the
+                vault. Leave on for normal QC closes. Uncheck only if you want principal paid in the
+                pair token instead.
+              </span>
             </label>
           </>
         ) : (
           <>
             <div className="calldata-row">
-              <label className="field">
-                <span>newTickLower</span>
+              <label className="field field-with-hint">
+                <span>New tick lower</span>
                 <input
                   value={newTickLower}
                   onChange={(e) => setNewTickLower(e.target.value)}
                   placeholder="e.g. -200100"
                   inputMode="numeric"
                 />
+                <span className="field-hint">Autofill seeds from the open range — edit before build.</span>
               </label>
               <label className="field">
-                <span>newTickUpper</span>
+                <span>New tick upper</span>
                 <input
                   value={newTickUpper}
                   onChange={(e) => setNewTickUpper(e.target.value)}
@@ -251,7 +332,7 @@ export function CalldataBuilderPanel() {
             </div>
 
             <label className="field field-with-hint">
-              <span>amountOutMinimum</span>
+              <span>Min amount out (raw)</span>
               <input
                 value={rebalanceAmountOutMin}
                 onChange={(e) => setRebalanceAmountOutMin(e.target.value)}

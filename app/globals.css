@@ -1567,6 +1567,25 @@ tr:last-child td {
   margin-top: 0.75rem;
 }
 
+.calldata-prefill {
+  margin-top: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--panel) 92%, var(--line));
+}
+
+.calldata-prefill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.calldata-prefill-ok {
+  margin: 0.55rem 0 0;
+}
+
 .calldata-row {
   display: grid;
   grid-template-columns: 1fr;
@@ -1602,15 +1621,21 @@ select.calldata-select {
 }
 
 .calldata-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  width: fit-content;
-  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
   margin: 0.15rem 0;
   font-size: 0.95rem;
   cursor: pointer;
   user-select: none;
+}
+
+.calldata-check-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
 }
 
 .calldata-check input[type='checkbox'] {
