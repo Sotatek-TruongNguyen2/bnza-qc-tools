@@ -72,6 +72,17 @@ export function ToolNavIcon({ toolId }: { toolId: string }) {
           <path d="M13 5l-2 14" />
         </svg>
       )
+    case 'queue':
+      // FIFO queue / people in line
+      return (
+        <svg {...common}>
+          <path d="M4 7h12" />
+          <path d="M4 12h16" />
+          <path d="M4 17h10" />
+          <circle cx="19" cy="7" r="1.5" fill="currentColor" stroke="none" />
+          <circle cx="19" cy="17" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+      )
     case 'addresses':
       // Contract / book-mark
       return (

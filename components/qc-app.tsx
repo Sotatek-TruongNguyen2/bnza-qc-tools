@@ -8,12 +8,13 @@ import { CalldataBuilderPanel } from './calldata-builder-panel'
 import { GasEstimatePanel } from './gas-estimate-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
+import { RedemptionQueuePanel } from './redemption-queue-panel'
 import { ToolNavGroupIcon } from './tool-nav-group-icon'
 import { ToolNavIcon } from './tool-nav-icon'
 import { TxPnlPanel } from './tx-pnl-panel'
 import { replaceQueryParams } from '@/lib/url-query'
 
-type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl' | 'gas' | 'calldata'
+type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl' | 'gas' | 'calldata' | 'queue'
 
 const TOOL_GROUPS: {
   id: string
@@ -35,6 +36,7 @@ const TOOL_GROUPS: {
     tools: [
       { id: 'tx-pnl', label: 'PnL', title: 'Transaction PnL' },
       { id: 'gas', label: 'Gas', title: 'Gas fee estimates' },
+      { id: 'queue', label: 'Queue', title: 'HL redemption queue' },
     ],
   },
   {
@@ -55,7 +57,8 @@ function toolFromParam(value: string | null): Tool {
     value === 'addresses' ||
     value === 'tx-pnl' ||
     value === 'gas' ||
-    value === 'calldata'
+    value === 'calldata' ||
+    value === 'queue'
   ) {
     return value
   }
@@ -121,8 +124,8 @@ export function QcApp() {
         </div>
         <h1>QC Uniswap tools</h1>
         <p className="lede">
-          Helpers for EXBOT bot vault state, LP inspection, swap quotes, gas samples, and Basescan
-          calldata for close / rebalance. No private keys stored here.
+          Helpers for EXBOT bot vault state, LP inspection, swap quotes, gas samples, redemption
+          queue, and Basescan calldata. No private keys stored here.
         </p>
       </header>
 
@@ -177,6 +180,11 @@ export function QcApp() {
         {mounted.has('gas') && (
           <div className={panelClass('gas')} hidden={tool !== 'gas'}>
             <GasEstimatePanel />
+          </div>
+        )}
+        {mounted.has('queue') && (
+          <div className={panelClass('queue')} hidden={tool !== 'queue'}>
+            <RedemptionQueuePanel />
           </div>
         )}
         {mounted.has('calldata') && (
