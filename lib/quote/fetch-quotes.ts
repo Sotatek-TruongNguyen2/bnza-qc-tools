@@ -23,6 +23,11 @@ import type {
   TokenInfo,
 } from './types'
 
+function asAddress(value: string): `0x${string}` {
+  // Always lowercase first so a bad mixed-case checksum cannot abort quoting.
+  return getAddress(value.toLowerCase() as `0x${string}`)
+}
+
 function feeLabel(fee: number): string {
   return `${fee} (${fee / 10_000}%)`
 }
@@ -46,9 +51,9 @@ async function resolveToken(client: BasePublicClient, input: string): Promise<To
   const known = KNOWN_TOKENS[upper as keyof typeof KNOWN_TOKENS]
 
   const address = known
-    ? getAddress(known)
-    : isAddress(trimmed)
-      ? getAddress(trimmed)
+    ? asAddress(known)
+    : isAddress(trimmed, { strict: false })
+      ? asAddress(trimmed)
       : null
 
   if (!address) {
@@ -165,7 +170,7 @@ async function discoverRoutes(
 
   // 2-hop via liquid Base hubs (WETH, USDC, DAI, USDT, cbETH, …).
   // Critical for USDC↔WETH: those two are endpoints, so other hubs must be intermediates.
-  const intermediates = INTERMEDIATE_TOKENS.map(getAddress).filter((addr) => {
+  const intermediates = INTERMEDIATE_TOKENS.map(asAddress).filter((addr) => {
     const lower = addr.toLowerCase()
     return (
       lower !== tokenIn.address.toLowerCase() && lower !== tokenOut.address.toLowerCase()
@@ -340,13 +345,17 @@ export async function fetchQuotes(
   ])
 
   for (const addr of INTERMEDIATE_TOKENS) {
-    const address = getAddress(addr)
-    const lower = address.toLowerCase()
-    const cached = INTERMEDIATE_TOKEN_META[lower]
-    tokenMeta.set(
-      lower,
-      cached ? { address, ...cached } : await resolveToken(client, address),
-    )
+    try {
+      const address = asAddress(addr)
+      const lower = address.toLowerCase()
+      const cached = INTERMEDIATE_TOKEN_META[lower]
+      tokenMeta.set(
+        lower,
+        cached ? { address, ...cached } : await resolveToken(client, address),
+      )
+    } catch {
+      // Skip a bad hub address — do not fail the whole quote.
+    }
   }
 
   const normalizedRoutes = routes.map((route) => ({
