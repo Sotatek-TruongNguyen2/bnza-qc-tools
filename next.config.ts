@@ -4,7 +4,7 @@ import type { NextConfig } from 'next'
 
 /**
  * Local DX: if this repo sits next to a bonanzapool checkout, reuse
- * contracts/bnza-exbot/.env (BASE_RPC_URL / ALCHEMY_API_KEY).
+ * contracts/bnza-exbot/.env (BASE_RPC_URL / BASE_RPC_URLS / ALCHEMY_API_KEY).
  * Does not override vars already set by Vercel or this app’s .env.local.
  */
 const siblingExbotEnv = path.resolve(
