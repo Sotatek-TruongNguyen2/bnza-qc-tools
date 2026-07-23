@@ -109,17 +109,14 @@ export function CalldataBuilderResult({
             )}
             <dl className="kv calldata-sim-kv">
               <div>
-                <dt>Sender (from)</dt>
-                <dd className="mono">{simulation.sender}</dd>
-              </div>
-              <div>
-                <dt>OPERATOR_ROLE on</dt>
-                <dd>
+                <dt>Operator (from)</dt>
+                <dd className="mono">
+                  {simulation.operator}
                   {simulation.operatorHasRole == null
-                    ? '—'
+                    ? ''
                     : simulation.operatorHasRole
-                      ? `yes (${simulation.operator})`
-                      : `no (${simulation.operator})`}
+                      ? ' · has OPERATOR_ROLE'
+                      : ' · missing OPERATOR_ROLE'}
                 </dd>
               </div>
               <div>
