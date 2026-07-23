@@ -88,6 +88,7 @@ export function CalldataBuilderPanel() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ExecuteStrategyFields | null>(null)
   const [operator, setOperator] = useState<string>(DEFAULT_OPERATOR_ADDRESS)
+  const [sender, setSender] = useState('')
   const [simulation, setSimulation] = useState<SimulateExecuteStrategyResult | null>(null)
   const [simulationLoading, setSimulationLoading] = useState(false)
   const [simulationError, setSimulationError] = useState<string | null>(null)
@@ -172,6 +173,7 @@ export function CalldataBuilderPanel() {
         params: fields.params,
         executeStrategyCalldata: fields.executeStrategyCalldata,
         operator: operator.trim() || DEFAULT_OPERATOR_ADDRESS,
+        sender: sender.trim() || undefined,
       })
       setSimulation(data)
     } catch (err) {
@@ -457,7 +459,7 @@ export function CalldataBuilderPanel() {
           )}
 
           <label className="field field-with-hint">
-            <span>Operator (simulation from)</span>
+            <span>Operator (role check / default sender)</span>
             <input
               value={operator}
               onChange={(e) => setOperator(e.target.value)}
@@ -466,10 +468,24 @@ export function CalldataBuilderPanel() {
               spellCheck={false}
             />
             <span className="field-hint">
-              msg.sender for eth_call / estimateGas. Default = Addresses tab deployer operator.
+              Checked for <code>OPERATOR_ROLE</code>. Also used as sender when the optional sender field is empty.
             </span>
           </label>
         </div>
+
+        <label className="field field-with-hint">
+          <span>Sender (optional simulation from)</span>
+          <input
+            value={sender}
+            onChange={(e) => setSender(e.target.value)}
+            placeholder="0x… optional msg.sender override"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <span className="field-hint">
+            Actual <code>msg.sender</code> for eth_call / estimateGas. Leave blank to simulate from the operator above.
+          </span>
+        </label>
 
         {action === 'open' && (
           <>

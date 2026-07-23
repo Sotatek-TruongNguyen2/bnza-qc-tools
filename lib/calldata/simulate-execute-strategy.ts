@@ -20,14 +20,17 @@ export type SimulateExecuteStrategyInput = {
   botIdBytes32: string
   params: string
   executeStrategyCalldata: string
-  /** msg.sender for the simulated call — must hold OPERATOR_ROLE. */
+  /** Optional address to check OPERATOR_ROLE on. Defaults to sender, then deployer operator. */
   operator?: string
+  /** Optional msg.sender override for eth_call / estimateGas. Defaults to operator, then deployer operator. */
+  sender?: string
 }
 
 export type SimulateExecuteStrategyResult = {
   ok: boolean
   vault: string
   operator: string
+  sender: string
   operatorHasRole: boolean | null
   gasEstimate: string | null
   gasEstimateBuffered: string | null
@@ -59,8 +62,9 @@ function requireHexBytes(label: string, value: string): Hex {
 }
 
 /**
- * eth_call simulate + eth_estimateGas for vault.executeStrategy as the operator.
- * Does not send a transaction.
+ * eth_call simulate + eth_estimateGas for vault.executeStrategy.
+ * `sender` is the actual msg.sender for simulation; `operator` is the address
+ * checked for OPERATOR_ROLE in the UI and defaults to sender.
  */
 export async function simulateExecuteStrategy(
   client: BasePublicClient,
@@ -73,9 +77,13 @@ export async function simulateExecuteStrategy(
   const botId = requireBytes32('botId', input.botIdBytes32)
   const params = requireHexBytes('params', input.params)
   const calldata = requireHexBytes('executeStrategyCalldata', input.executeStrategyCalldata)
+  const sender = requireAddress(
+    'sender',
+    input.sender?.trim() || input.operator?.trim() || DEFAULT_OPERATOR_ADDRESS,
+  )
   const operator = requireAddress(
     'operator',
-    input.operator?.trim() || DEFAULT_OPERATOR_ADDRESS,
+    input.operator?.trim() || sender,
   )
 
   let operatorHasRole: boolean | null = null
@@ -88,7 +96,7 @@ export async function simulateExecuteStrategy(
     })
     if (!operatorHasRole) {
       warnings.push(
-        `Operator ${operator} does not currently hold OPERATOR_ROLE on the vault — simulation may revert with AccessControl.`,
+        `Address ${operator} does not currently hold OPERATOR_ROLE on the vault — simulation may revert with AccessControl.`,
       )
     }
   } catch (err) {
@@ -104,7 +112,7 @@ export async function simulateExecuteStrategy(
       abi: simulateAbi,
       functionName: 'executeStrategy',
       args: [strategy, user, botId, params],
-      account: operator,
+      account: sender,
     })
   } catch (err) {
     const decoded = decodeSimulationRevert(err)
@@ -112,6 +120,7 @@ export async function simulateExecuteStrategy(
       ok: false,
       vault,
       operator,
+      sender,
       operatorHasRole,
       gasEstimate: null,
       gasEstimateBuffered: null,
@@ -127,7 +136,7 @@ export async function simulateExecuteStrategy(
     const gas = await client.estimateGas({
       to: vault,
       data: calldata,
-      account: operator,
+      account: sender,
     })
     gasEstimate = gas.toString()
     gasEstimateBuffered = BigInt(Math.ceil(Number(gas) * GAS_BUFFER)).toString()
@@ -139,6 +148,7 @@ export async function simulateExecuteStrategy(
     ok: true,
     vault,
     operator,
+    sender,
     operatorHasRole,
     gasEstimate,
     gasEstimateBuffered,
