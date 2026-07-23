@@ -83,6 +83,16 @@ export function QcApp() {
     })
   }, [searchParams])
 
+  /** Re-trigger enter animation on each tab switch without remounting keep-alive panels. */
+  const [playEnter, setPlayEnter] = useState(true)
+  useEffect(() => {
+    setPlayEnter(false)
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setPlayEnter(true))
+    })
+    return () => cancelAnimationFrame(id)
+  }, [tool])
+
   function selectTool(next: Tool) {
     if (next === tool) return
     setTool(next)
@@ -98,7 +108,8 @@ export function QcApp() {
   }
 
   function panelClass(id: Tool): string {
-    return tool === id ? 'tab-panel' : 'tab-panel tab-panel-hidden'
+    if (tool !== id) return 'tab-panel tab-panel-hidden'
+    return playEnter ? 'tab-panel tab-panel-enter' : 'tab-panel'
   }
 
   return (
