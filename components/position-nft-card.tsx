@@ -65,16 +65,15 @@ export function PositionNftCard({ tokenId, currentTick }: Props) {
   return (
     <div className="position-nft-card">
       <div className="position-nft-card-head">
-        <h3>Uniswap V3 position NFT</h3>
-        <p className="muted">From NPM <code>tokenURI</code> (on-chain SVG).</p>
+        <h3>Position NFT</h3>
+        <p className="muted">NPM <code>tokenURI</code></p>
       </div>
-      {loading && <p className="muted">Loading NFT art…</p>}
+      {loading && <p className="muted">Loading…</p>}
       {error && !loading && <p className="muted">{error}</p>}
       {imageUri && (
         <figure className="position-nft-figure">
           {/* eslint-disable-next-line @next/next/no-img-element -- data:image SVG from chain */}
           <img src={imageUri} alt={name ?? `Uniswap V3 position #${tokenId}`} />
-          {name && <figcaption className="muted">{name}</figcaption>}
         </figure>
       )}
     </div>
