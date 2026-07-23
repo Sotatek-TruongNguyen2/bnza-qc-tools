@@ -37,6 +37,7 @@ function isCalldataAction(v: string): v is CalldataAction {
 export function CalldataBuilderPanel() {
   const [action, setAction] = useState<CalldataAction>('close')
   const [openTx, setOpenTx] = useState('')
+  const [prefillExpanded, setPrefillExpanded] = useState(false)
   const [prefillLoading, setPrefillLoading] = useState(false)
   const [prefillNote, setPrefillNote] = useState<string | null>(null)
   const [prefillError, setPrefillError] = useState<string | null>(null)
@@ -104,7 +105,10 @@ export function CalldataBuilderPanel() {
     if (u) setUser(u)
     if (b) setBotId(b)
     if (t) setTokenId(t)
-    if (tx) setOpenTx(tx)
+    if (tx) {
+      setOpenTx(tx)
+      setPrefillExpanded(true)
+    }
     const tl = params.get('tickLower')
     const tu = params.get('tickUpper')
     if (tl) {
@@ -273,8 +277,14 @@ export function CalldataBuilderPanel() {
             className="calldata-select"
             value={action}
             onChange={(e) => {
-              setAction(e.target.value as CalldataAction)
+              const next = e.target.value as CalldataAction
+              setAction(next)
               setResult(null)
+              if (next === 'open') {
+                setPrefillExpanded(false)
+                setPrefillNote(null)
+                setPrefillError(null)
+              }
             }}
           >
             <option value="open">Open position</option>
@@ -286,32 +296,111 @@ export function CalldataBuilderPanel() {
 
         {action !== 'open' && (
           <div className="calldata-prefill">
-            <label className="field field-with-hint">
-              <span>Open position tx (optional autofill)</span>
-              <div className="calldata-prefill-row">
-                <input
-                  value={openTx}
-                  onChange={(e) => setOpenTx(e.target.value)}
-                  placeholder="0x… or https://basescan.org/tx/0x…"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  disabled={prefillLoading || !openTx.trim()}
-                  onClick={() => void loadFromOpenTx()}
-                >
-                  {prefillLoading ? 'Loading…' : 'Autofill'}
-                </button>
-              </div>
-              <span className="field-hint">
-                Paste the vault <strong>open/mint</strong> tx. Fills user, bot ID (bytes32), tokenId,
-                and ticks from <code>PositionOpened</code>. Useful for collect / close / rebalance.
-              </span>
-            </label>
-            {prefillNote && <p className="hint calldata-prefill-ok">{prefillNote}</p>}
-            {prefillError && <p className="error">{prefillError}</p>}
+            {!prefillExpanded ? (
+              <button
+                type="button"
+                className="calldata-prefill-suggest"
+                onClick={() => setPrefillExpanded(true)}
+              >
+                <span className="calldata-prefill-suggest-icon" aria-hidden>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 3v3" />
+                    <path d="M12 18v3" />
+                    <path d="M3 12h3" />
+                    <path d="M18 12h3" />
+                    <path d="M5.6 5.6l2.1 2.1" />
+                    <path d="M16.3 16.3l2.1 2.1" />
+                    <path d="M5.6 18.4l2.1-2.1" />
+                    <path d="M16.3 7.7l2.1-2.1" />
+                    <circle cx="12" cy="12" r="3.25" />
+                  </svg>
+                </span>
+                <span className="calldata-prefill-suggest-copy">
+                  <strong>Do you want to autofill?</strong>
+                  <span className="muted">
+                    Paste an open/mint tx to fill user, bot ID, tokenId, and ticks.
+                  </span>
+                </span>
+                <span className="calldata-prefill-suggest-cta">Yes, autofill</span>
+              </button>
+            ) : (
+              <>
+                <div className="calldata-prefill-expanded-head">
+                  <span className="calldata-prefill-expanded-title">
+                    <span className="calldata-prefill-suggest-icon" aria-hidden>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 3v3" />
+                        <path d="M12 18v3" />
+                        <path d="M3 12h3" />
+                        <path d="M18 12h3" />
+                        <path d="M5.6 5.6l2.1 2.1" />
+                        <path d="M16.3 16.3l2.1 2.1" />
+                        <path d="M5.6 18.4l2.1-2.1" />
+                        <path d="M16.3 7.7l2.1-2.1" />
+                        <circle cx="12" cy="12" r="3.25" />
+                      </svg>
+                    </span>
+                    Autofill from open position tx
+                  </span>
+                  <button
+                    type="button"
+                    className="calldata-prefill-dismiss"
+                    onClick={() => {
+                      setPrefillExpanded(false)
+                      setPrefillNote(null)
+                      setPrefillError(null)
+                    }}
+                  >
+                    Hide
+                  </button>
+                </div>
+                <label className="field field-with-hint">
+                  <span className="sr-only">Open position tx</span>
+                  <div className="calldata-prefill-row">
+                    <input
+                      value={openTx}
+                      onChange={(e) => setOpenTx(e.target.value)}
+                      placeholder="0x… or https://basescan.org/tx/0x…"
+                      autoComplete="off"
+                      spellCheck={false}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      disabled={prefillLoading || !openTx.trim()}
+                      onClick={() => void loadFromOpenTx()}
+                    >
+                      {prefillLoading ? 'Loading…' : 'Autofill'}
+                    </button>
+                  </div>
+                  <span className="field-hint">
+                    Vault <strong>open/mint</strong> tx → user, bot ID, tokenId, ticks from{' '}
+                    <code>PositionOpened</code>.
+                  </span>
+                </label>
+                {prefillNote && <p className="hint calldata-prefill-ok">{prefillNote}</p>}
+                {prefillError && <p className="error">{prefillError}</p>}
+              </>
+            )}
           </div>
         )}
 
