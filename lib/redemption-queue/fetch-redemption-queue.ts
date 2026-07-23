@@ -6,7 +6,12 @@ import {
   REDEMPTION_QUEUE_ABI,
   REDEMPTION_QUEUE_ADDRESS,
 } from './constants'
-import type { RedemptionPendingRequest, RedemptionQueueResult } from './types'
+import { resolveCloseTxsForRequests } from './resolve-close-txs-for-requests'
+import type {
+  RedemptionCloseTxSummary,
+  RedemptionPendingRequest,
+  RedemptionQueueResult,
+} from './types'
 
 function formatWait(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '—'
@@ -25,13 +30,12 @@ function formatWait(seconds: number): string {
 }
 
 /**
- * Pending FIFO via Multicall3 only (no eth_getLogs).
- * Contract views: pendingQueueLength, nextPendingRequestId,
- * pendingRequestAt(i), getRequest(id).
+ * Pending FIFO via Multicall3 views, plus RequestCreated → close tx hash per request.
  */
 export async function fetchRedemptionQueue(
   client: BasePublicClient,
 ): Promise<RedemptionQueueResult> {
+  const warnings: string[] = []
   const nowSec = Math.floor(Date.now() / 1000)
 
   const [pendingCountRaw, headRaw] = await client.multicall({
@@ -76,15 +80,23 @@ export async function fetchRedemptionQueue(
       })),
     })
 
+    const closeById = await resolveCloseTxsForRequests(
+      client,
+      requestIds.map((id) => id.toString()),
+      warnings,
+    )
+
     pending = requestIds.map((id, queueIndex) => {
       const req = reqResults[queueIndex]!
       const createdAtUnix = Number(req.createdAt)
       const waitSeconds = Math.max(0, nowSec - createdAtUnix)
       const createdAtIso = new Date(createdAtUnix * 1000).toISOString()
       const user = getAddress(req.user)
+      const idStr = id.toString()
+      const close = closeById.get(idStr)
 
       return {
-        requestId: id.toString(),
+        requestId: idStr,
         queueIndex,
         isHead: queueIndex === 0,
         user,
@@ -96,6 +108,9 @@ export async function fetchRedemptionQueue(
         waitSeconds,
         waitLabel: formatWait(waitSeconds),
         basescanUser: basescanLink(user),
+        closeTxHash: close?.closeTxHash ?? null,
+        basescanCloseTx: close?.basescanCloseTx ?? null,
+        closeBlockNumber: close?.closeBlockNumber ?? null,
       }
     })
   }
@@ -104,6 +119,21 @@ export async function fetchRedemptionQueue(
   const oldestWaitSeconds = waits.length > 0 ? Math.max(...waits) : null
   const avgWaitSeconds =
     waits.length > 0 ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : null
+
+  const closeTxMap = new Map<string, string[]>()
+  for (const row of pending) {
+    if (!row.closeTxHash) continue
+    const list = closeTxMap.get(row.closeTxHash) ?? []
+    list.push(row.requestId)
+    closeTxMap.set(row.closeTxHash, list)
+  }
+  const closeTxs: RedemptionCloseTxSummary[] = [...closeTxMap.entries()].map(
+    ([closeTxHash, requestIds]) => ({
+      closeTxHash,
+      basescanCloseTx: `https://basescan.org/tx/${closeTxHash}`,
+      requestIds,
+    }),
+  )
 
   return {
     queueAddress: REDEMPTION_QUEUE_ADDRESS,
@@ -116,7 +146,10 @@ export async function fetchRedemptionQueue(
       oldestWaitLabel: oldestWaitSeconds == null ? null : formatWait(oldestWaitSeconds),
       avgWaitSeconds,
       avgWaitLabel: avgWaitSeconds == null ? null : formatWait(avgWaitSeconds),
+      uniqueCloseTxCount: closeTxs.length,
     },
     pending,
+    closeTxs,
+    warnings,
   }
 }

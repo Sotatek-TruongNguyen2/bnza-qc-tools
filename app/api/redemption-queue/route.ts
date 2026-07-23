@@ -5,10 +5,10 @@ import { createBasePublicClient, formatRpcError } from '@/lib/rpc'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-/** Pending FIFO via Multicall3 views only. */
+/** Pending FIFO + RequestCreated → close tx lookup. */
 export async function GET() {
   try {
-    const client = createBasePublicClient(20_000)
+    const client = createBasePublicClient(45_000)
     const result = await fetchRedemptionQueue(client)
     return NextResponse.json(result)
   } catch (err) {

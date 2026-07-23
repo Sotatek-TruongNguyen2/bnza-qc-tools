@@ -63,7 +63,8 @@ export function RedemptionQueuePanel() {
             ) : (
               'RedemptionQueue'
             )}
-            . Operator fulfills from the head.
+            . Operator fulfills from the head. Close txs traced via{' '}
+            <code>RequestCreated</code>.
           </p>
         </div>
         <div className="result-actions">
@@ -108,7 +109,20 @@ export function RedemptionQueuePanel() {
               <span className="rq-stat-value">{stats.avgWaitLabel ?? '—'}</span>
               <span className="rq-stat-hint">across pending</span>
             </div>
+            <div className="rq-stat">
+              <span className="rq-stat-label">Close txs</span>
+              <span className="rq-stat-value">{stats.uniqueCloseTxCount}</span>
+              <span className="rq-stat-hint">via RequestCreated</span>
+            </div>
           </div>
+
+          {result.warnings.length > 0 && (
+            <ul className="calldata-warnings">
+              {result.warnings.slice(0, 4).map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          )}
 
           <p className="muted rq-fetched">
             Fetched {formatLocalDateTime(result.fetchedAtIso)} ·{' '}
@@ -122,6 +136,37 @@ export function RedemptionQueuePanel() {
 
           {!empty && (
             <>
+              {result.closeTxs.length > 0 && (
+                <>
+                  <h3 className="rq-section-title">
+                    Corresponding close txs
+                    <span className="muted"> · {result.closeTxs.length}</span>
+                  </h3>
+                  <ul className="rq-close-tx-list">
+                    {result.closeTxs.map((tx) => (
+                      <li key={tx.closeTxHash} className="rq-close-tx-row">
+                        <span className="rq-copyable">
+                          <a
+                            href={tx.basescanCloseTx}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mono"
+                          >
+                            {tx.closeTxHash}
+                          </a>
+                          <CopyIconButton value={tx.closeTxHash} label="Copy close tx hash" />
+                        </span>
+                        <span className="muted">
+                          request
+                          {tx.requestIds.length === 1 ? '' : 's'}{' '}
+                          {tx.requestIds.map((id) => `#${id}`).join(', ')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
               <h3 className="rq-section-title">Queue order (FIFO)</h3>
               <div className="rq-rail" role="list" aria-label="Pending redemption FIFO order">
                 {result.pending.map((row) => (
@@ -249,6 +294,21 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           </dd>
         </div>
         <div>
+          <dt>Close tx</dt>
+          <dd>
+            {row.closeTxHash && row.basescanCloseTx ? (
+              <span className="rq-copyable">
+                <a href={row.basescanCloseTx} target="_blank" rel="noreferrer" className="mono">
+                  {row.closeTxHash}
+                </a>
+                <CopyIconButton value={row.closeTxHash} label="Copy close tx hash" />
+              </span>
+            ) : (
+              <span className="muted">Not found (RequestCreated lookup)</span>
+            )}
+          </dd>
+        </div>
+        <div>
           <dt>HL portion</dt>
           <dd>
             <span className="rq-copyable">
@@ -259,7 +319,12 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
         </div>
         <div>
           <dt>Created</dt>
-          <dd>{formatLocalDateTime(row.createdAtIso)}</dd>
+          <dd>
+            {formatLocalDateTime(row.createdAtIso)}
+            {row.closeBlockNumber ? (
+              <span className="muted"> · block {row.closeBlockNumber}</span>
+            ) : null}
+          </dd>
         </div>
       </dl>
     </li>

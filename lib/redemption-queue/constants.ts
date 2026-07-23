@@ -47,4 +47,10 @@ export const REDEMPTION_QUEUE_ABI = [
   },
 ] as const
 
+/** Emitted in the redeem/close executeStrategy tx when HL portion is enqueued. */
+export const REQUEST_CREATED_EVENT =
+  'event RequestCreated(uint256 indexed requestId, address indexed user, bytes32 indexed botId, uint256 positionId, bytes32 hlPortionId)' as const
+
+export const REDEMPTION_CLOSE_TX_LOOKUP_CONCURRENCY = 6
+
 export const BASESCAN_QUEUE = `https://basescan.org/address/${REDEMPTION_QUEUE_ADDRESS}`
