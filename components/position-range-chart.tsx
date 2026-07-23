@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { apiGetJson } from '@/lib/api-client'
+import { buildCurrentPriceHint } from '@/lib/position/build-current-price-hint'
 import { tickToPriceRatio } from '@/lib/position/format'
 import {
   buildDensityAreaPath,
@@ -11,6 +12,7 @@ import {
   type DensityPoint,
 } from '@/lib/position/range-chart-math'
 import type { PositionOpenPrice, PositionRaw } from '@/lib/position/types'
+import { CalculationHint } from './calculation-hint'
 import { PositionOpenPriceLine } from './position-open-price-line'
 import { PositionRangeLegend } from './position-range-legend'
 
@@ -29,6 +31,8 @@ const PAD_B = 28
 
 export function PositionRangeChart({ raw, openPrice, openPriceLoading }: Props) {
   const [density, setDensity] = useState<DensityPoint[]>([])
+  const [openHintId, setOpenHintId] = useState<string | null>(null)
+  const currentPriceHint = useMemo(() => buildCurrentPriceHint(raw), [raw])
 
   const quote = useMemo(() => getDisplayQuote(raw), [raw])
   const priceAtTick = (tick: number) =>
@@ -120,10 +124,23 @@ export function PositionRangeChart({ raw, openPrice, openPriceLoading }: Props) 
   return (
     <div className="range-chart">
       <div className="range-chart-header">
-        <p className="range-chart-current">
-          Current price: <strong>{currentHeader}</strong>
-          {inverseHint && <span className="muted"> {inverseHint}</span>}
-        </p>
+        <div className="range-chart-current-row">
+          <p className="range-chart-current">
+            Current price: <strong>{currentHeader}</strong>
+            {inverseHint && <span className="muted"> {inverseHint}</span>}
+            <span className="muted">
+              {' '}
+              · tick {raw.currentTick}
+            </span>
+          </p>
+          <CalculationHint
+            hintId="current-price"
+            isOpen={openHintId === 'current-price'}
+            onToggle={(id) => setOpenHintId((cur) => (cur === id ? null : id))}
+            onClose={() => setOpenHintId(null)}
+            section={currentPriceHint}
+          />
+        </div>
         <p className="muted range-chart-ticks mono">
           ticks [{raw.tickLower}, {raw.tickUpper}) · current {raw.currentTick}
           {inRange ? ' · in range' : raw.liquidity === '0' ? ' · closed' : ' · out of range'}

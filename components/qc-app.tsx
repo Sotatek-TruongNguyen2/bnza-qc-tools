@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AddressesPanel } from './addresses-panel'
 import { BotPanel } from './bot-panel'
+import { CalldataBuilderPanel } from './calldata-builder-panel'
 import { GasEstimatePanel } from './gas-estimate-panel'
 import { PositionPanel } from './position-panel'
 import { QuotePanel } from './quote-panel'
 import { TxPnlPanel } from './tx-pnl-panel'
 import { replaceQueryParams } from '@/lib/url-query'
 
-type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl' | 'gas'
+type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl' | 'gas' | 'calldata'
 
 function toolFromParam(value: string | null): Tool {
   if (
@@ -19,7 +20,8 @@ function toolFromParam(value: string | null): Tool {
     value === 'position' ||
     value === 'addresses' ||
     value === 'tx-pnl' ||
-    value === 'gas'
+    value === 'gas' ||
+    value === 'calldata'
   ) {
     return value
   }
@@ -66,8 +68,8 @@ export function QcApp() {
         </div>
         <h1>QC Uniswap tools</h1>
         <p className="lede">
-          Read-only helpers for EXBOT bot vault state, LP position inspection, swap quotes, and
-          gas fee samples. No wallet or private key needed.
+          Helpers for EXBOT bot vault state, LP inspection, swap quotes, gas samples, and Basescan
+          calldata for close / rebalance. No private keys stored here.
         </p>
       </header>
 
@@ -109,6 +111,13 @@ export function QcApp() {
         </button>
         <button
           type="button"
+          className={tool === 'calldata' ? 'tab active' : 'tab'}
+          onClick={() => selectTool('calldata')}
+        >
+          Calldata builder
+        </button>
+        <button
+          type="button"
           className={tool === 'addresses' ? 'tab active' : 'tab'}
           onClick={() => selectTool('addresses')}
         >
@@ -123,12 +132,13 @@ export function QcApp() {
         {tool === 'quote' && <QuotePanel />}
         {tool === 'tx-pnl' && <TxPnlPanel />}
         {tool === 'gas' && <GasEstimatePanel />}
+        {tool === 'calldata' && <CalldataBuilderPanel />}
         {tool === 'addresses' && <AddressesPanel />}
       </div>
 
       <footer className="footer">
-        <code>get-bot-status</code> vault views / <code>query-uniswap-v3-position-base</code> /{' '}
-        <code>quote-uniswap-v3-routes-base</code>. Quotes / reads only — no transactions.
+        <code>get-bot-status</code> / position / quote helpers. Calldata builder only encodes params —
+        operator sends on Basescan.
       </footer>
     </main>
   )
