@@ -13,6 +13,38 @@ import { replaceQueryParams } from '@/lib/url-query'
 
 type Tool = 'position' | 'quote' | 'bot' | 'addresses' | 'tx-pnl' | 'gas' | 'calldata'
 
+const TOOL_GROUPS: {
+  id: string
+  label: string
+  tools: { id: Tool; label: string; title: string }[]
+}[] = [
+  {
+    id: 'lookup',
+    label: 'Lookup',
+    tools: [
+      { id: 'bot', label: 'Bot', title: 'Bot vault / custody lookup' },
+      { id: 'position', label: 'Position', title: 'Uniswap LP position lookup' },
+      { id: 'quote', label: 'Quote', title: 'Uniswap V3 swap quote' },
+    ],
+  },
+  {
+    id: 'analyze',
+    label: 'Analyze',
+    tools: [
+      { id: 'tx-pnl', label: 'PnL', title: 'Transaction PnL' },
+      { id: 'gas', label: 'Gas', title: 'Gas fee estimates' },
+    ],
+  },
+  {
+    id: 'ops',
+    label: 'Ops',
+    tools: [
+      { id: 'calldata', label: 'Calldata', title: 'Basescan close / rebalance params' },
+      { id: 'addresses', label: 'Addresses', title: 'Deployed contract addresses' },
+    ],
+  },
+]
+
 function toolFromParam(value: string | null): Tool {
   if (
     value === 'bot' ||
@@ -73,56 +105,26 @@ export function QcApp() {
         </p>
       </header>
 
-      <nav className="tabs" aria-label="Tools">
-        <button
-          type="button"
-          className={tool === 'bot' ? 'tab active' : 'tab'}
-          onClick={() => selectTool('bot')}
-        >
-          Bot lookup
-        </button>
-        <button
-          type="button"
-          className={tool === 'position' ? 'tab active' : 'tab'}
-          onClick={() => selectTool('position')}
-        >
-          Position lookup
-        </button>
-        <button
-          type="button"
-          className={tool === 'quote' ? 'tab active' : 'tab'}
-          onClick={() => selectTool('quote')}
-        >
-          Swap quote
-        </button>
-        <button
-          type="button"
-          className={tool === 'tx-pnl' ? 'tab active' : 'tab'}
-          onClick={() => selectTool('tx-pnl')}
-        >
-          PnL
-        </button>
-        <button
-          type="button"
-          className={tool === 'gas' ? 'tab active' : 'tab'}
-          onClick={() => selectTool('gas')}
-        >
-          Gas estimate
-        </button>
-        <button
-          type="button"
-          className={tool === 'calldata' ? 'tab active' : 'tab'}
-          onClick={() => selectTool('calldata')}
-        >
-          Calldata builder
-        </button>
-        <button
-          type="button"
-          className={tool === 'addresses' ? 'tab active' : 'tab'}
-          onClick={() => selectTool('addresses')}
-        >
-          Addresses
-        </button>
+      <nav className="tool-nav" aria-label="Tools">
+        {TOOL_GROUPS.map((group) => (
+          <div key={group.id} className="tool-nav-group" role="group" aria-label={group.label}>
+            <span className="tool-nav-label">{group.label}</span>
+            <div className="tool-nav-pills">
+              {group.tools.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={tool === item.id ? 'tab active' : 'tab'}
+                  title={item.title}
+                  aria-current={tool === item.id ? 'page' : undefined}
+                  onClick={() => selectTool(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="tab-panels">
