@@ -266,35 +266,6 @@ export function CalldataBuilderPanel() {
         </div>
       </div>
 
-      <div className="calldata-prefill">
-        <label className="field field-with-hint">
-          <span>Open position tx (optional autofill)</span>
-          <div className="calldata-prefill-row">
-            <input
-              value={openTx}
-              onChange={(e) => setOpenTx(e.target.value)}
-              placeholder="0x… or https://basescan.org/tx/0x…"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <button
-              type="button"
-              className="btn-secondary"
-              disabled={prefillLoading || !openTx.trim()}
-              onClick={() => void loadFromOpenTx()}
-            >
-              {prefillLoading ? 'Loading…' : 'Autofill'}
-            </button>
-          </div>
-          <span className="field-hint">
-            Paste the vault <strong>open/mint</strong> tx. Fills user, bot ID (bytes32), tokenId, and
-            ticks from <code>PositionOpened</code>. Useful for collect / close / rebalance.
-          </span>
-        </label>
-        {prefillNote && <p className="hint calldata-prefill-ok">{prefillNote}</p>}
-        {prefillError && <p className="error">{prefillError}</p>}
-      </div>
-
       <form className="calldata-form" onSubmit={onSubmit}>
         <label className="field">
           <span>Action</span>
@@ -312,6 +283,37 @@ export function CalldataBuilderPanel() {
             <option value="rebalance">Rebalance position</option>
           </select>
         </label>
+
+        {action !== 'open' && (
+          <div className="calldata-prefill">
+            <label className="field field-with-hint">
+              <span>Open position tx (optional autofill)</span>
+              <div className="calldata-prefill-row">
+                <input
+                  value={openTx}
+                  onChange={(e) => setOpenTx(e.target.value)}
+                  placeholder="0x… or https://basescan.org/tx/0x…"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={prefillLoading || !openTx.trim()}
+                  onClick={() => void loadFromOpenTx()}
+                >
+                  {prefillLoading ? 'Loading…' : 'Autofill'}
+                </button>
+              </div>
+              <span className="field-hint">
+                Paste the vault <strong>open/mint</strong> tx. Fills user, bot ID (bytes32), tokenId,
+                and ticks from <code>PositionOpened</code>. Useful for collect / close / rebalance.
+              </span>
+            </label>
+            {prefillNote && <p className="hint calldata-prefill-ok">{prefillNote}</p>}
+            {prefillError && <p className="error">{prefillError}</p>}
+          </div>
+        )}
 
         <div className="calldata-row">
           <label className="field field-with-hint">
