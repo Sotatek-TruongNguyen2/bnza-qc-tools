@@ -1638,6 +1638,94 @@ tr:last-child td {
   gap: 0.65rem;
 }
 
+.calldata-route-picker {
+  position: relative;
+}
+
+.calldata-route-trigger {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid #1f6f54;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.calldata-route-trigger:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.calldata-route-trigger-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  min-width: 0;
+}
+
+.calldata-route-chevron {
+  color: var(--muted);
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.calldata-route-menu {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0.35rem;
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  top: 100%;
+  max-height: 20rem;
+  overflow: auto;
+  border-radius: 0.75rem;
+  border: 1px solid #d7e0ec;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(20, 40, 60, 0.12);
+}
+
+.calldata-route-menu > li + li {
+  margin-top: 0.15rem;
+}
+
+.calldata-route-option {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.calldata-route-option:hover,
+.calldata-route-option.is-selected {
+  background: #f0f6f3;
+}
+
+.calldata-route-rank {
+  min-width: 2.4rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+}
+
 .calldata-route-preview {
   display: flex;
   flex-wrap: wrap;

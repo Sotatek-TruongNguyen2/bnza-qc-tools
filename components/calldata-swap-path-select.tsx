@@ -1,25 +1,25 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { QuoteRoutePath } from './quote-route-path'
+import { TokenIcon } from './token-icon'
 import { apiGetJson } from '@/lib/api-client'
-import { BASE_WETH_ADDRESS } from '@/lib/base-known-tokens'
+import { BASE_USDC_ADDRESS, BASE_WETH_ADDRESS } from '@/lib/base-known-tokens'
 import {
   feeTierShortLabel,
   pickCloseConvertTokenIn,
 } from '@/lib/calldata/pick-close-convert-token-in'
 import type { PositionResult } from '@/lib/position/types'
-import type { QuoteResult } from '@/lib/quote/types'
+import type { QuoteResult, RouteHop, TokenInfo } from '@/lib/quote/types'
 
-const EMPTY = ''
-const CUSTOM = '__custom__'
-/** Nominal size for ranking routes — path encoding does not depend on amount. */
-const QUOTE_AMOUNT = '0.1'
+/** Tiny probe amount — only used to rank routes; never shown in UI. */
+const PROBE_AMOUNT = '0.1'
 
 type RouteOption = {
   path: string
-  label: string
-  hops: QuoteResult['quotes'][number]['hops']
+  rank: number
+  kindLabel: string
+  hops: RouteHop[]
   description: string
 }
 
@@ -29,6 +29,16 @@ type Props = {
   onChange: (path: string) => void
   defaultSwapFee: string
   onDefaultSwapFeeChange: (fee: string) => void
+}
+
+function autoHops(tokenIn: TokenInfo, fee: number): RouteHop[] {
+  return [
+    {
+      tokenIn: tokenIn.address,
+      tokenOut: BASE_USDC_ADDRESS,
+      fee,
+    },
+  ]
 }
 
 export function CalldataSwapPathSelect({
@@ -42,11 +52,13 @@ export function CalldataSwapPathSelect({
   const [error, setError] = useState<string | null>(null)
   const [routes, setRoutes] = useState<RouteOption[]>([])
   const [tokenInSymbol, setTokenInSymbol] = useState('WETH')
-  const [tokenOutMeta, setTokenOutMeta] = useState<QuoteResult['tokenOut'] | null>(null)
-  const [tokenInMeta, setTokenInMeta] = useState<QuoteResult['tokenIn'] | null>(null)
+  const [tokenOutMeta, setTokenOutMeta] = useState<TokenInfo | null>(null)
+  const [tokenInMeta, setTokenInMeta] = useState<TokenInfo | null>(null)
   const [pairNote, setPairNote] = useState<string | null>(null)
   const [mode, setMode] = useState<'auto' | 'route' | 'custom'>('auto')
   const [customPath, setCustomPath] = useState('')
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   const loadRoutes = useCallback(async () => {
     setLoading(true)
@@ -54,8 +66,7 @@ export function CalldataSwapPathSelect({
     try {
       let nextIn: string = BASE_WETH_ADDRESS
       let nextInSymbol = 'WETH'
-      let note =
-        'Routes for close convert: WETH → USDC (same discovery as the Quote tab).'
+      let note = 'Close convert path: WETH → USDC (same route discovery as Quote).'
 
       const id = tokenId.trim()
       if (/^\d+$/.test(id)) {
@@ -68,7 +79,7 @@ export function CalldataSwapPathSelect({
           nextInSymbol = picked.tokenInSymbol
           note = picked.note
         } catch {
-          // keep WETH→USDC if position lookup fails
+          // keep WETH→USDC
         }
       }
 
@@ -76,7 +87,7 @@ export function CalldataSwapPathSelect({
       setPairNote(note)
 
       const qs = new URLSearchParams({
-        amount: QUOTE_AMOUNT,
+        amount: PROBE_AMOUNT,
         tokenIn: nextIn,
         tokenOut: 'USDC',
         slippage: '0.5',
@@ -89,9 +100,10 @@ export function CalldataSwapPathSelect({
         .filter((q) => q.path && q.path !== '0x' && q.kind !== 'identity')
         .map((q) => ({
           path: q.path,
+          rank: q.rank,
+          kindLabel: q.kind === 'multi-hop' ? `${q.hopCount}-hop` : 'direct',
           hops: q.hops,
           description: q.description,
-          label: `#${q.rank} · ${q.kind === 'multi-hop' ? `${q.hopCount}-hop` : 'direct'} · ${q.description} · ~${q.amountOutHuman}`,
         }))
       setRoutes(opts)
 
@@ -113,93 +125,183 @@ export function CalldataSwapPathSelect({
 
   useEffect(() => {
     void loadRoutes()
-  }, [tokenId]) // eslint-disable-line react-hooks/exhaustive-deps -- refresh on tokenId; manual Refresh for rest
+  }, [tokenId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   const selected = useMemo(
     () => routes.find((r) => r.path.toLowerCase() === value.toLowerCase()) ?? null,
     [routes, value],
   )
 
-  const selectValue =
-    mode === 'custom'
-      ? CUSTOM
-      : mode === 'auto' || !value
-        ? EMPTY
-        : selected
-          ? selected.path
-          : CUSTOM
+  const fee = Number(defaultSwapFee) || 500
+  const fallbackIn: TokenInfo = tokenInMeta ?? {
+    address: BASE_WETH_ADDRESS,
+    symbol: tokenInSymbol,
+    decimals: 18,
+  }
+  const fallbackOut: TokenInfo = tokenOutMeta ?? {
+    address: BASE_USDC_ADDRESS,
+    symbol: 'USDC',
+    decimals: 6,
+  }
 
-  function onSelectChange(next: string) {
-    if (next === EMPTY) {
-      setMode('auto')
-      onChange('')
-      return
-    }
-    if (next === CUSTOM) {
-      setMode('custom')
-      onChange(customPath.trim())
-      return
-    }
+  function pickAuto() {
+    setMode('auto')
+    onChange('')
+    setOpen(false)
+  }
+
+  function pickRoute(path: string) {
     setMode('route')
-    onChange(next)
+    onChange(path)
+    setOpen(false)
+  }
+
+  function pickCustom() {
+    setMode('custom')
+    onChange(customPath.trim())
+    setOpen(false)
   }
 
   return (
-    <div className="calldata-swap-path">
-      <label className="field field-with-hint">
+    <div className="calldata-swap-path" ref={rootRef}>
+      <div className="field field-with-hint">
         <span>Swap path (from Quote routes)</span>
-        <div className="calldata-prefill-row">
-          <select
-            className="calldata-select"
-            value={selectValue}
-            onChange={(e) => onSelectChange(e.target.value)}
-            disabled={loading}
-          >
-            <option value={EMPTY}>
-              Auto default · {tokenInSymbol}→USDC @{' '}
-              {feeTierShortLabel(Number(defaultSwapFee) || 500)}
-            </option>
-            {routes.map((r) => (
-              <option key={r.path} value={r.path}>
-                {r.label}
-              </option>
-            ))}
-            <option value={CUSTOM}>Custom hex path…</option>
-          </select>
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={loading}
-            onClick={() => void loadRoutes()}
-          >
-            {loading ? 'Loading…' : 'Refresh'}
-          </button>
+        <div className="calldata-route-picker">
+          <div className="calldata-prefill-row">
+            <button
+              type="button"
+              className="calldata-route-trigger"
+              disabled={loading}
+              aria-haspopup="listbox"
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+            >
+              <span className="calldata-route-trigger-main">
+                {mode === 'route' && selected ? (
+                  <>
+                    <span className="muted calldata-route-rank">#{selected.rank}</span>
+                    <QuoteRoutePath
+                      hops={selected.hops}
+                      tokenIn={fallbackIn}
+                      tokenOut={fallbackOut}
+                      description={selected.description}
+                    />
+                    <span className="muted">{selected.kindLabel}</span>
+                  </>
+                ) : mode === 'custom' ? (
+                  <span>Custom hex path</span>
+                ) : (
+                  <>
+                    <span className="muted">Auto</span>
+                    <span className="quote-route-path">
+                      <span className="quote-route-token">
+                        <TokenIcon
+                          symbol={fallbackIn.symbol}
+                          address={fallbackIn.address}
+                          size={18}
+                        />
+                        <span>{fallbackIn.symbol}</span>
+                      </span>
+                      <span className="quote-route-hop muted">
+                        <span className="quote-route-fee">{feeTierShortLabel(fee)}</span>
+                        <span className="quote-route-arrow" aria-hidden>
+                          →
+                        </span>
+                      </span>
+                      <span className="quote-route-token">
+                        <TokenIcon symbol="USDC" address={BASE_USDC_ADDRESS} size={18} />
+                        <span>USDC</span>
+                      </span>
+                    </span>
+                  </>
+                )}
+              </span>
+              <span className="calldata-route-chevron" aria-hidden>
+                ▾
+              </span>
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={loading}
+              onClick={() => void loadRoutes()}
+            >
+              {loading ? 'Loading…' : 'Refresh'}
+            </button>
+          </div>
+
+          {open && (
+            <ul className="calldata-route-menu" role="listbox">
+              <li>
+                <button type="button" className="calldata-route-option" onClick={pickAuto}>
+                  <span className="muted calldata-route-rank">Auto</span>
+                  <QuoteRoutePath
+                    hops={autoHops(fallbackIn, fee)}
+                    tokenIn={fallbackIn}
+                    tokenOut={fallbackOut}
+                    description={`Auto default ${fallbackIn.symbol}→USDC @ ${fee}`}
+                  />
+                  <span className="muted">{feeTierShortLabel(fee)} default</span>
+                </button>
+              </li>
+              {routes.map((r) => (
+                <li key={r.path}>
+                  <button
+                    type="button"
+                    className={
+                      selected?.path === r.path
+                        ? 'calldata-route-option is-selected'
+                        : 'calldata-route-option'
+                    }
+                    onClick={() => pickRoute(r.path)}
+                  >
+                    <span className="muted calldata-route-rank">#{r.rank}</span>
+                    <QuoteRoutePath
+                      hops={r.hops}
+                      tokenIn={fallbackIn}
+                      tokenOut={fallbackOut}
+                      description={r.description}
+                    />
+                    <span className="muted">{r.kindLabel}</span>
+                  </button>
+                </li>
+              ))}
+              <li>
+                <button type="button" className="calldata-route-option" onClick={pickCustom}>
+                  <span className="muted calldata-route-rank">…</span>
+                  <span>Custom hex path</span>
+                </button>
+              </li>
+            </ul>
+          )}
         </div>
         <span className="field-hint">
-          Reuses Quote tab route discovery
+          Same Uniswap V3 paths as the Quote tab
           {tokenInMeta && tokenOutMeta
             ? ` (${tokenInMeta.symbol} → ${tokenOutMeta.symbol})`
             : ` (${tokenInSymbol} → USDC)`}
-          . Sample {QUOTE_AMOUNT} ranks routes only — not the close size.
+          . Amounts are not shown — close size is separate (Min USDC out).
         </span>
-      </label>
+      </div>
 
       {pairNote && <p className="hint">{pairNote}</p>}
       {error && <p className="error">{error}</p>}
-
-      {selected && tokenInMeta && tokenOutMeta && mode === 'route' && (
-        <div className="calldata-route-preview">
-          <QuoteRoutePath
-            hops={selected.hops}
-            tokenIn={tokenInMeta}
-            tokenOut={tokenOutMeta}
-            description={selected.description}
-          />
-          <span className="muted mono calldata-route-path-hex">
-            {selected.path.slice(0, 18)}…
-          </span>
-        </div>
-      )}
 
       {mode === 'custom' && (
         <label className="field field-with-hint">
@@ -228,7 +330,7 @@ export function CalldataSwapPathSelect({
             inputMode="numeric"
             placeholder="500"
           />
-          <span className="field-hint">Only for Auto default. 500 = 0.05%, 3000 = 0.3%.</span>
+          <span className="field-hint">Only for Auto. 500 = 0.05%, 3000 = 0.3%.</span>
         </label>
       )}
     </div>
