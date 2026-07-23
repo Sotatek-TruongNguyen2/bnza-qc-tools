@@ -297,10 +297,10 @@ function QueueChip({ row }: { row: RedemptionPendingRequest }) {
     <div
       role="listitem"
       className={row.isHead ? 'rq-chip rq-chip-head' : 'rq-chip'}
-      title={`requestId ${row.requestId} · ${row.user} · ${row.waitLabel}`}
+      title={`#${row.requestId} · ${row.user} · ${row.waitLabel}`}
     >
       <span className="rq-chip-pos">{row.isHead ? 'HEAD' : row.queueIndex + 1}</span>
-      <span className="rq-chip-id mono">id {row.requestId}</span>
+      <span className="rq-chip-id mono">#{row.requestId}</span>
       <span className="rq-chip-wait">{row.waitLabel}</span>
     </div>
   )
