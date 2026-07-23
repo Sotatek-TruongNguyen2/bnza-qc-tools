@@ -2460,11 +2460,40 @@ select.calldata-select {
 
 .rq-copyable .mono,
 .rq-copyable a.mono {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  word-break: normal;
-  overflow-wrap: normal;
+}
+
+.rq-trim.has-tooltip {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  cursor: help;
+}
+
+.rq-trim-tooltip {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.25rem);
+  z-index: 40;
+  max-width: min(22rem, 75vw);
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid #c5d3c9;
+  background: #1b2a22;
+  color: #f4faf6;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-all;
+  box-shadow: 0 8px 20px rgba(20, 40, 30, 0.22);
+  pointer-events: none;
+}
+
+.rq-trim.has-tooltip:hover .rq-trim-tooltip,
+.rq-trim.has-tooltip:focus-within .rq-trim-tooltip {
+  display: block;
 }
 
 .copy-icon-btn {

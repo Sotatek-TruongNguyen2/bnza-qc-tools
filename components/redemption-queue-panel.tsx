@@ -195,9 +195,40 @@ function shorten(addr: string, left = 4, right = 4): string {
   return `${addr.slice(0, left + 2)}…${addr.slice(-right)}`
 }
 
-function shortenBytes32(hex: string): string {
-  if (hex.length < 18) return hex
-  return `${hex.slice(0, 10)}…${hex.slice(-8)}`
+/** Middle-trim bytes32 the same way as addresses: 0xabcd…wxyz */
+function shortenBytes32(hex: string, left = 4, right = 4): string {
+  if (!hex.startsWith('0x') || hex.length <= 2 + left + right + 1) return hex
+  return `${hex.slice(0, 2 + left)}…${hex.slice(-right)}`
+}
+
+/** Short display + CSS tooltip with full value (native title is unreliable on truncated text). */
+function TrimmedId({
+  full,
+  display,
+  href,
+}: {
+  full: string
+  display: string
+  href?: string
+}) {
+  const text = href ? (
+    <a href={href} target="_blank" rel="noreferrer" className="mono">
+      {display}
+    </a>
+  ) : (
+    <span className="mono">{display}</span>
+  )
+
+  if (display === full) return text
+
+  return (
+    <span className="rq-trim has-tooltip" tabIndex={0}>
+      {text}
+      <span className="rq-trim-tooltip mono" role="tooltip">
+        {full}
+      </span>
+    </span>
+  )
 }
 
 function RequestCard({ row }: { row: RedemptionPendingRequest }) {
@@ -220,9 +251,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>Request ID</dt>
           <dd>
             <span className="rq-copyable">
-              <span className="mono" title={row.requestId}>
-                {row.requestId}
-              </span>
+              <span className="mono">{row.requestId}</span>
               <CopyIconButton value={row.requestId} label="Copy request ID" />
             </span>
           </dd>
@@ -231,15 +260,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>User</dt>
           <dd>
             <span className="rq-copyable">
-              <a
-                href={row.basescanUser}
-                target="_blank"
-                rel="noreferrer"
-                className="mono"
-                title={row.user}
-              >
-                {shorten(row.user)}
-              </a>
+              <TrimmedId full={row.user} display={shorten(row.user)} href={row.basescanUser} />
               <CopyIconButton value={row.user} label="Copy user address" />
             </span>
           </dd>
@@ -248,9 +269,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>Bot ID</dt>
           <dd>
             <span className="rq-copyable">
-              <span className="mono" title={row.botId}>
-                {shortenBytes32(row.botId)}
-              </span>
+              <TrimmedId full={row.botId} display={shortenBytes32(row.botId)} />
               <CopyIconButton value={row.botId} label="Copy bot ID" />
             </span>
           </dd>
@@ -259,9 +278,7 @@ function RequestCard({ row }: { row: RedemptionPendingRequest }) {
           <dt>Position ID</dt>
           <dd>
             <span className="rq-copyable">
-              <span className="mono" title={row.positionId}>
-                {row.positionId}
-              </span>
+              <span className="mono">{row.positionId}</span>
               <CopyIconButton value={row.positionId} label="Copy position ID" />
             </span>
           </dd>
