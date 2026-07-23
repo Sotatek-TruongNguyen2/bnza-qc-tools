@@ -2475,7 +2475,7 @@ select.calldata-select {
   font-variant-numeric: tabular-nums;
 }
 
-.recent-opens-close {
+.recent-opens-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2489,11 +2489,31 @@ select.calldata-select {
   font-size: 0.95rem;
   line-height: 1;
   cursor: pointer;
+  padding: 0;
 }
 
-.recent-opens-close:hover {
+.recent-opens-icon-btn:hover:not(:disabled) {
   color: var(--ink);
   border-color: color-mix(in srgb, var(--ink) 25%, var(--line));
+}
+
+.recent-opens-icon-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.recent-opens-refresh-icon {
+  display: block;
+}
+
+.recent-opens-refresh-icon.is-spinning {
+  animation: recent-opens-spin 0.8s linear infinite;
+}
+
+@keyframes recent-opens-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .recent-opens-collapsed {

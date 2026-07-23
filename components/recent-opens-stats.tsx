@@ -132,12 +132,30 @@ export function RecentOpensStats() {
           <span className="muted recent-opens-countdown" title="Time until next auto-refresh">
             Next {countdown}
           </span>
-          <button type="button" className="btn-secondary" disabled={loading} onClick={() => void reload()}>
-            {loading ? 'Loading…' : 'Refresh'}
+          <button
+            type="button"
+            className="recent-opens-icon-btn"
+            disabled={loading}
+            onClick={() => void reload()}
+            aria-label={loading ? 'Refreshing' : 'Refresh'}
+            title={loading ? 'Refreshing…' : 'Refresh now'}
+          >
+            <svg
+              className={loading ? 'recent-opens-refresh-icon is-spinning' : 'recent-opens-refresh-icon'}
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              aria-hidden
+            >
+              <path
+                fill="currentColor"
+                d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"
+              />
+            </svg>
           </button>
           <button
             type="button"
-            className="recent-opens-close"
+            className="recent-opens-icon-btn"
             onClick={closeSection}
             aria-label="Hide recent opens"
             title="Hide this section"
