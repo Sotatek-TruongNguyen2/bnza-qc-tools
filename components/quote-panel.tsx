@@ -263,15 +263,11 @@ export function QuotePanel() {
               <dl className="kv">
                 <div>
                   <dt>Amount out</dt>
-                  <dd>
-                    <CompactTokenAmount value={best.amountOutHuman} />
-                  </dd>
+                  <dd className="mono">{best.amountOutHuman}</dd>
                 </div>
                 <div>
                   <dt>Min out</dt>
-                  <dd>
-                    <CompactTokenAmount value={best.amountOutMinimumHuman} />
-                  </dd>
+                  <dd className="mono">{best.amountOutMinimumHuman}</dd>
                 </div>
                 <div>
                   <dt>Gas est.</dt>
